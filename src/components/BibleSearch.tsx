@@ -82,7 +82,7 @@ export const BibleSearch = () => {
                           {result.book.name} {result.chapter}:{result.verse.number}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {result.book.testament}
+                          Bíblia Sagrada
                         </span>
                       </div>
                       <p className="text-foreground leading-relaxed">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { BibleVerse, BibleBook } from "./useBibleData";
 
 export interface SearchResult {
@@ -17,47 +18,30 @@ export const useBibleSearch = () => {
 
     setSearching(true);
     try {
-      // Carregar lista de livros
-      const booksResponse = await fetch('/data/books.json');
-      const books: BibleBook[] = await booksResponse.json();
-      
       const results: SearchResult[] = [];
       const queryLower = query.toLowerCase();
 
-      // Buscar em alguns capítulos disponíveis como exemplo
-      const availableChapters = [
-        { book: 'gn', chapters: [1] },
-        { book: 'jo', chapters: [3] }
-      ];
+      // Buscar no Supabase
+      const { data, error } = await supabase
+        .from('versiculos')
+        .select('livro, capitulo, versiculo, texto')
+        .ilike('texto', `%${query}%`)
+        .limit(50);
 
-      for (const { book: bookAbbrev, chapters } of availableChapters) {
-        const book = books.find(b => b.abbrev.pt === bookAbbrev);
-        if (!book) continue;
+      if (error) throw error;
 
-        for (const chapterNum of chapters) {
-          try {
-            const chapterResponse = await fetch(`/data/${bookAbbrev}/${chapterNum}.json`);
-            if (!chapterResponse.ok) continue;
-            
-            const chapterData = await chapterResponse.json();
-            
-            for (const verse of chapterData.verses) {
-              if (verse.text.toLowerCase().includes(queryLower)) {
-                // Calcular relevância baseada na posição da palavra no texto
-                const index = verse.text.toLowerCase().indexOf(queryLower);
-                const relevance = index === 0 ? 1 : 1 - (index / verse.text.length);
-                
-                results.push({
-                  book,
-                  chapter: chapterNum,
-                  verse,
-                  relevance
-                });
-              }
-            }
-          } catch (error) {
-            console.error(`Erro ao buscar no capítulo ${bookAbbrev} ${chapterNum}:`, error);
-          }
+      if (data) {
+        for (const item of data) {
+          // Calcular relevância baseada na posição da palavra no texto
+          const index = item.texto.toLowerCase().indexOf(queryLower);
+          const relevance = index === 0 ? 1 : 1 - (index / item.texto.length);
+          
+          results.push({
+            book: { name: item.livro, chapters: 1 },
+            chapter: item.capitulo,
+            verse: { number: item.versiculo, text: item.texto },
+            relevance
+          });
         }
       }
 

@@ -168,6 +168,33 @@ export type Database = {
         }
         Relationships: []
       }
+      versiculos: {
+        Row: {
+          capitulo: number
+          id: number
+          livro: string
+          texto: string
+          versao: string | null
+          versiculo: number
+        }
+        Insert: {
+          capitulo: number
+          id?: number
+          livro: string
+          texto: string
+          versao?: string | null
+          versiculo: number
+        }
+        Update: {
+          capitulo?: number
+          id?: number
+          livro?: string
+          texto?: string
+          versao?: string | null
+          versiculo?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

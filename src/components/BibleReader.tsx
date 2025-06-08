@@ -31,7 +31,7 @@ export const BibleReader = () => {
     if (selectedBook && currentChapter && availableBooks.length > 0) {
       const book = availableBooks.find(b => b.name === selectedBook);
       if (book) {
-        fetchChapter(book.abbrev.pt, currentChapter);
+        fetchChapter(selectedBook, currentChapter);
         saveReadingProgress(selectedBook, currentChapter);
       }
     }
@@ -64,7 +64,7 @@ export const BibleReader = () => {
           </SelectTrigger>
           <SelectContent>
             {availableBooks.map((book) => (
-              <SelectItem key={book.abbrev.pt} value={book.name}>
+              <SelectItem key={book.name} value={book.name}>
                 {book.name}
               </SelectItem>
             ))}
@@ -141,7 +141,7 @@ export const BibleReader = () => {
               <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>
                 {availableBooks.length === 0 
-                  ? "Configure sua chave de API da BibliaAPI.com para acessar todos os livros da Bíblia" 
+                  ? "Carregando livros da Bíblia do Supabase..." 
                   : "Selecione um livro para começar a leitura"
                 }
               </p>

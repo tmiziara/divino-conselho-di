@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface BibleVerse {
   number: number;
@@ -7,15 +8,8 @@ export interface BibleVerse {
 }
 
 export interface BibleBook {
-  abbrev: {
-    pt: string;
-    en: string;
-  };
-  author: string;
-  chapters: number;
-  group: string;
   name: string;
-  testament: string;
+  chapters: number;
 }
 
 export interface BibleChapter {
@@ -34,27 +28,40 @@ export const useBibleData = () => {
   const [chapterData, setChapterData] = useState<BibleChapter | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Função para carregar dados locais
-  const loadLocalData = async (path: string) => {
-    try {
-      const response = await fetch(path);
-      if (!response.ok) {
-        throw new Error(`Erro ao carregar ${path}: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error(`Erro ao carregar arquivo ${path}:`, error);
-      throw error;
-    }
-  };
-
-  // Função para carregar todos os livros disponíveis
+  // Função para carregar todos os livros disponíveis do Supabase
   const loadAvailableBooks = async () => {
     setBooksLoading(true);
     try {
-      const data = await loadLocalData('/data/books.json');
-      if (data && Array.isArray(data)) {
-        setAvailableBooks(data);
+      const { data, error } = await supabase
+        .from('versiculos')
+        .select('livro')
+        .order('livro');
+
+      if (error) throw error;
+
+      if (data) {
+        // Obter livros únicos e contar capítulos
+        const uniqueBooks = Array.from(new Set(data.map(item => item.livro)));
+        const booksWithChapters = await Promise.all(
+          uniqueBooks.map(async (bookName) => {
+            const { data: chaptersData, error: chaptersError } = await supabase
+              .from('versiculos')
+              .select('capitulo')
+              .eq('livro', bookName)
+              .order('capitulo');
+
+            if (chaptersError) throw chaptersError;
+
+            const maxChapter = Math.max(...chaptersData.map(c => c.capitulo));
+            
+            return {
+              name: bookName,
+              chapters: maxChapter
+            };
+          })
+        );
+
+        setAvailableBooks(booksWithChapters);
       }
     } catch (error) {
       console.error('Erro ao carregar livros:', error);
@@ -68,22 +75,48 @@ export const useBibleData = () => {
     }
   };
 
-  // Função para buscar capítulo dos dados locais
-  const fetchChapter = async (bookAbbrev: string, chapter: number) => {
-    if (!bookAbbrev) return;
+  // Função para buscar capítulo do Supabase
+  const fetchChapter = async (bookName: string, chapterNumber: number) => {
+    if (!bookName) return;
 
     setLoading(true);
     try {
-      const data = await loadLocalData(`/data/${bookAbbrev}/${chapter}.json`);
-      
-      if (data) {
-        setChapterData(data);
+      const { data, error } = await supabase
+        .from('versiculos')
+        .select('versiculo, texto')
+        .eq('livro', bookName)
+        .eq('capitulo', chapterNumber)
+        .order('versiculo');
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const book = availableBooks.find(b => b.name === bookName);
+        const verses: BibleVerse[] = data.map(verse => ({
+          number: verse.versiculo,
+          text: verse.texto
+        }));
+
+        setChapterData({
+          book: book || { name: bookName, chapters: 1 },
+          chapter: {
+            number: chapterNumber,
+            verses: verses.length
+          },
+          verses
+        });
+      } else {
+        toast({
+          title: "Capítulo não encontrado",
+          description: `O capítulo ${chapterNumber} do livro ${bookName} não foi encontrado.`,
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Erro ao buscar capítulo:', error);
       toast({
-        title: "Capítulo não encontrado",
-        description: `O capítulo ${chapter} do livro ${bookAbbrev} ainda não está disponível.`,
+        title: "Erro",
+        description: "Não foi possível carregar o capítulo.",
         variant: "destructive"
       });
     } finally {
