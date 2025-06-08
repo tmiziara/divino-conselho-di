@@ -57,7 +57,7 @@ export const useBibleData = () => {
   const loadAvailableBooks = async () => {
     setBooksLoading(true);
     try {
-      const data = await makeAuthenticatedRequest('https://www.bibliaapi.com/api/books/acf');
+      const data = await makeAuthenticatedRequest('https://bibliaapi.com/api/books/acf');
       if (data && Array.isArray(data)) {
         // Filtrar apenas livros em português
         const portugueseBooks = data.filter((book: any) => 
@@ -83,7 +83,7 @@ export const useBibleData = () => {
 
     setLoading(true);
     try {
-      const url = `https://www.bibliaapi.com/api/verses/acf/${bookAbbrev}/${chapter}`;
+      const url = `https://bibliaapi.com/api/verses/acf/${bookAbbrev}/${chapter}`;
       const data = await makeAuthenticatedRequest(url);
 
       if (data && data.verses) {
