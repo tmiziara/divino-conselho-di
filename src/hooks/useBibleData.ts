@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mapeamento dos códigos dos livros para nomes completos
+// Mapeamento dos códigos dos livros para nomes completos (baseado nos códigos reais da base de dados)
 const NOMES_LIVROS: Record<string, string> = {
   "gn": "Gênesis",
   "ex": "Êxodo",
@@ -21,7 +21,7 @@ const NOMES_LIVROS: Record<string, string> = {
   "ed": "Esdras",
   "ne": "Neemias",
   "et": "Ester",
-  "job": "Jó",
+  "jó": "Jó",
   "sl": "Salmos",
   "pv": "Provérbios",
   "ec": "Eclesiastes",
@@ -47,7 +47,7 @@ const NOMES_LIVROS: Record<string, string> = {
   "mc": "Marcos",
   "lc": "Lucas",
   "jo": "João",
-  "at": "Atos",
+  "atos": "Atos",
   "rm": "Romanos",
   "1co": "1 Coríntios",
   "2co": "2 Coríntios",
