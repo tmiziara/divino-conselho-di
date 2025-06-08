@@ -54,14 +54,16 @@ const Bible = () => {
     if (!text) return [];
     
     const verses: BibleVerse[] = [];
-    const lines = text.split('\n').filter(line => line.trim());
     
-    lines.forEach(line => {
-      const match = line.match(/^(\d+)\s+(.+)$/);
-      if (match) {
+    // O texto vem como um parágrafo contínuo, vamos quebrar por sentenças
+    // e criar versículos numerados
+    const sentences = text.split(/\.\s+/).filter(sentence => sentence.trim().length > 0);
+    
+    sentences.forEach((sentence, index) => {
+      if (sentence.trim()) {
         verses.push({
-          number: parseInt(match[1]),
-          text: match[2].trim()
+          number: index + 1,
+          text: sentence.trim() + (sentence.endsWith('.') ? '' : '.')
         });
       }
     });
@@ -95,7 +97,8 @@ const Bible = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`https://api.biblia.com/v1/bible/content/LEB.json?passage=${bookAbbrev}.${chapter}&key=17180d4a76ffdeba768733b44f1cceaa`);
+      // Usando bible-api.com que retorna versículos estruturados
+      const response = await fetch(`https://bible-api.com/${bookAbbrev.toLowerCase()}+${chapter}?translation=almeida`);
       if (!response.ok) throw new Error('Erro ao buscar capítulo');
       
       const data = await response.json();
@@ -108,13 +111,16 @@ const Bible = () => {
           author: "",
           chapters: 150, // Valor padrão, seria ideal ter isso da API
           group: "",
-          version: "LEB"
+          version: "Almeida"
         },
         chapter: {
           number: chapter,
-          verses: data.text ? data.text.split(/\d+/).length - 1 : 0
+          verses: data.verses ? data.verses.length : 0
         },
-        verses: parseVerses(data.text || "")
+        verses: data.verses ? data.verses.map((verse: any) => ({
+          number: verse.verse,
+          text: verse.text
+        })) : []
       };
       
       setChapterData(transformedData);
