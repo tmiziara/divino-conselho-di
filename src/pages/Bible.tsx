@@ -71,21 +71,21 @@ const Bible = () => {
     return verses;
   };
 
-  // Mapeamento dos nomes em português para abreviações da API (formato biblia.com)
+  // Mapeamento dos nomes em português para abreviações da API bible-api.com
   const bookMapping: { [key: string]: string } = {
-    "Gênesis": "Genesis", "Êxodo": "Exodus", "Levítico": "Leviticus", "Números": "Numbers", "Deuteronômio": "Deuteronomy",
-    "Josué": "Joshua", "Juízes": "Judges", "Rute": "Ruth", "1 Samuel": "1Samuel", "2 Samuel": "2Samuel",
-    "1 Reis": "1Kings", "2 Reis": "2Kings", "1 Crônicas": "1Chronicles", "2 Crônicas": "2Chronicles", "Esdras": "Ezra",
-    "Neemias": "Nehemiah", "Ester": "Esther", "Jó": "Job", "Salmos": "Psalms", "Provérbios": "Proverbs",
-    "Eclesiastes": "Ecclesiastes", "Cantares": "SongofSongs", "Isaías": "Isaiah", "Jeremias": "Jeremiah", "Lamentações": "Lamentations",
-    "Ezequiel": "Ezekiel", "Daniel": "Daniel", "Oséias": "Hosea", "Joel": "Joel", "Amós": "Amos",
-    "Obadias": "Obadiah", "Jonas": "Jonah", "Miquéias": "Micah", "Naum": "Nahum", "Habacuque": "Habakkuk",
-    "Sofonias": "Zephaniah", "Ageu": "Haggai", "Zacarias": "Zechariah", "Malaquias": "Malachi", "Mateus": "Matthew",
-    "Marcos": "Mark", "Lucas": "Luke", "João": "John", "Atos": "Acts", "Romanos": "Romans",
-    "1 Coríntios": "1Corinthians", "2 Coríntios": "2Corinthians", "Gálatas": "Galatians", "Efésios": "Ephesians", "Filipenses": "Philippians",
-    "Colossenses": "Colossians", "1 Tessalonicenses": "1Thessalonians", "2 Tessalonicenses": "2Thessalonians", "1 Timóteo": "1Timothy", "2 Timóteo": "2Timothy",
-    "Tito": "Titus", "Filemom": "Philemon", "Hebreus": "Hebrews", "Tiago": "James", "1 Pedro": "1Peter",
-    "2 Pedro": "2Peter", "1 João": "1John", "2 João": "2John", "3 João": "3John", "Judas": "Jude", "Apocalipse": "Revelation"
+    "Gênesis": "genesis", "Êxodo": "exodus", "Levítico": "leviticus", "Números": "numbers", "Deuteronômio": "deuteronomy",
+    "Josué": "joshua", "Juízes": "judges", "Rute": "ruth", "1 Samuel": "1samuel", "2 Samuel": "2samuel",
+    "1 Reis": "1kings", "2 Reis": "2kings", "1 Crônicas": "1chronicles", "2 Crônicas": "2chronicles", "Esdras": "ezra",
+    "Neemias": "nehemiah", "Ester": "esther", "Jó": "job", "Salmos": "psalms", "Provérbios": "proverbs",
+    "Eclesiastes": "ecclesiastes", "Cantares": "song-of-songs", "Isaías": "isaiah", "Jeremias": "jeremiah", "Lamentações": "lamentations",
+    "Ezequiel": "ezekiel", "Daniel": "daniel", "Oséias": "hosea", "Joel": "joel", "Amós": "amos",
+    "Obadias": "obadiah", "Jonas": "jonah", "Miquéias": "micah", "Naum": "nahum", "Habacuque": "habakkuk",
+    "Sofonias": "zephaniah", "Ageu": "haggai", "Zacarias": "zechariah", "Malaquias": "malachi", "Mateus": "matthew",
+    "Marcos": "mark", "Lucas": "luke", "João": "john", "Atos": "acts", "Romanos": "romans",
+    "1 Coríntios": "1corinthians", "2 Coríntios": "2corinthians", "Gálatas": "galatians", "Efésios": "ephesians", "Filipenses": "philippians",
+    "Colossenses": "colossians", "1 Tessalonicenses": "1thessalonians", "2 Tessalonicenses": "2thessalonians", "1 Timóteo": "1timothy", "2 Timóteo": "2timothy",
+    "Tito": "titus", "Filemom": "philemon", "Hebreus": "hebrews", "Tiago": "james", "1 Pedro": "1peter",
+    "2 Pedro": "2peter", "1 João": "1john", "2 João": "2john", "3 João": "3john", "Judas": "jude", "Apocalipse": "revelation"
   };
 
   const bibleBooks = Object.keys(bookMapping);
@@ -98,7 +98,7 @@ const Bible = () => {
     setLoading(true);
     try {
       // Usando bible-api.com que retorna versículos estruturados
-      const response = await fetch(`https://bible-api.com/${bookAbbrev.toLowerCase()}+${chapter}?translation=almeida`);
+      const response = await fetch(`https://bible-api.com/${bookAbbrev}+${chapter}?translation=almeida`);
       if (!response.ok) throw new Error('Erro ao buscar capítulo');
       
       const data = await response.json();
