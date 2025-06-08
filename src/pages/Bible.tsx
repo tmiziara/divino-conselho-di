@@ -49,21 +49,41 @@ const Bible = () => {
   const [useScrollView, setUseScrollView] = useState(true);
   const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
 
-  // Mapeamento dos nomes em português para abreviações da API
+  // Função para extrair versículos do texto da API
+  const parseVerses = (text: string): BibleVerse[] => {
+    if (!text) return [];
+    
+    const verses: BibleVerse[] = [];
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    lines.forEach(line => {
+      const match = line.match(/^(\d+)\s+(.+)$/);
+      if (match) {
+        verses.push({
+          number: parseInt(match[1]),
+          text: match[2].trim()
+        });
+      }
+    });
+    
+    return verses;
+  };
+
+  // Mapeamento dos nomes em português para abreviações da API (formato biblia.com)
   const bookMapping: { [key: string]: string } = {
-    "Gênesis": "gn", "Êxodo": "ex", "Levítico": "lv", "Números": "nm", "Deuteronômio": "dt",
-    "Josué": "js", "Juízes": "jz", "Rute": "rt", "1 Samuel": "1sm", "2 Samuel": "2sm",
-    "1 Reis": "1rs", "2 Reis": "2rs", "1 Crônicas": "1cr", "2 Crônicas": "2cr", "Esdras": "ed",
-    "Neemias": "ne", "Ester": "et", "Jó": "jó", "Salmos": "sl", "Provérbios": "pv",
-    "Eclesiastes": "ec", "Cantares": "ct", "Isaías": "is", "Jeremias": "jr", "Lamentações": "lm",
-    "Ezequiel": "ez", "Daniel": "dn", "Oséias": "os", "Joel": "jl", "Amós": "am",
-    "Obadias": "ob", "Jonas": "jn", "Miquéias": "mq", "Naum": "na", "Habacuque": "hc",
-    "Sofonias": "sf", "Ageu": "ag", "Zacarias": "zc", "Malaquias": "ml", "Mateus": "mt",
-    "Marcos": "mc", "Lucas": "lc", "João": "jo", "Atos": "at", "Romanos": "rm",
-    "1 Coríntios": "1co", "2 Coríntios": "2co", "Gálatas": "gl", "Efésios": "ef", "Filipenses": "fp",
-    "Colossenses": "cl", "1 Tessalonicenses": "1ts", "2 Tessalonicenses": "2ts", "1 Timóteo": "1tm", "2 Timóteo": "2tm",
-    "Tito": "tt", "Filemom": "fm", "Hebreus": "hb", "Tiago": "tg", "1 Pedro": "1pe",
-    "2 Pedro": "2pe", "1 João": "1jo", "2 João": "2jo", "3 João": "3jo", "Judas": "jd", "Apocalipse": "ap"
+    "Gênesis": "Genesis", "Êxodo": "Exodus", "Levítico": "Leviticus", "Números": "Numbers", "Deuteronômio": "Deuteronomy",
+    "Josué": "Joshua", "Juízes": "Judges", "Rute": "Ruth", "1 Samuel": "1Samuel", "2 Samuel": "2Samuel",
+    "1 Reis": "1Kings", "2 Reis": "2Kings", "1 Crônicas": "1Chronicles", "2 Crônicas": "2Chronicles", "Esdras": "Ezra",
+    "Neemias": "Nehemiah", "Ester": "Esther", "Jó": "Job", "Salmos": "Psalms", "Provérbios": "Proverbs",
+    "Eclesiastes": "Ecclesiastes", "Cantares": "SongofSongs", "Isaías": "Isaiah", "Jeremias": "Jeremiah", "Lamentações": "Lamentations",
+    "Ezequiel": "Ezekiel", "Daniel": "Daniel", "Oséias": "Hosea", "Joel": "Joel", "Amós": "Amos",
+    "Obadias": "Obadiah", "Jonas": "Jonah", "Miquéias": "Micah", "Naum": "Nahum", "Habacuque": "Habakkuk",
+    "Sofonias": "Zephaniah", "Ageu": "Haggai", "Zacarias": "Zechariah", "Malaquias": "Malachi", "Mateus": "Matthew",
+    "Marcos": "Mark", "Lucas": "Luke", "João": "John", "Atos": "Acts", "Romanos": "Romans",
+    "1 Coríntios": "1Corinthians", "2 Coríntios": "2Corinthians", "Gálatas": "Galatians", "Efésios": "Ephesians", "Filipenses": "Philippians",
+    "Colossenses": "Colossians", "1 Tessalonicenses": "1Thessalonians", "2 Tessalonicenses": "2Thessalonians", "1 Timóteo": "1Timothy", "2 Timóteo": "2Timothy",
+    "Tito": "Titus", "Filemom": "Philemon", "Hebreus": "Hebrews", "Tiago": "James", "1 Pedro": "1Peter",
+    "2 Pedro": "2Peter", "1 João": "1John", "2 João": "2John", "3 João": "3John", "Judas": "Jude", "Apocalipse": "Revelation"
   };
 
   const bibleBooks = Object.keys(bookMapping);
@@ -75,11 +95,29 @@ const Bible = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`https://www.abibliadigital.com.br/api/verses/nvi/${bookAbbrev}/${chapter}`);
+      const response = await fetch(`https://api.biblia.com/v1/bible/content/LEB.json?passage=${bookAbbrev}.${chapter}&key=17180d4a76ffdeba768733b44f1cceaa`);
       if (!response.ok) throw new Error('Erro ao buscar capítulo');
       
-      const data: BibleChapter = await response.json();
-      setChapterData(data);
+      const data = await response.json();
+      
+      // Transformar dados da API para o formato esperado
+      const transformedData: BibleChapter = {
+        book: {
+          abbrev: { pt: bookAbbrev, en: bookAbbrev },
+          name: book,
+          author: "",
+          chapters: 150, // Valor padrão, seria ideal ter isso da API
+          group: "",
+          version: "LEB"
+        },
+        chapter: {
+          number: chapter,
+          verses: data.text ? data.text.split(/\d+/).length - 1 : 0
+        },
+        verses: parseVerses(data.text || "")
+      };
+      
+      setChapterData(transformedData);
       
       // Salvar progresso se usuário logado
       if (user) {
