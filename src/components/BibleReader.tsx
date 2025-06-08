@@ -65,7 +65,7 @@ export const BibleReader = () => {
           <SelectContent>
             {availableBooks.map((book) => (
               <SelectItem key={book.name} value={book.name}>
-                {book.name}
+                {book.fullName}
               </SelectItem>
             ))}
           </SelectContent>

@@ -79,7 +79,7 @@ export const BibleSearch = () => {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <span className="text-sm font-semibold text-primary">
-                          {result.book.name} {result.chapter}:{result.verse.number}
+                          {result.book.fullName} {result.chapter}:{result.verse.number}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           Bíblia Sagrada

@@ -37,7 +37,7 @@ export const useBibleSearch = () => {
           const relevance = index === 0 ? 1 : 1 - (index / item.texto.length);
           
           results.push({
-            book: { name: item.livro, chapters: 1 },
+            book: { name: item.livro, fullName: item.livro, chapters: 1 },
             chapter: item.capitulo,
             verse: { number: item.versiculo, text: item.texto },
             relevance
