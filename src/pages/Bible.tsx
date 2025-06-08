@@ -77,7 +77,7 @@ const Bible = () => {
   const loadAvailableBooks = async () => {
     setBooksLoading(true);
     try {
-      const data = await makeAuthenticatedRequest('https://bibliaapi.com/api/books');
+      const data = await makeAuthenticatedRequest('https://bibliaapi.com/api/books/nvi');
       if (data && Array.isArray(data)) {
         // Filtrar apenas livros em português
         const portugueseBooks = data.filter((book: any) => 
