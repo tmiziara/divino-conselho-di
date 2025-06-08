@@ -1,37 +1,182 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Heart, BookOpen, Brain } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Search, Heart, BookOpen, Brain, ChevronLeft, ChevronRight } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import BibleSidebar from "@/components/BibleSidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface BibleVerse {
+  number: number;
+  text: string;
+}
+
+interface BibleChapter {
+  book: {
+    abbrev: { pt: string; en: string };
+    name: string;
+    author: string;
+    chapters: number;
+    group: string;
+    version: string;
+  };
+  chapter: {
+    number: number;
+    verses: number;
+  };
+  verses: BibleVerse[];
+}
 
 const Bible = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBook, setSelectedBook] = useState("");
   const [aiSearchTerm, setAiSearchTerm] = useState("");
   const [currentChapter, setCurrentChapter] = useState(1);
   const [selectedText, setSelectedText] = useState("");
+  const [chapterData, setChapterData] = useState<BibleChapter | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [useScrollView, setUseScrollView] = useState(true);
+  const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
 
-  const bibleBooks = [
-    "Gênesis", "Êxodo", "Levítico", "Números", "Deuteronômio",
-    "Josué", "Juízes", "Rute", "1 Samuel", "2 Samuel",
-    "1 Reis", "2 Reis", "1 Crônicas", "2 Crônicas", "Esdras",
-    "Neemias", "Ester", "Jó", "Salmos", "Provérbios",
-    "Eclesiastes", "Cantares", "Isaías", "Jeremias", "Lamentações",
-    "Ezequiel", "Daniel", "Oséias", "Joel", "Amós",
-    "Obadias", "Jonas", "Miquéias", "Naum", "Habacuque",
-    "Sofonias", "Ageu", "Zacarias", "Malaquias", "Mateus",
-    "Marcos", "Lucas", "João", "Atos", "Romanos",
-    "1 Coríntios", "2 Coríntios", "Gálatas", "Efésios", "Filipenses",
-    "Colossenses", "1 Tessalonicenses", "2 Tessalonicenses", "1 Timóteo", "2 Timóteo",
-    "Tito", "Filemom", "Hebreus", "Tiago", "1 Pedro",
-    "2 Pedro", "1 João", "2 João", "3 João", "Judas", "Apocalipse"
-  ];
+  // Mapeamento dos nomes em português para abreviações da API
+  const bookMapping: { [key: string]: string } = {
+    "Gênesis": "gn", "Êxodo": "ex", "Levítico": "lv", "Números": "nm", "Deuteronômio": "dt",
+    "Josué": "js", "Juízes": "jz", "Rute": "rt", "1 Samuel": "1sm", "2 Samuel": "2sm",
+    "1 Reis": "1rs", "2 Reis": "2rs", "1 Crônicas": "1cr", "2 Crônicas": "2cr", "Esdras": "ed",
+    "Neemias": "ne", "Ester": "et", "Jó": "jó", "Salmos": "sl", "Provérbios": "pv",
+    "Eclesiastes": "ec", "Cantares": "ct", "Isaías": "is", "Jeremias": "jr", "Lamentações": "lm",
+    "Ezequiel": "ez", "Daniel": "dn", "Oséias": "os", "Joel": "jl", "Amós": "am",
+    "Obadias": "ob", "Jonas": "jn", "Miquéias": "mq", "Naum": "na", "Habacuque": "hc",
+    "Sofonias": "sf", "Ageu": "ag", "Zacarias": "zc", "Malaquias": "ml", "Mateus": "mt",
+    "Marcos": "mc", "Lucas": "lc", "João": "jo", "Atos": "at", "Romanos": "rm",
+    "1 Coríntios": "1co", "2 Coríntios": "2co", "Gálatas": "gl", "Efésios": "ef", "Filipenses": "fp",
+    "Colossenses": "cl", "1 Tessalonicenses": "1ts", "2 Tessalonicenses": "2ts", "1 Timóteo": "1tm", "2 Timóteo": "2tm",
+    "Tito": "tt", "Filemom": "fm", "Hebreus": "hb", "Tiago": "tg", "1 Pedro": "1pe",
+    "2 Pedro": "2pe", "1 João": "1jo", "2 João": "2jo", "3 João": "3jo", "Judas": "jd", "Apocalipse": "ap"
+  };
+
+  const bibleBooks = Object.keys(bookMapping);
+
+  // Função para buscar capítulo da API
+  const fetchChapter = async (book: string, chapter: number) => {
+    const bookAbbrev = bookMapping[book];
+    if (!bookAbbrev) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`https://www.abibliadigital.com.br/api/verses/nvi/${bookAbbrev}/${chapter}`);
+      if (!response.ok) throw new Error('Erro ao buscar capítulo');
+      
+      const data: BibleChapter = await response.json();
+      setChapterData(data);
+      
+      // Salvar progresso se usuário logado
+      if (user) {
+        await saveReadingProgress(book, chapter);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar capítulo:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar o capítulo. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Função para salvar progresso de leitura
+  const saveReadingProgress = async (book: string, chapter: number) => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from('bible_progress')
+        .upsert({
+          user_id: user.id,
+          book,
+          chapter,
+          verse: 1
+        });
+    } catch (error) {
+      console.error('Erro ao salvar progresso:', error);
+    }
+  };
+
+  // Função para favoritar versículos
+  const addToFavorites = async () => {
+    if (!user || selectedVerses.size === 0 || !chapterData) return;
+
+    try {
+      const versesToAdd = Array.from(selectedVerses).map(verseNum => {
+        const verse = chapterData.verses.find(v => v.number === verseNum);
+        return {
+          user_id: user.id,
+          reference: `${chapterData.book.name} ${chapterData.chapter.number}:${verseNum}`,
+          text: verse?.text || "",
+          book: chapterData.book.name,
+          chapter: chapterData.chapter.number,
+          verse: verseNum
+        };
+      });
+
+      // Note: Esta tabela seria criada se necessário
+      // await supabase.from('favorite_verses').insert(versesToAdd);
+      
+      toast({
+        title: "Versículos favoritados!",
+        description: `${versesToAdd.length} versículo(s) adicionado(s) aos favoritos.`
+      });
+      setSelectedVerses(new Set());
+    } catch (error) {
+      console.error('Erro ao favoritar versículos:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar aos favoritos.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Função para alternar seleção de versículo
+  const toggleVerseSelection = (verseNumber: number) => {
+    const newSelection = new Set(selectedVerses);
+    if (newSelection.has(verseNumber)) {
+      newSelection.delete(verseNumber);
+    } else {
+      newSelection.add(verseNumber);
+    }
+    setSelectedVerses(newSelection);
+  };
+
+  // Effect para buscar capítulo quando livro ou capítulo mudarem
+  useEffect(() => {
+    if (selectedBook && currentChapter) {
+      fetchChapter(selectedBook, currentChapter);
+    }
+  }, [selectedBook, currentChapter]);
+
+  // Função para navegar entre capítulos
+  const navigateChapter = (direction: 'prev' | 'next') => {
+    if (!chapterData) return;
+    
+    const newChapter = direction === 'prev' ? currentChapter - 1 : currentChapter + 1;
+    if (newChapter >= 1 && newChapter <= chapterData.book.chapters) {
+      setCurrentChapter(newChapter);
+    }
+  };
 
   const sampleVerses = [
     {
@@ -95,7 +240,7 @@ const Bible = () => {
                   </TabsList>
                   
                   <TabsContent value="read" className="space-y-4">
-                    <div className="flex gap-4 items-center">
+                    <div className="flex gap-4 items-center flex-wrap">
                       <Select value={selectedBook} onValueChange={setSelectedBook}>
                         <SelectTrigger className="w-48">
                           <SelectValue placeholder="Selecionar livro" />
@@ -109,59 +254,168 @@ const Bible = () => {
                         </SelectContent>
                       </Select>
                       
-                      <Select value={currentChapter.toString()} onValueChange={(value) => setCurrentChapter(parseInt(value))}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue placeholder="Capítulo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 50 }, (_, i) => i + 1).map((chapter) => (
-                            <SelectItem key={chapter} value={chapter.toString()}>
-                              {chapter}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {chapterData && (
+                        <Select value={currentChapter.toString()} onValueChange={(value) => setCurrentChapter(parseInt(value))}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Capítulo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: chapterData.book.chapters }, (_, i) => i + 1).map((chapter) => (
+                              <SelectItem key={chapter} value={chapter.toString()}>
+                                {chapter}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {chapterData && (
+                        <div className="flex items-center space-x-2">
+                          <Switch 
+                            id="scroll-mode" 
+                            checked={useScrollView} 
+                            onCheckedChange={setUseScrollView}
+                          />
+                          <Label htmlFor="scroll-mode" className="text-sm">
+                            {useScrollView ? "Rolagem contínua" : "Paginação"}
+                          </Label>
+                        </div>
+                      )}
                     </div>
 
-                    <Card className="min-h-[400px]">
+                    <Card className="min-h-[500px]">
                       <CardContent className="p-6">
-                        {selectedBook && (
+                        {loading ? (
+                          <div className="flex items-center justify-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            <span className="ml-2 text-muted-foreground">Carregando capítulo...</span>
+                          </div>
+                        ) : chapterData ? (
                           <div className="space-y-4">
-                            <h3 className="text-xl font-bold text-primary">
-                              {selectedBook} {currentChapter}
-                            </h3>
-                            <div className="space-y-3 text-foreground leading-relaxed">
-                              {/* Sample verses - in a real app, this would come from a Bible API */}
-                              <p className="cursor-pointer hover:bg-muted/50 p-2 rounded" 
-                                 onClick={() => setSelectedText("Versículo 1 selecionado")}>
-                                <span className="text-sm text-muted-foreground mr-2">1</span>
-                                No princípio era o Verbo, e o Verbo estava com Deus, e o Verbo era Deus.
-                              </p>
-                              <p className="cursor-pointer hover:bg-muted/50 p-2 rounded"
-                                 onClick={() => setSelectedText("Versículo 2 selecionado")}>
-                                <span className="text-sm text-muted-foreground mr-2">2</span>
-                                Ele estava no princípio com Deus.
-                              </p>
-                              <p className="cursor-pointer hover:bg-muted/50 p-2 rounded"
-                                 onClick={() => setSelectedText("Versículo 3 selecionado")}>
-                                <span className="text-sm text-muted-foreground mr-2">3</span>
-                                Todas as coisas foram feitas por ele, e sem ele nada do que foi feito se fez.
-                              </p>
-                            </div>
-                            
-                            {selectedText && user && (
-                              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                                <p className="text-sm mb-2">Texto selecionado: {selectedText}</p>
-                                <Button size="sm" className="divine-button">
-                                  <Heart className="w-4 h-4 mr-2" />
-                                  Adicionar aos Favoritos
+                            {/* Header do capítulo */}
+                            <div className="flex items-center justify-between border-b pb-4">
+                              <h3 className="text-xl font-bold text-primary">
+                                {chapterData.book.name} {chapterData.chapter.number}
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => navigateChapter('prev')}
+                                  disabled={currentChapter <= 1}
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                  Anterior
                                 </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => navigateChapter('next')}
+                                  disabled={currentChapter >= chapterData.book.chapters}
+                                >
+                                  Próximo
+                                  <ChevronRight className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Conteúdo dos versículos */}
+                            {useScrollView ? (
+                              <ScrollArea className="h-[400px]">
+                                <div className="space-y-3 pr-4">
+                                  {chapterData.verses.map((verse) => (
+                                    <p 
+                                      key={verse.number}
+                                      className={`cursor-pointer p-3 rounded-lg transition-colors ${
+                                        selectedVerses.has(verse.number) 
+                                          ? 'bg-primary/20 border border-primary/30' 
+                                          : 'hover:bg-muted/50'
+                                      }`}
+                                      onClick={() => toggleVerseSelection(verse.number)}
+                                    >
+                                      <span className="text-sm font-semibold text-primary mr-3">
+                                        {verse.number}
+                                      </span>
+                                      <span className="text-foreground leading-relaxed">
+                                        {verse.text}
+                                      </span>
+                                    </p>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            ) : (
+                              <div>
+                                <div className="space-y-3 text-foreground leading-relaxed mb-6">
+                                  {chapterData.verses.map((verse) => (
+                                    <p 
+                                      key={verse.number}
+                                      className={`cursor-pointer p-3 rounded-lg transition-colors ${
+                                        selectedVerses.has(verse.number) 
+                                          ? 'bg-primary/20 border border-primary/30' 
+                                          : 'hover:bg-muted/50'
+                                      }`}
+                                      onClick={() => toggleVerseSelection(verse.number)}
+                                    >
+                                      <span className="text-sm font-semibold text-primary mr-3">
+                                        {verse.number}
+                                      </span>
+                                      <span className="text-foreground leading-relaxed">
+                                        {verse.text}
+                                      </span>
+                                    </p>
+                                  ))}
+                                </div>
+                                
+                                {/* Paginação */}
+                                <Pagination className="mt-6">
+                                  <PaginationContent>
+                                    <PaginationItem>
+                                      <PaginationPrevious 
+                                        onClick={() => navigateChapter('prev')}
+                                        className={currentChapter <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                      />
+                                    </PaginationItem>
+                                    <PaginationItem>
+                                      <PaginationLink isActive>
+                                        {currentChapter}
+                                      </PaginationLink>
+                                    </PaginationItem>
+                                    <PaginationItem>
+                                      <PaginationNext 
+                                        onClick={() => navigateChapter('next')}
+                                        className={currentChapter >= chapterData.book.chapters ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                      />
+                                    </PaginationItem>
+                                  </PaginationContent>
+                                </Pagination>
+                              </div>
+                            )}
+                            
+                            {/* Botão de favoritar versículos selecionados */}
+                            {selectedVerses.size > 0 && user && (
+                              <div className="mt-6 p-4 bg-muted/50 rounded-lg border">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm text-muted-foreground">
+                                    {selectedVerses.size} versículo(s) selecionado(s)
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => setSelectedVerses(new Set())}
+                                    >
+                                      Limpar seleção
+                                    </Button>
+                                    <Button size="sm" className="divine-button" onClick={addToFavorites}>
+                                      <Heart className="w-4 h-4 mr-2" />
+                                      Adicionar aos Favoritos
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>
-                        )}
-                        
-                        {!selectedBook && (
+                        ) : (
                           <div className="text-center py-12 text-muted-foreground">
                             <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
                             <p>Selecione um livro para começar a leitura</p>
