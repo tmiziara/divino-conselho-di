@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, Heart, BookOpen, Brain, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Heart, BookOpen, Brain, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import BibleSidebar from "@/components/BibleSidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,15 +20,20 @@ interface BibleVerse {
   text: string;
 }
 
-interface BibleChapter {
-  book: {
-    abbrev: { pt: string; en: string };
-    name: string;
-    author: string;
-    chapters: number;
-    group: string;
-    version: string;
+interface BibleBook {
+  abbrev: {
+    pt: string;
+    en: string;
   };
+  author: string;
+  chapters: number;
+  group: string;
+  name: string;
+  testament: string;
+}
+
+interface BibleChapter {
+  book: BibleBook;
   chapter: {
     number: number;
     verses: number;
@@ -43,142 +48,95 @@ const Bible = () => {
   const [selectedBook, setSelectedBook] = useState("");
   const [aiSearchTerm, setAiSearchTerm] = useState("");
   const [currentChapter, setCurrentChapter] = useState(1);
-  const [selectedText, setSelectedText] = useState("");
   const [chapterData, setChapterData] = useState<BibleChapter | null>(null);
   const [loading, setLoading] = useState(false);
   const [useScrollView, setUseScrollView] = useState(true);
   const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
+  const [availableBooks, setAvailableBooks] = useState<BibleBook[]>([]);
+  const [booksLoading, setBooksLoading] = useState(true);
 
-  // Função para extrair versículos do texto da API
-  const parseVerses = (text: string): BibleVerse[] => {
-    if (!text) return [];
+  // Função para fazer requisições autenticadas à API
+  const makeAuthenticatedRequest = async (url: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
     
-    const verses: BibleVerse[] = [];
-    
-    // O texto vem como um parágrafo contínuo, vamos quebrar por sentenças
-    // e criar versículos numerados
-    const sentences = text.split(/\.\s+/).filter(sentence => sentence.trim().length > 0);
-    
-    sentences.forEach((sentence, index) => {
-      if (sentence.trim()) {
-        verses.push({
-          number: index + 1,
-          text: sentence.trim() + (sentence.endsWith('.') ? '' : '.')
-        });
-      }
+    const response = await supabase.functions.invoke('bible-proxy', {
+      body: { url },
+      headers: {
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
     });
-    
-    return verses;
+
+    if (response.error) {
+      throw new Error(`Erro na requisição: ${response.error.message}`);
+    }
+
+    return response.data;
   };
 
-  // Mapeamento dos nomes em português para abreviações da API bible-api.com (apenas livros verificados e funcionais)
-  const bookMapping: { [key: string]: string } = {
-    "Gênesis": "genesis", 
-    "Êxodo": "exodus", 
-    "Levítico": "leviticus", 
-    "Números": "numbers", 
-    "Deuteronômio": "deuteronomy",
-    "Josué": "joshua", 
-    "Juízes": "judges", 
-    "Rute": "ruth", 
-    "Neemias": "nehemiah", 
-    "Ester": "esther", 
-    "Jó": "job", 
-    "Salmos": "psalms", 
-    "Provérbios": "proverbs",
-    "Eclesiastes": "ecclesiastes", 
-    "Cantares": "song", 
-    "Isaías": "isaiah", 
-    "Jeremias": "jeremiah", 
-    "Lamentações": "lamentations",
-    "Ezequiel": "ezekiel", 
-    "Daniel": "daniel", 
-    "Oséias": "hosea", 
-    "Joel": "joel", 
-    "Amós": "amos",
-    "Obadias": "obadiah", 
-    "Jonas": "jonah", 
-    "Miquéias": "micah", 
-    "Naum": "nahum", 
-    "Habacuque": "habakkuk",
-    "Sofonias": "zephaniah", 
-    "Ageu": "haggai", 
-    "Zacarias": "zechariah", 
-    "Malaquias": "malachi", 
-    "Mateus": "matthew",
-    "Marcos": "mark", 
-    "Lucas": "luke", 
-    "João": "john", 
-    "Atos": "acts", 
-    "Romanos": "romans",
-    "1 Coríntios": "1corinthians", 
-    "2 Coríntios": "2corinthians", 
-    "Gálatas": "galatians", 
-    "Efésios": "ephesians", 
-    "Filipenses": "philippians",
-    "Colossenses": "colossians", 
-    "1 Tessalonicenses": "1thessalonians", 
-    "2 Tessalonicenses": "2thessalonians", 
-    "1 Timóteo": "1timothy", 
-    "2 Timóteo": "2timothy",
-    "Tito": "titus", 
-    "Filemom": "philemon", 
-    "Hebreus": "hebrews", 
-    "Tiago": "james", 
-    "1 Pedro": "1peter",
-    "2 Pedro": "2peter", 
-    "1 João": "1john", 
-    "2 João": "2john", 
-    "3 João": "3john", 
-    "Apocalipse": "revelation"
+  // Função para carregar todos os livros disponíveis
+  const loadAvailableBooks = async () => {
+    setBooksLoading(true);
+    try {
+      const data = await makeAuthenticatedRequest('https://bibliaapi.com/api/books');
+      if (data && Array.isArray(data)) {
+        // Filtrar apenas livros em português
+        const portugueseBooks = data.filter((book: any) => 
+          book.abbrev && book.abbrev.pt && book.name
+        );
+        setAvailableBooks(portugueseBooks);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar livros:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar a lista de livros. Verifique sua conexão e token de API.",
+        variant: "destructive"
+      });
+    } finally {
+      setBooksLoading(false);
+    }
   };
 
-  const bibleBooks = Object.keys(bookMapping);
-
-  // Função para buscar capítulo da API
-  const fetchChapter = async (book: string, chapter: number) => {
-    const bookAbbrev = bookMapping[book];
+  // Função para buscar capítulo da nova API
+  const fetchChapter = async (bookAbbrev: string, chapter: number) => {
     if (!bookAbbrev) return;
 
     setLoading(true);
     try {
-      // Usando bible-api.com que retorna versículos estruturados
-      const response = await fetch(`https://bible-api.com/${bookAbbrev}+${chapter}?translation=almeida`);
-      if (!response.ok) throw new Error('Erro ao buscar capítulo');
-      
-      const data = await response.json();
-      
-      // Transformar dados da API para o formato esperado
-      const transformedData: BibleChapter = {
-        book: {
-          abbrev: { pt: bookAbbrev, en: bookAbbrev },
-          name: book,
-          author: "",
-          chapters: 150, // Valor padrão, seria ideal ter isso da API
-          group: "",
-          version: "Almeida"
-        },
-        chapter: {
-          number: chapter,
-          verses: data.verses ? data.verses.length : 0
-        },
-        verses: data.verses ? data.verses.map((verse: any) => ({
-          number: verse.verse,
-          text: verse.text
-        })) : []
-      };
-      
-      setChapterData(transformedData);
-      
-      // Salvar progresso se usuário logado
-      if (user) {
-        await saveReadingProgress(book, chapter);
+      const url = `https://bibliaapi.com/api/verses/nvi/${bookAbbrev}/${chapter}`;
+      const data = await makeAuthenticatedRequest(url);
+
+      if (data && data.verses) {
+        const book = availableBooks.find(b => b.abbrev.pt === bookAbbrev);
+        
+        if (!book) {
+          throw new Error('Livro não encontrado');
+        }
+
+        const transformedData: BibleChapter = {
+          book: book,
+          chapter: {
+            number: chapter,
+            verses: data.verses.length
+          },
+          verses: data.verses.map((verse: any) => ({
+            number: verse.number,
+            text: verse.text
+          }))
+        };
+
+        setChapterData(transformedData);
+
+        // Salvar progresso se usuário logado
+        if (user) {
+          await saveReadingProgress(book.name, chapter);
+        }
       }
     } catch (error) {
       console.error('Erro ao buscar capítulo:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar o capítulo. Tente novamente.",
+        description: "Não foi possível carregar o capítulo. Verifique sua conexão e token de API.",
         variant: "destructive"
       });
     } finally {
@@ -281,8 +239,9 @@ const Bible = () => {
     setSelectedVerses(newSelection);
   };
 
-  // Effect para carregar progresso ao montar o componente
+  // Effect para carregar livros e progresso ao montar o componente
   useEffect(() => {
+    loadAvailableBooks();
     if (user) {
       loadReadingProgress();
     }
@@ -290,10 +249,13 @@ const Bible = () => {
 
   // Effect para buscar capítulo quando livro ou capítulo mudarem
   useEffect(() => {
-    if (selectedBook && currentChapter) {
-      fetchChapter(selectedBook, currentChapter);
+    if (selectedBook && currentChapter && availableBooks.length > 0) {
+      const book = availableBooks.find(b => b.name === selectedBook);
+      if (book) {
+        fetchChapter(book.abbrev.pt, currentChapter);
+      }
     }
-  }, [selectedBook, currentChapter]);
+  }, [selectedBook, currentChapter, availableBooks]);
 
   // Função para navegar entre capítulos
   const navigateChapter = (direction: 'prev' | 'next') => {
@@ -304,30 +266,6 @@ const Bible = () => {
       setCurrentChapter(newChapter);
     }
   };
-
-  const sampleVerses = [
-    {
-      reference: "João 3:16",
-      text: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.",
-      book: "João",
-      chapter: 3,
-      verse: 16
-    },
-    {
-      reference: "Salmos 23:1",
-      text: "O Senhor é o meu pastor, nada me faltará.",
-      book: "Salmos",
-      chapter: 23,
-      verse: 1
-    },
-    {
-      reference: "Filipenses 4:13",
-      text: "Posso todas as coisas naquele que me fortalece.",
-      book: "Filipenses",
-      chapter: 4,
-      verse: 13
-    }
-  ];
 
   return (
     <div className="min-h-screen celestial-bg">
@@ -368,14 +306,14 @@ const Bible = () => {
                   
                   <TabsContent value="read" className="space-y-4">
                     <div className="flex gap-4 items-center flex-wrap">
-                      <Select value={selectedBook} onValueChange={setSelectedBook}>
+                      <Select value={selectedBook} onValueChange={setSelectedBook} disabled={booksLoading}>
                         <SelectTrigger className="w-48">
-                          <SelectValue placeholder="Selecionar livro" />
+                          <SelectValue placeholder={booksLoading ? "Carregando livros..." : "Selecionar livro"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {bibleBooks.map((book) => (
-                            <SelectItem key={book} value={book}>
-                              {book}
+                          {availableBooks.map((book) => (
+                            <SelectItem key={book.abbrev.pt} value={book.name}>
+                              {book.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -412,7 +350,12 @@ const Bible = () => {
 
                     <Card className="min-h-[500px]">
                       <CardContent className="p-6">
-                        {loading ? (
+                        {booksLoading ? (
+                          <div className="flex items-center justify-center py-12">
+                            <Loader2 className="h-8 w-8 animate-spin mr-2" />
+                            <span className="text-muted-foreground">Carregando livros da Bíblia...</span>
+                          </div>
+                        ) : loading ? (
                           <div className="flex items-center justify-center py-12">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                             <span className="ml-2 text-muted-foreground">Carregando capítulo...</span>
@@ -545,7 +488,12 @@ const Bible = () => {
                         ) : (
                           <div className="text-center py-12 text-muted-foreground">
                             <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                            <p>Selecione um livro para começar a leitura</p>
+                            <p>
+                              {availableBooks.length === 0 
+                                ? "Configure sua chave de API da BibliaAPI.com para acessar todos os livros da Bíblia" 
+                                : "Selecione um livro para começar a leitura"
+                              }
+                            </p>
                           </div>
                         )}
                       </CardContent>
