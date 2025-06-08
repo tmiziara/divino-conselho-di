@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Heart, Mail, Lock, User, Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthDialogProps {
   open: boolean;
@@ -16,11 +18,58 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implementar autenticação com Supabase
-    console.log("Auth attempt:", { email, password, name, isLogin });
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Bem-vindo de volta!",
+          description: "Login realizado com sucesso.",
+        });
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              display_name: name,
+            },
+          },
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Verifique seu email para confirmar a conta.",
+        });
+      }
+      
+      onOpenChange(false);
+      setEmail("");
+      setPassword("");
+      setName("");
+    } catch (error: any) {
+      toast({
+        title: isLogin ? "Erro no login" : "Erro ao criar conta",
+        description: error.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -95,8 +144,8 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full divine-button">
-            {isLogin ? "Entrar" : "Criar conta"}
+          <Button type="submit" className="w-full divine-button" disabled={isLoading}>
+            {isLoading ? (isLogin ? "Entrando..." : "Criando conta...") : (isLogin ? "Entrar" : "Criar conta")}
           </Button>
         </form>
 

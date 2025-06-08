@@ -9,7 +9,135 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          response: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          response?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          response?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_devotionals: {
+        Row: {
+          content: string
+          created_at: string
+          date: string
+          id: string
+          title: string
+          verse_reference: string | null
+          verse_text: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          date: string
+          id?: string
+          title: string
+          verse_reference?: string | null
+          verse_text?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          date?: string
+          id?: string
+          title?: string
+          verse_reference?: string | null
+          verse_text?: string | null
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          book: string | null
+          chapter: number | null
+          content: string
+          created_at: string
+          id: string
+          reference: string | null
+          title: string
+          type: string
+          user_id: string
+          verse: number | null
+        }
+        Insert: {
+          book?: string | null
+          chapter?: number | null
+          content: string
+          created_at?: string
+          id?: string
+          reference?: string | null
+          title: string
+          type: string
+          user_id: string
+          verse?: number | null
+        }
+        Update: {
+          book?: string | null
+          chapter?: number | null
+          content?: string
+          created_at?: string
+          id?: string
+          reference?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+          verse?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          subscription_expires_at: string | null
+          subscription_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          subscription_expires_at?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          subscription_expires_at?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

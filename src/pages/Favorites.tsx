@@ -1,0 +1,195 @@
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Heart, BookOpen, MessageCircle, Trash2 } from "lucide-react";
+import Navigation from "@/components/Navigation";
+import { useAuth } from "@/hooks/useAuth";
+
+interface Favorite {
+  id: string;
+  type: "verse" | "psalm" | "message";
+  title: string;
+  content: string;
+  reference?: string;
+  createdAt: Date;
+}
+
+const Favorites = () => {
+  const { user } = useAuth();
+  const [favorites] = useState<Favorite[]>([
+    {
+      id: "1",
+      type: "verse",
+      title: "João 3:16",
+      content: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.",
+      reference: "João 3:16",
+      createdAt: new Date()
+    },
+    {
+      id: "2",
+      type: "psalm",
+      title: "Salmo 23",
+      content: "O Senhor é o meu pastor, nada me faltará. Deitar-me faz em verdes pastos, guia-me mansamente a águas tranquilas.",
+      reference: "Salmos 23:1-2",
+      createdAt: new Date()
+    },
+    {
+      id: "3",
+      type: "message",
+      title: "Mensagem de Encorajamento",
+      content: "Que Deus te abençoe abundantemente. Lembre-se de que Ele tem planos grandiosos para sua vida.",
+      createdAt: new Date()
+    }
+  ]);
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "verse":
+        return <BookOpen className="w-4 h-4" />;
+      case "psalm":
+        return <Heart className="w-4 h-4" />;
+      case "message":
+        return <MessageCircle className="w-4 h-4" />;
+      default:
+        return <Heart className="w-4 h-4" />;
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "verse":
+        return "Versículo";
+      case "psalm":
+        return "Salmo";
+      case "message":
+        return "Mensagem";
+      default:
+        return "Favorito";
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "verse":
+        return "bg-primary/10 text-primary";
+      case "psalm":
+        return "bg-accent/10 text-accent";
+      case "message":
+        return "bg-secondary/10 text-secondary-foreground";
+      default:
+        return "bg-muted";
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen celestial-bg">
+        <Navigation onAuthClick={() => {}} />
+        <div className="container mx-auto px-6 py-20">
+          <Card className="spiritual-card max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-center heavenly-text">
+                <Heart className="w-8 h-8 mx-auto mb-2" />
+                Seus Favoritos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-muted-foreground mb-4">
+                Faça login para salvar e visualizar seus versículos e mensagens favoritas
+              </p>
+              <Button className="divine-button">
+                Fazer Login
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen celestial-bg">
+      <Navigation onAuthClick={() => {}} />
+      
+      <div className="container mx-auto px-6 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold heavenly-text mb-4">
+            <Heart className="w-10 h-10 inline-block mr-3" />
+            Seus Favoritos
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Versículos, salmos e mensagens que tocaram seu coração
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto">
+          {favorites.length === 0 ? (
+            <Card className="spiritual-card">
+              <CardContent className="py-12 text-center">
+                <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">Nenhum favorito ainda</h3>
+                <p className="text-muted-foreground mb-6">
+                  Comece explorando a Bíblia e o canal de conversa para salvar conteúdos que te inspiram
+                </p>
+                <div className="flex gap-4 justify-center">
+                  <Button className="divine-button">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    Explorar Bíblia
+                  </Button>
+                  <Button variant="outline">
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Ir para Chat
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6">
+              {favorites.map((favorite) => (
+                <Card key={favorite.id} className="spiritual-card">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          {getTypeIcon(favorite.type)}
+                          {favorite.title}
+                        </CardTitle>
+                        {favorite.reference && (
+                          <CardDescription className="text-primary font-medium">
+                            {favorite.reference}
+                          </CardDescription>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={getTypeColor(favorite.type)}>
+                          {getTypeLabel(favorite.type)}
+                        </Badge>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-lg leading-relaxed mb-4">
+                      {favorite.content}
+                    </p>
+                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                      <span>Salvo em {favorite.createdAt.toLocaleDateString()}</span>
+                      <Button variant="ghost" size="sm">
+                        Configurar como wallpaper
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Favorites;
