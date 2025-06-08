@@ -1,47 +1,93 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, BookOpen, MessageCircle, Trash2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Favorite {
   id: string;
-  type: "verse" | "psalm" | "message";
+  type: string;
   title: string;
   content: string;
   reference?: string;
-  createdAt: Date;
+  created_at: string;
+  book?: string;
+  chapter?: number;
+  verse?: number;
 }
 
 const Favorites = () => {
   const { user } = useAuth();
-  const [favorites] = useState<Favorite[]>([
-    {
-      id: "1",
-      type: "verse",
-      title: "João 3:16",
-      content: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.",
-      reference: "João 3:16",
-      createdAt: new Date()
-    },
-    {
-      id: "2",
-      type: "psalm",
-      title: "Salmo 23",
-      content: "O Senhor é o meu pastor, nada me faltará. Deitar-me faz em verdes pastos, guia-me mansamente a águas tranquilas.",
-      reference: "Salmos 23:1-2",
-      createdAt: new Date()
-    },
-    {
-      id: "3",
-      type: "message",
-      title: "Mensagem de Encorajamento",
-      content: "Que Deus te abençoe abundantemente. Lembre-se de que Ele tem planos grandiosos para sua vida.",
-      createdAt: new Date()
+  const { toast } = useToast();
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Função para carregar favoritos do banco de dados
+  const loadFavorites = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  ]);
+
+    try {
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setFavorites(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar favoritos:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar seus favoritos.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Função para deletar favorito
+  const deleteFavorite = async (favoriteId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('id', favoriteId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setFavorites(prev => prev.filter(fav => fav.id !== favoriteId));
+      
+      toast({
+        title: "Favorito removido",
+        description: "O item foi removido dos seus favoritos."
+      });
+    } catch (error) {
+      console.error('Erro ao deletar favorito:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o favorito.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Effect para carregar favoritos quando o usuário está logado
+  useEffect(() => {
+    loadFavorites();
+  }, [user]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -124,7 +170,14 @@ const Favorites = () => {
         </div>
 
         <div className="max-w-4xl mx-auto">
-          {favorites.length === 0 ? (
+          {loading ? (
+            <Card className="spiritual-card">
+              <CardContent className="py-12 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Carregando seus favoritos...</p>
+              </CardContent>
+            </Card>
+          ) : favorites.length === 0 ? (
             <Card className="spiritual-card">
               <CardContent className="py-12 text-center">
                 <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -165,7 +218,12 @@ const Favorites = () => {
                         <Badge className={getTypeColor(favorite.type)}>
                           {getTypeLabel(favorite.type)}
                         </Badge>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => deleteFavorite(favorite.id)}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -176,7 +234,7 @@ const Favorites = () => {
                       {favorite.content}
                     </p>
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
-                      <span>Salvo em {favorite.createdAt.toLocaleDateString()}</span>
+                      <span>Salvo em {new Date(favorite.created_at).toLocaleDateString()}</span>
                       <Button variant="ghost" size="sm">
                         Configurar como wallpaper
                       </Button>

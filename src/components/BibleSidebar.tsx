@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, Calendar, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DailyVerse {
   reference: string;
@@ -64,8 +65,22 @@ const BibleSidebar = () => {
   const handleFavorite = async (verse: DailyVerse) => {
     if (!user) return;
     
-    // TODO: Implementar salvamento de favoritos
-    console.log('Salvando favorito:', verse);
+    try {
+      const { error } = await supabase.from('favorites').insert({
+        user_id: user.id,
+        type: 'verse',
+        title: verse.reference,
+        content: verse.text,
+        reference: verse.reference
+      });
+
+      if (error) throw error;
+      
+      // Mostrar feedback visual (toast seria ideal aqui)
+      console.log('Versículo favoritado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao favoritar versículo:', error);
+    }
   };
 
   return (

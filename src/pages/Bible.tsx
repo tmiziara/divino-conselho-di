@@ -141,19 +141,47 @@ const Bible = () => {
     }
   };
 
+  // Função para carregar progresso de leitura
+  const loadReadingProgress = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('bible_progress')
+        .select('book, chapter')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data) {
+        setSelectedBook(data.book);
+        setCurrentChapter(data.chapter);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar progresso:', error);
+    }
+  };
+
   // Função para salvar progresso de leitura
   const saveReadingProgress = async (book: string, chapter: number) => {
     if (!user) return;
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('bible_progress')
         .upsert({
           user_id: user.id,
           book,
           chapter,
           verse: 1
+        }, {
+          onConflict: 'user_id,book'
         });
+
+      if (error) throw error;
     } catch (error) {
       console.error('Erro ao salvar progresso:', error);
     }
@@ -168,16 +196,19 @@ const Bible = () => {
         const verse = chapterData.verses.find(v => v.number === verseNum);
         return {
           user_id: user.id,
+          type: 'verse',
+          title: `${chapterData.book.name} ${chapterData.chapter.number}:${verseNum}`,
+          content: verse?.text || "",
           reference: `${chapterData.book.name} ${chapterData.chapter.number}:${verseNum}`,
-          text: verse?.text || "",
           book: chapterData.book.name,
           chapter: chapterData.chapter.number,
           verse: verseNum
         };
       });
 
-      // Note: Esta tabela seria criada se necessário
-      // await supabase.from('favorite_verses').insert(versesToAdd);
+      const { error } = await supabase.from('favorites').insert(versesToAdd);
+      
+      if (error) throw error;
       
       toast({
         title: "Versículos favoritados!",
@@ -204,6 +235,13 @@ const Bible = () => {
     }
     setSelectedVerses(newSelection);
   };
+
+  // Effect para carregar progresso ao montar o componente
+  useEffect(() => {
+    if (user) {
+      loadReadingProgress();
+    }
+  }, [user]);
 
   // Effect para buscar capítulo quando livro ou capítulo mudarem
   useEffect(() => {
