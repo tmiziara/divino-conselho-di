@@ -73,9 +73,8 @@ serve(async (req) => {
     }
 
     // Make the request to BibliaAPI
-    const bibliaResponse = await fetch(url, {
+    const bibliaResponse = await fetch(`${url}?token=${bibliaApiToken}`, {
       headers: {
-        'Authorization': `Bearer ${bibliaApiToken}`,
         'Content-Type': 'application/json'
       }
     })
