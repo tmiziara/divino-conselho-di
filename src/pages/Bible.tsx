@@ -71,7 +71,7 @@ const Bible = () => {
     return verses;
   };
 
-  // Mapeamento dos nomes em português para abreviações da API bible-api.com (apenas livros testados e funcionais)
+  // Mapeamento dos nomes em português para abreviações da API bible-api.com (apenas livros verificados e funcionais)
   const bookMapping: { [key: string]: string } = {
     "Gênesis": "genesis", 
     "Êxodo": "exodus", 
@@ -81,13 +81,6 @@ const Bible = () => {
     "Josué": "joshua", 
     "Juízes": "judges", 
     "Rute": "ruth", 
-    "1 Samuel": "1samuel", 
-    "2 Samuel": "2samuel",
-    "1 Reis": "1kings", 
-    "2 Reis": "2kings", 
-    "1 Crônicas": "1chronicles", 
-    "2 Crônicas": "2chronicles", 
-    "Esdras": "ezra",
     "Neemias": "nehemiah", 
     "Ester": "esther", 
     "Jó": "job", 
@@ -137,7 +130,6 @@ const Bible = () => {
     "1 João": "1john", 
     "2 João": "2john", 
     "3 João": "3john", 
-    "Judas": "jude", 
     "Apocalipse": "revelation"
   };
 
