@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export interface BibleVerse {
@@ -35,41 +34,33 @@ export const useBibleData = () => {
   const [chapterData, setChapterData] = useState<BibleChapter | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Função para fazer requisições autenticadas à API
-  const makeAuthenticatedRequest = async (url: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    const response = await supabase.functions.invoke('bible-proxy', {
-      body: { url },
-      headers: {
-        'Authorization': `Bearer ${session?.access_token}`,
-      },
-    });
-
-    if (response.error) {
-      throw new Error(`Erro na requisição: ${response.error.message}`);
+  // Função para carregar dados locais
+  const loadLocalData = async (path: string) => {
+    try {
+      const response = await fetch(path);
+      if (!response.ok) {
+        throw new Error(`Erro ao carregar ${path}: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Erro ao carregar arquivo ${path}:`, error);
+      throw error;
     }
-
-    return response.data;
   };
 
   // Função para carregar todos os livros disponíveis
   const loadAvailableBooks = async () => {
     setBooksLoading(true);
     try {
-      const data = await makeAuthenticatedRequest('https://bibliaapi.com/api/books/acf');
+      const data = await loadLocalData('/data/books.json');
       if (data && Array.isArray(data)) {
-        // Filtrar apenas livros em português
-        const portugueseBooks = data.filter((book: any) => 
-          book.abbrev && book.abbrev.pt && book.name
-        );
-        setAvailableBooks(portugueseBooks);
+        setAvailableBooks(data);
       }
     } catch (error) {
       console.error('Erro ao carregar livros:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar a lista de livros. Verifique sua conexão e token de API.",
+        description: "Não foi possível carregar a lista de livros.",
         variant: "destructive"
       });
     } finally {
@@ -77,41 +68,22 @@ export const useBibleData = () => {
     }
   };
 
-  // Função para buscar capítulo da nova API
+  // Função para buscar capítulo dos dados locais
   const fetchChapter = async (bookAbbrev: string, chapter: number) => {
     if (!bookAbbrev) return;
 
     setLoading(true);
     try {
-      const url = `https://bibliaapi.com/api/verses/acf/${bookAbbrev}/${chapter}`;
-      const data = await makeAuthenticatedRequest(url);
-
-      if (data && data.verses) {
-        const book = availableBooks.find(b => b.abbrev.pt === bookAbbrev);
-        
-        if (!book) {
-          throw new Error('Livro não encontrado');
-        }
-
-        const transformedData: BibleChapter = {
-          book: book,
-          chapter: {
-            number: chapter,
-            verses: data.verses.length
-          },
-          verses: data.verses.map((verse: any) => ({
-            number: verse.number,
-            text: verse.text
-          }))
-        };
-
-        setChapterData(transformedData);
+      const data = await loadLocalData(`/data/${bookAbbrev}/${chapter}.json`);
+      
+      if (data) {
+        setChapterData(data);
       }
     } catch (error) {
       console.error('Erro ao buscar capítulo:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível carregar o capítulo. Verifique sua conexão e token de API.",
+        title: "Capítulo não encontrado",
+        description: `O capítulo ${chapter} do livro ${bookAbbrev} ainda não está disponível.`,
         variant: "destructive"
       });
     } finally {
