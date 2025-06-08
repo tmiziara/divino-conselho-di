@@ -6,6 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, Heart } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -16,6 +18,7 @@ interface Message {
 
 const Chat = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -26,16 +29,6 @@ const Chat = () => {
   ]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const spiritualResponses = [
-    "Que Deus te abençoe abundantemente. Lembre-se de que Ele tem planos grandiosos para sua vida.",
-    "A Palavra nos ensina em Filipenses 4:13: 'Posso todas as coisas naquele que me fortalece.' Confie no Senhor.",
-    "Que a paz que excede todo entendimento guarde seu coração. Deus está sempre ao seu lado.",
-    "Como está escrito em Provérbios 3:5-6: 'Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento.'",
-    "O Senhor é teu pastor e nada te faltará. Ele te guiará pelos caminhos da justiça.",
-    "Que o Espírito Santo console seu coração e traga a direção que você busca.",
-    "Lembre-se de que em todas as coisas somos mais que vencedores por meio daquele que nos amou."
-  ];
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
@@ -48,21 +41,50 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentMessage = newMessage;
     setNewMessage("");
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const randomResponse = spiritualResponses[Math.floor(Math.random() * spiritualResponses.length)];
+    try {
+      // Call the spiritual chat edge function
+      const { data, error } = await supabase.functions.invoke('spiritual-chat', {
+        body: {
+          message: currentMessage,
+          userId: user.id
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: randomResponse,
+        text: data.response,
         isUser: false,
         timestamp: new Date()
       };
+
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Erro na conversa",
+        description: "Não foi possível receber uma resposta. Tente novamente.",
+        variant: "destructive"
+      });
+      
+      // Add fallback message
+      const fallbackMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "Peço perdão, meu filho/filha. Estou enfrentando dificuldades técnicas no momento. Que tal voltarmos a conversar em alguns instantes? Que Deus te abençoe!",
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, fallbackMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, BookOpen, MessageCircle, Crown, Star, Shield, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
+  const { user } = useAuth();
 
   const features = [
     {
@@ -63,20 +66,44 @@ const Index = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button 
-                onClick={() => setShowAuth(true)}
-                className="divine-button text-lg px-8 py-4"
-              >
-                <Star className="w-5 h-5 mr-2" />
-                Comece Sua Jornada
-              </Button>
-              <Button 
-                variant="outline" 
-                className="text-lg px-8 py-4 border-primary/20 hover:bg-primary/5"
-              >
-                <BookOpen className="w-5 h-5 mr-2" />
-                Explorar Bíblia
-              </Button>
+              {user ? (
+                <>
+                  <Link to="/biblia">
+                    <Button className="divine-button text-lg px-8 py-4">
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      Explorar Bíblia
+                    </Button>
+                  </Link>
+                  <Link to="/conversa">
+                    <Button 
+                      variant="outline" 
+                      className="text-lg px-8 py-4 border-primary/20 hover:bg-primary/5"
+                    >
+                      <MessageCircle className="w-5 h-5 mr-2" />
+                      Conversa Espiritual
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    onClick={() => setShowAuth(true)}
+                    className="divine-button text-lg px-8 py-4"
+                  >
+                    <Star className="w-5 h-5 mr-2" />
+                    Comece Sua Jornada
+                  </Button>
+                  <Link to="/biblia">
+                    <Button 
+                      variant="outline" 
+                      className="text-lg px-8 py-4 border-primary/20 hover:bg-primary/5"
+                    >
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      Explorar Bíblia
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Stats */}
@@ -129,24 +156,26 @@ const Index = () => {
       </div>
 
       {/* Call to Action */}
-      <div className="bg-primary/5 py-20">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-4 heavenly-text">
-            Comece Sua Jornada Espiritual Hoje
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Junte-se a milhares de fiéis que já transformaram suas vidas através 
-            da Palavra de Deus e da oração
-          </p>
-          <Button 
-            onClick={() => setShowAuth(true)}
-            className="divine-button text-lg px-8 py-4"
-          >
-            <Heart className="w-5 h-5 mr-2" />
-            Iniciar Gratuitamente
-          </Button>
+      {!user && (
+        <div className="bg-primary/5 py-20">
+          <div className="container mx-auto px-6 text-center">
+            <h2 className="text-4xl font-bold mb-4 heavenly-text">
+              Comece Sua Jornada Espiritual Hoje
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Junte-se a milhares de fiéis que já transformaram suas vidas através 
+              da Palavra de Deus e da oração
+            </p>
+            <Button 
+              onClick={() => setShowAuth(true)}
+              className="divine-button text-lg px-8 py-4"
+            >
+              <Heart className="w-5 h-5 mr-2" />
+              Iniciar Gratuitamente
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
     </div>
