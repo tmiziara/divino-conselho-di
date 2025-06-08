@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, Heart } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import ChatSidebar from "@/components/ChatSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -135,72 +136,80 @@ const Chat = () => {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          <Card className="spiritual-card h-[600px] flex flex-col">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-primary" />
-                Conversa Espiritual
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent className="flex-1 flex flex-col p-0">
-              <ScrollArea className="flex-1 p-6">
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-                    >
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar with Chat History */}
+          <div className="lg:col-span-1">
+            <ChatSidebar />
+          </div>
+
+          {/* Main Chat Area */}
+          <div className="lg:col-span-3">
+            <Card className="spiritual-card h-[600px] flex flex-col">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-primary" />
+                  Conversa Espiritual
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent className="flex-1 flex flex-col p-0">
+                <ScrollArea className="flex-1 p-6">
+                  <div className="space-y-4">
+                    {messages.map((message) => (
                       <div
-                        className={`max-w-[80%] p-4 rounded-lg ${
-                          message.isUser
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground'
-                        }`}
+                        key={message.id}
+                        className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                       >
-                        <p>{message.text}</p>
-                        <small className="opacity-70">
-                          {message.timestamp.toLocaleTimeString()}
-                        </small>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {isLoading && (
-                    <div className="flex justify-start">
-                      <div className="bg-muted text-muted-foreground p-4 rounded-lg">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
-                          <div className="w-2 h-2 bg-current rounded-full animate-pulse delay-75"></div>
-                          <div className="w-2 h-2 bg-current rounded-full animate-pulse delay-150"></div>
+                        <div
+                          className={`max-w-[80%] p-4 rounded-lg ${
+                            message.isUser
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          <p>{message.text}</p>
+                          <small className="opacity-70">
+                            {message.timestamp.toLocaleTimeString()}
+                          </small>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                    
+                    {isLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-muted text-muted-foreground p-4 rounded-lg">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
+                            <div className="w-2 h-2 bg-current rounded-full animate-pulse delay-75"></div>
+                            <div className="w-2 h-2 bg-current rounded-full animate-pulse delay-150"></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+                
+                <div className="p-6 border-t border-border">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Compartilhe o que está em seu coração..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={handleSendMessage} 
+                      disabled={!newMessage.trim() || isLoading}
+                      className="divine-button"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </ScrollArea>
-              
-              <div className="p-6 border-t border-border">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Compartilhe o que está em seu coração..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={handleSendMessage} 
-                    disabled={!newMessage.trim() || isLoading}
-                    className="divine-button"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

@@ -9,10 +9,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bible_progress: {
+        Row: {
+          book: string
+          chapter: number
+          id: string
+          updated_at: string
+          user_id: string
+          verse: number | null
+        }
+        Insert: {
+          book: string
+          chapter: number
+          id?: string
+          updated_at?: string
+          user_id: string
+          verse?: number | null
+        }
+        Update: {
+          book?: string
+          chapter?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+          verse?: number | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
           id: string
+          is_from_ai: boolean
           message: string
           response: string | null
           user_id: string
@@ -20,6 +48,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_from_ai?: boolean
           message: string
           response?: string | null
           user_id: string
@@ -27,6 +56,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_from_ai?: boolean
           message?: string
           response?: string | null
           user_id?: string
