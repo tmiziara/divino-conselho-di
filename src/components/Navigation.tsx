@@ -15,7 +15,6 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
 
   const navItems = [
     { name: "Início", path: "/" },
-    { name: "Bíblia", path: "/biblia" },
     { name: "Conversa", path: "/conversa" },
     { name: "Favoritos", path: "/favoritos" },
   ];
