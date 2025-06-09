@@ -69,7 +69,7 @@ const Chat = () => {
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <MessageCircle className="w-8 h-8 mx-auto mb-2" />
-                Canal de Conversa Espiritual
+                Conversa Espiritual
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
@@ -94,7 +94,7 @@ const Chat = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold heavenly-text mb-4">
             <MessageCircle className="w-10 h-10 inline-block mr-3" />
-            Canal de Conversa Espiritual
+            Conversa Espiritual
           </h1>
           <p className="text-xl text-muted-foreground">
             Um espaço sagrado para compartilhar sua fé e receber orientação
