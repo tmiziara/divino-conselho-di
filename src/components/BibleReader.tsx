@@ -216,11 +216,11 @@ const BibleReader = () => {
       <div className="space-y-4">
         {verses.map((verse) => (
           <Card key={`${verse.livro}-${verse.capitulo}-${verse.versiculo}`} className="p-4">
-            <div className="flex gap-4 items-start">
-              <span className="text-primary font-bold text-lg flex-shrink-0">
+            <div className="flex gap-2 items-start">
+              <span className="text-primary font-bold text-lg flex-shrink-0 w-8">
                 {verse.versiculo}
               </span>
-              <p className="text-foreground leading-relaxed flex-1">
+              <p className="text-foreground leading-relaxed flex-1 pr-2">
                 {verse.texto}
               </p>
               {user && (
@@ -228,7 +228,7 @@ const BibleReader = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => toggleFavorite(verse)}
-                  className="flex-shrink-0 h-6 w-6 md:h-10 md:w-10 p-0"
+                  className="flex-shrink-0 h-6 w-6 md:h-8 md:w-8 p-0 ml-auto"
                 >
                   {isVerseFavorite(verse) ? (
                     <Heart className="w-3 h-3 md:w-4 md:h-4 fill-red-500 text-red-500" />
