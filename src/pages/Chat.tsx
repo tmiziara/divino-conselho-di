@@ -104,8 +104,8 @@ const Chat = () => {
         <div className="max-w-4xl mx-auto">
           <Card className="spiritual-card min-h-[600px] flex flex-col">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-left">
-                <Heart className="w-5 h-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-left text-lg md:text-xl">
+                <Heart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 Conversa Espiritual
               </CardTitle>
             </CardHeader>
