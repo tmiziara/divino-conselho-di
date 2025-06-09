@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Bible from "./pages/Bible";
 import Chat from "./pages/Chat";
 import Favorites from "./pages/Favorites";
+import Success from "./pages/Success";
+import Cancel from "./pages/Cancel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/biblia" element={<Bible />} />
           <Route path="/conversa" element={<Chat />} />
           <Route path="/favoritos" element={<Favorites />} />
+          <Route path="/success" element={<Success />} />
+          <Route path="/cancel" element={<Cancel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

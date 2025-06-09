@@ -5,6 +5,7 @@ import { Heart, BookOpen, MessageCircle, Crown, Star, Shield, Sparkles } from "l
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
+import { SubscriptionPlans } from "@/components/SubscriptionPlans";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
@@ -153,6 +154,11 @@ const Index = () => {
             </Card>
           ))}
         </div>
+      </div>
+
+      {/* Subscription Plans Section */}
+      <div className="bg-gradient-to-b from-background to-primary/5 py-20">
+        <SubscriptionPlans />
       </div>
 
       {/* Call to Action */}
