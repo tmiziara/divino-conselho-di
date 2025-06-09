@@ -201,27 +201,27 @@ const Favorites = () => {
             <div className="grid gap-6">
               {favorites.map((favorite) => (
                 <Card key={favorite.id} className="spiritual-card">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-xl">
                           {getTypeIcon(favorite.type)}
-                          {favorite.title}
+                          <span className="truncate">{favorite.title}</span>
                         </CardTitle>
                         {favorite.reference && (
-                          <CardDescription className="text-primary font-medium">
+                          <CardDescription className="text-primary font-medium text-sm">
                             {favorite.reference}
                           </CardDescription>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getTypeColor(favorite.type)}>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Badge className={`${getTypeColor(favorite.type)} text-xs`}>
                           {getTypeLabel(favorite.type)}
                         </Badge>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
                           onClick={() => deleteFavorite(favorite.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -229,13 +229,13 @@ const Favorites = () => {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-lg leading-relaxed mb-4">
+                  <CardContent className="pt-0">
+                    <p className="text-base sm:text-lg leading-relaxed mb-4">
                       {favorite.content}
                     </p>
-                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-sm text-muted-foreground">
                       <span>Salvo em {new Date(favorite.created_at).toLocaleDateString()}</span>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="text-xs sm:text-sm w-fit">
                         Configurar como wallpaper
                       </Button>
                     </div>
