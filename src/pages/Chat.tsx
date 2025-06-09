@@ -5,43 +5,22 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, Heart } from "lucide-react";
 import Navigation from "@/components/Navigation";
-import ChatSidebar from "@/components/ChatSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
-
 const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Olá! Que a paz do Senhor esteja contigo. Como posso te ajudar em sua jornada espiritual hoje?",
-      isUser: false,
-      timestamp: new Date()
-    }
-  ]);
+  const [currentResponse, setCurrentResponse] = useState<string>(
+    "Olá! Que a paz do Senhor esteja contigo. Como posso te ajudar em sua jornada espiritual hoje?"
+  );
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: newMessage,
-      isUser: true,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
     const currentMessage = newMessage;
     setNewMessage("");
     setIsLoading(true);
@@ -59,14 +38,7 @@ const Chat = () => {
         throw error;
       }
 
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: data.response,
-        isUser: false,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
+      setCurrentResponse(data.response);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -75,14 +47,7 @@ const Chat = () => {
         variant: "destructive"
       });
       
-      // Add fallback message
-      const fallbackMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Peço perdão, meu filho/filha. Estou enfrentando dificuldades técnicas no momento. Que tal voltarmos a conversar em alguns instantes? Que Deus te abençoe!",
-        isUser: false,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, fallbackMessage]);
+      setCurrentResponse("Peço perdão, meu filho/filha. Estou enfrentando dificuldades técnicas no momento. Que tal voltarmos a conversar em alguns instantes? Que Deus te abençoe!");
     } finally {
       setIsLoading(false);
     }
@@ -136,46 +101,20 @@ const Chat = () => {
           </p>
         </div>
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar with Chat History */}
-          <div className="lg:col-span-1">
-            <ChatSidebar />
-          </div>
-
-          {/* Main Chat Area */}
-          <div className="lg:col-span-3">
-            <Card className="spiritual-card h-[600px] flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-primary" />
-                  Conversa Espiritual
-                </CardTitle>
-              </CardHeader>
-              
-              <CardContent className="flex-1 flex flex-col p-0">
-                <ScrollArea className="flex-1 p-6">
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-[80%] p-4 rounded-lg ${
-                            message.isUser
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          <p>{message.text}</p>
-                          <small className="opacity-70">
-                            {message.timestamp.toLocaleTimeString()}
-                          </small>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {isLoading && (
+        <div className="max-w-4xl mx-auto">
+          <Card className="spiritual-card min-h-[600px] flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-left">
+                <Heart className="w-5 h-5 text-primary" />
+                Conversa Espiritual
+              </CardTitle>
+            </CardHeader>
+            
+            <CardContent className="flex-1 flex flex-col p-0">
+              <div className="flex-1 bg-muted/20 min-h-[400px] relative">
+                <ScrollArea className="h-full w-full absolute inset-0">
+                  <div className="p-6">
+                    {isLoading ? (
                       <div className="flex justify-start">
                         <div className="bg-muted text-muted-foreground p-4 rounded-lg">
                           <div className="flex space-x-1">
@@ -185,31 +124,35 @@ const Chat = () => {
                           </div>
                         </div>
                       </div>
+                    ) : (
+                      <div className="bg-muted/50 text-foreground p-6 rounded-lg text-left leading-relaxed">
+                        <p className="whitespace-pre-wrap">{currentResponse}</p>
+                      </div>
                     )}
                   </div>
                 </ScrollArea>
-                
-                <div className="p-6 border-t border-border">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Compartilhe o que está em seu coração..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={handleSendMessage} 
-                      disabled={!newMessage.trim() || isLoading}
-                      className="divine-button"
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </div>
+              </div>
+              
+              <div className="p-6 border-t border-border bg-card">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Compartilhe o que está em seu coração..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="flex-1 text-left"
+                  />
+                  <Button 
+                    onClick={handleSendMessage} 
+                    disabled={!newMessage.trim() || isLoading}
+                    className="divine-button"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
