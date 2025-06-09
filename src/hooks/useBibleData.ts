@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mapeamento dos códigos dos livros para nomes completos (baseado nos códigos reais da base de dados)
+// Mapeamento dos códigos dos livros para nomes completos
 const NOMES_LIVROS: Record<string, string> = {
   "gn": "Gênesis",
   "ex": "Êxodo",
@@ -21,7 +21,7 @@ const NOMES_LIVROS: Record<string, string> = {
   "ed": "Esdras",
   "ne": "Neemias",
   "et": "Ester",
-  "jó": "Jó",
+  "job": "Jó",
   "sl": "Salmos",
   "pv": "Provérbios",
   "ec": "Eclesiastes",
@@ -47,7 +47,7 @@ const NOMES_LIVROS: Record<string, string> = {
   "mc": "Marcos",
   "lc": "Lucas",
   "jo": "João",
-  "atos": "Atos",
+  "at": "Atos",
   "rm": "Romanos",
   "1co": "1 Coríntios",
   "2co": "2 Coríntios",
@@ -75,9 +75,9 @@ const NOMES_LIVROS: Record<string, string> = {
 // Ordem bíblica dos livros para garantir ordenação correta
 const ORDEM_BIBLICA = [
   "gn", "ex", "lv", "nm", "dt", "js", "jz", "rt", "1sm", "2sm", "1rs", "2rs", 
-  "1cr", "2cr", "ed", "ne", "et", "jó", "sl", "pv", "ec", "ct", "is", "jr", 
+  "1cr", "2cr", "ed", "ne", "et", "job", "sl", "pv", "ec", "ct", "is", "jr", 
   "lm", "ez", "dn", "os", "jl", "am", "ob", "jn", "mq", "na", "hc", "sf", 
-  "ag", "zc", "ml", "mt", "mc", "lc", "jo", "atos", "rm", "1co", "2co", "gl", 
+  "ag", "zc", "ml", "mt", "mc", "lc", "jo", "at", "rm", "1co", "2co", "gl", 
   "ef", "fp", "cl", "1ts", "2ts", "1tm", "2tm", "tt", "fm", "hb", "tg", "1pe", 
   "2pe", "1jo", "2jo", "3jo", "jd", "ap"
 ];
@@ -113,8 +113,6 @@ export const useBibleData = () => {
   const loadAvailableBooks = async () => {
     setBooksLoading(true);
     try {
-      console.log('🔍 Iniciando carregamento de livros...');
-      
       const { data, error } = await supabase
         .from('versiculos')
         .select('livro')
@@ -123,37 +121,25 @@ export const useBibleData = () => {
       if (error) throw error;
 
       if (data) {
-        console.log('📚 Total de registros encontrados:', data.length);
-        
         // Obter livros únicos
         const uniqueBooks = Array.from(new Set(data.map(item => item.livro)));
-        console.log('📖 Livros únicos encontrados:', uniqueBooks.length, uniqueBooks);
         
-        // Processar cada livro individualmente para evitar falhas em cascata
+        // Processar cada livro individualmente
         const booksWithChapters = [];
         
         for (const bookCode of uniqueBooks) {
           try {
-            console.log(`📝 Processando livro: ${bookCode}`);
-            
             const { data: chaptersData, error: chaptersError } = await supabase
               .from('versiculos')
               .select('capitulo')
               .eq('livro', bookCode)
               .order('capitulo');
 
-            if (chaptersError) {
-              console.error(`❌ Erro ao carregar capítulos para ${bookCode}:`, chaptersError);
-              continue; // Pular este livro e continuar com os outros
-            }
-
-            if (!chaptersData || chaptersData.length === 0) {
-              console.warn(`⚠️ Nenhum capítulo encontrado para ${bookCode}`);
+            if (chaptersError || !chaptersData || chaptersData.length === 0) {
               continue;
             }
 
             const maxChapter = Math.max(...chaptersData.map(c => c.capitulo));
-            console.log(`✅ ${bookCode}: ${maxChapter} capítulos`);
             
             booksWithChapters.push({
               name: bookCode,
@@ -161,8 +147,8 @@ export const useBibleData = () => {
               chapters: maxChapter
             });
           } catch (bookError) {
-            console.error(`❌ Erro ao processar livro ${bookCode}:`, bookError);
             // Continuar com o próximo livro
+            continue;
           }
         }
 
@@ -172,14 +158,11 @@ export const useBibleData = () => {
           const indexB = ORDEM_BIBLICA.indexOf(b.name);
           return indexA - indexB;
         });
-
-        console.log('📚 Total de livros processados com sucesso:', sortedBooks.length);
-        console.log('📋 Livros finais:', sortedBooks.map(b => `${b.name} (${b.fullName})`));
         
         setAvailableBooks(sortedBooks);
       }
     } catch (error) {
-      console.error('❌ Erro crítico ao carregar livros:', error);
+      console.error('Erro ao carregar livros:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar a lista de livros.",

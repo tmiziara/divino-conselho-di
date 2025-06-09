@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import BibleSidebar from "@/components/BibleSidebar";
-import { BibleReader } from "@/components/BibleReader";
+import { SimpleBibleReader } from "@/components/SimpleBibleReader";
 import { BibleSearch } from "@/components/BibleSearch";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -49,7 +49,7 @@ const Bible = () => {
                   </TabsList>
                   
                   <TabsContent value="read" className="space-y-4">
-                    <BibleReader />
+                    <SimpleBibleReader />
                   </TabsContent>
                   
                   <TabsContent value="search" className="space-y-4">
