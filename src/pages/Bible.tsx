@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Bible = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState<'reader' | 'search' | 'favorites'>('reader');
+  const [activeTab, setActiveTab] = useState<'reader' | 'search'>('reader');
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
 
@@ -73,34 +73,12 @@ const Bible = () => {
               <Search className="w-4 h-4 mr-2" />
               Pesquisar
             </Button>
-            <Button
-              variant={activeTab === 'favorites' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('favorites')}
-              className="flex-1"
-              disabled={!user}
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              Favoritos
-            </Button>
           </div>
 
           {/* Content */}
           <div className="bg-card rounded-lg border p-6">
             {activeTab === 'reader' && <BibleReader />}
             {activeTab === 'search' && <BibleSearch searchQuery={searchQuery} />}
-            {activeTab === 'favorites' && user && <BibleFavorites />}
-            {activeTab === 'favorites' && !user && (
-              <div className="text-center py-12">
-                <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Faça login para ver seus favoritos</h3>
-                <p className="text-muted-foreground mb-4">
-                  Entre na sua conta para salvar e acessar seus versículos favoritos
-                </p>
-                <Button onClick={() => setShowAuthDialog(true)}>
-                  Fazer Login
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </div>
