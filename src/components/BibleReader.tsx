@@ -13,13 +13,13 @@ const BOOK_NAMES = {
   "gn": "Gênesis", "ex": "Êxodo", "lv": "Levítico", "nm": "Números", "dt": "Deuteronômio",
   "js": "Josué", "jz": "Juízes", "rt": "Rute", "1sm": "1 Samuel", "2sm": "2 Samuel",
   "1rs": "1 Reis", "2rs": "2 Reis", "1cr": "1 Crônicas", "2cr": "2 Crônicas",
-  "ed": "Esdras", "ne": "Neemias", "et": "Ester", "job": "Jó", "sl": "Salmos",
+  "ed": "Esdras", "ne": "Neemias", "et": "Ester", "jó": "Jó", "sl": "Salmos",
   "pv": "Provérbios", "ec": "Eclesiastes", "ct": "Cânticos", "is": "Isaías",
   "jr": "Jeremias", "lm": "Lamentações", "ez": "Ezequiel", "dn": "Daniel",
   "os": "Oseias", "jl": "Joel", "am": "Amós", "ob": "Obadias", "jn": "Jonas",
   "mq": "Miquéias", "na": "Naum", "hc": "Habacuque", "sf": "Sofonias",
   "ag": "Ageu", "zc": "Zacarias", "ml": "Malaquias", "mt": "Mateus",
-  "mc": "Marcos", "lc": "Lucas", "jo": "João", "at": "Atos", "rm": "Romanos",
+  "mc": "Marcos", "lc": "Lucas", "jo": "João", "atos": "Atos", "rm": "Romanos",
   "1co": "1 Coríntios", "2co": "2 Coríntios", "gl": "Gálatas", "ef": "Efésios",
   "fp": "Filipenses", "cl": "Colossenses", "1ts": "1 Tessalonicenses", "2ts": "2 Tessalonicenses",
   "1tm": "1 Timóteo", "2tm": "2 Timóteo", "tt": "Tito", "fm": "Filemom",
@@ -31,40 +31,46 @@ const BibleReader = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { 
-    books, 
     chapters, 
     verses, 
     selectedBook, 
     selectedChapter, 
     setSelectedBook, 
     setSelectedChapter,
-    loadBooks,
     loadChapters,
     loadVerses
   } = useBibleData();
+
+  // All 66 biblical books in order
+  const BIBLICAL_BOOKS = [
+    "gn", "ex", "lv", "nm", "dt", "js", "jz", "rt", "1sm", "2sm",
+    "1rs", "2rs", "1cr", "2cr", "ed", "ne", "et", "jó", "sl", "pv",
+    "ec", "ct", "is", "jr", "lm", "ez", "dn", "os", "jl", "am",
+    "ob", "jn", "mq", "na", "hc", "sf", "ag", "zc", "ml", "mt",
+    "mc", "lc", "jo", "atos", "rm", "1co", "2co", "gl", "ef", "fp",
+    "cl", "1ts", "2ts", "1tm", "2tm", "tt", "fm", "hb", "tg", "1pe",
+    "2pe", "1jo", "2jo", "3jo", "jd", "ap"
+  ];
   
   const { saveProgress, getLastPosition } = useBibleProgress();
   const { favorites, addToFavorites, removeFromFavorites, loadFavorites } = useBibleFavorites();
 
   useEffect(() => {
-    loadBooks();
     if (user) {
       loadFavorites();
     }
-  }, [user]);
-
-  useEffect(() => {
+    
     // Load last reading position
     const lastPosition = getLastPosition();
-    if (lastPosition.book && books.length > 0) {
+    if (lastPosition.book) {
       setSelectedBook(lastPosition.book);
       if (lastPosition.chapter) {
         setSelectedChapter(lastPosition.chapter);
       }
-    } else if (books.length > 0) {
-      setSelectedBook(books[0]);
+    } else {
+      setSelectedBook(BIBLICAL_BOOKS[0]); // Default to Genesis
     }
-  }, [books]);
+  }, [user]);
 
   useEffect(() => {
     if (selectedBook) {
@@ -154,7 +160,7 @@ const BibleReader = () => {
             <SelectValue placeholder="Selecione o livro" />
           </SelectTrigger>
           <SelectContent>
-            {books.map((book) => (
+            {BIBLICAL_BOOKS.map((book) => (
               <SelectItem key={book} value={book}>
                 {BOOK_NAMES[book as keyof typeof BOOK_NAMES] || book}
               </SelectItem>
