@@ -112,64 +112,69 @@ export const useBibleData = () => {
   // Função para carregar todos os livros disponíveis do Supabase
   const loadAvailableBooks = async () => {
     setBooksLoading(true);
+    console.log('🔍 Starting to load available books...');
+    
     try {
+      // Buscar todos os livros únicos com seus capítulos máximos de uma vez
       const { data, error } = await supabase
         .from('versiculos')
-        .select('livro')
+        .select('livro, capitulo')
         .order('livro');
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error loading books:', error);
+        throw error;
+      }
 
-      if (data) {
-        // Obter livros únicos
-        const uniqueBooks = Array.from(new Set(data.map(item => item.livro)));
+      if (data && data.length > 0) {
+        console.log(`📊 Found ${data.length} total verses`);
         
-        // Processar cada livro individualmente
-        const booksWithChapters = [];
+        // Agrupar por livro e encontrar o capítulo máximo
+        const bookMap = new Map();
         
-        for (const bookCode of uniqueBooks) {
-          try {
-            const { data: chaptersData, error: chaptersError } = await supabase
-              .from('versiculos')
-              .select('capitulo')
-              .eq('livro', bookCode)
-              .order('capitulo');
+        data.forEach(item => {
+          const currentMax = bookMap.get(item.livro) || 0;
+          bookMap.set(item.livro, Math.max(currentMax, item.capitulo));
+        });
+        
+        console.log(`📚 Found ${bookMap.size} unique books:`, Array.from(bookMap.keys()));
+        
+        // Criar array de livros com suas informações
+        const booksWithChapters = Array.from(bookMap.entries()).map(([bookCode, maxChapter]) => ({
+          name: bookCode,
+          fullName: NOMES_LIVROS[bookCode] || bookCode,
+          chapters: maxChapter
+        }));
 
-            if (chaptersError || !chaptersData || chaptersData.length === 0) {
-              continue;
-            }
-
-            const maxChapter = Math.max(...chaptersData.map(c => c.capitulo));
-            
-            booksWithChapters.push({
-              name: bookCode,
-              fullName: NOMES_LIVROS[bookCode] || bookCode,
-              chapters: maxChapter
-            });
-          } catch (bookError) {
-            // Continuar com o próximo livro
-            continue;
-          }
-        }
+        // Filtrar apenas livros que estão na ordem bíblica
+        const validBooks = booksWithChapters.filter(book => 
+          ORDEM_BIBLICA.includes(book.name)
+        );
 
         // Ordenar livros na ordem bíblica
-        const sortedBooks = booksWithChapters.sort((a, b) => {
+        const sortedBooks = validBooks.sort((a, b) => {
           const indexA = ORDEM_BIBLICA.indexOf(a.name);
           const indexB = ORDEM_BIBLICA.indexOf(b.name);
           return indexA - indexB;
         });
         
+        console.log(`✅ Successfully loaded ${sortedBooks.length} books:`, sortedBooks.map(b => b.fullName));
         setAvailableBooks(sortedBooks);
+      } else {
+        console.warn('⚠️ No books found in database');
+        setAvailableBooks([]);
       }
     } catch (error) {
-      console.error('Erro ao carregar livros:', error);
+      console.error('❌ Error loading books:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar a lista de livros.",
         variant: "destructive"
       });
+      setAvailableBooks([]);
     } finally {
       setBooksLoading(false);
+      console.log('🏁 Finished loading books');
     }
   };
 
