@@ -32,11 +32,28 @@ export const useSubscription = () => {
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
-        console.error('Error checking subscription:', error);
+        console.log('[useSubscription] Error checking subscription:', error);
+        
+        // Check if it's an authentication error (invalid JWT)
+        if (error.message?.includes('Edge Function returned a non-2xx status code')) {
+          console.log('[useSubscription] Detected invalid authentication, will be handled by useAuth');
+          // Don't set subscription state here, let useAuth handle the invalid token
+          setLoading(false);
+          return;
+        }
+        
+        // For other errors, set default state
+        setSubscription({
+          subscribed: false,
+          subscription_tier: "free",
+          subscription_end: null,
+        });
+        setLoading(false);
         return;
       }
 
       if (data) {
+        console.log('[useSubscription] Subscription data received:', data);
         setSubscription({
           subscribed: data.subscribed || false,
           subscription_tier: data.subscription_tier || "free",
@@ -44,7 +61,12 @@ export const useSubscription = () => {
         });
       }
     } catch (error) {
-      console.error('Error invoking subscription check:', error);
+      console.log('[useSubscription] Error invoking subscription check:', error);
+      setSubscription({
+        subscribed: false,
+        subscription_tier: "free",
+        subscription_end: null,
+      });
     } finally {
       setLoading(false);
     }
