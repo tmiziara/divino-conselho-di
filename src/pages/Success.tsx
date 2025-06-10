@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
@@ -10,19 +10,26 @@ import { useToast } from "@/hooks/use-toast";
 const Success = () => {
   const { checkSubscription } = useSubscription();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Check subscription status after successful payment
+    // Show success message and check subscription
+    toast({
+      title: "Pagamento Confirmado!",
+      description: "Sua assinatura foi ativada com sucesso.",
+    });
+
+    // Check subscription and redirect to home after 3 seconds
     const timer = setTimeout(() => {
-      checkSubscription();
-      toast({
-        title: "Pagamento Confirmado!",
-        description: "Sua assinatura foi ativada com sucesso.",
+      setIsRedirecting(true);
+      checkSubscription().then(() => {
+        navigate('/', { replace: true });
       });
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(timer);
-  }, [checkSubscription, toast]);
+  }, [checkSubscription, toast, navigate]);
 
   return (
     <div className="min-h-screen celestial-bg">
@@ -52,23 +59,34 @@ const Success = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/perfil">
-                  <Button className="divine-button">
-                    Ver Meu Perfil
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                {isRedirecting ? (
+                  <Button disabled className="divine-button">
+                    Redirecionando...
                   </Button>
-                </Link>
-                <Link to="/biblia">
-                  <Button variant="outline" className="border-primary/20">
-                    Explorar Bíblia
-                  </Button>
-                </Link>
+                ) : (
+                  <>
+                    <Link to="/">
+                      <Button className="divine-button">
+                        Ir para Início
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
+                    <Link to="/perfil">
+                      <Button variant="outline" className="border-primary/20">
+                        Ver Meu Perfil
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
               
               <div className="pt-6 border-t border-border">
                 <p className="text-sm text-muted-foreground">
-                  Você receberá um email de confirmação em breve. 
-                  Se tiver alguma dúvida, não hesite em nos contatar.
+                  {isRedirecting ? (
+                    "Redirecionando você para a página inicial em instantes..."
+                  ) : (
+                    "Você receberá um email de confirmação em breve. Redirecionamento automático em 3 segundos..."
+                  )}
                 </p>
               </div>
             </CardContent>
