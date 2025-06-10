@@ -87,7 +87,7 @@ export const SubscriptionPlans = () => {
               )}
               
               {isFreeUser && (
-                <Badge variant="outline" className="absolute -top-2 left-1/2 transform -translate-x-1/2 border-accent text-accent">
+                <Badge variant="secondary" className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-accent text-accent-foreground">
                   Seu Plano Atual
                 </Badge>
               )}
