@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Crown, CreditCard, Calendar, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 
 const profileSchema = z.object({
@@ -33,7 +36,7 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 
 const Profile = () => {
   const { user } = useAuth();
-  
+  const { subscription, openCustomerPortal } = useSubscription();
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -150,6 +153,34 @@ const Profile = () => {
     }
   };
 
+  const handleManageSubscription = async () => {
+    try {
+      const data = await openCustomerPortal();
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível abrir o portal de assinaturas.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const getPlanDisplayName = (tier: string) => {
+    switch (tier) {
+      case "basico": return "Básico";
+      case "premium": return "Premium";
+      default: return "Gratuito";
+    }
+  };
 
   if (loading) {
     return (
@@ -172,7 +203,71 @@ const Profile = () => {
           <p className="text-muted-foreground">Gerencie suas informações pessoais</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6">
+          {/* Subscription Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="w-5 h-5 text-primary" />
+                Status da Assinatura
+              </CardTitle>
+              <CardDescription>
+                Gerencie sua assinatura e planos
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Plano Atual</p>
+                  <p className="text-sm text-muted-foreground">
+                    {getPlanDisplayName(subscription.subscription_tier)}
+                  </p>
+                </div>
+                <Badge 
+                  variant={subscription.subscribed ? "default" : "secondary"}
+                  className="text-sm"
+                >
+                  {subscription.subscribed ? "Ativo" : "Gratuito"}
+                </Badge>
+              </div>
+              
+              {subscription.subscription_end && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium text-sm">Próxima renovação</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatDate(subscription.subscription_end)}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex gap-2 pt-4">
+                {subscription.subscribed ? (
+                  <Button onClick={handleManageSubscription} className="flex-1">
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Gerenciar Assinatura
+                  </Button>
+                ) : (
+                  <Link to="/assinatura" className="flex-1">
+                    <Button className="w-full divine-button">
+                      <Crown className="w-4 h-4 mr-2" />
+                      Upgrade para Premium
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/assinatura">
+                  <Button variant="outline">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Ver Planos
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-6 md:grid-cols-2">
           {/* Informações Pessoais */}
           <Card>
             <CardHeader>
@@ -304,6 +399,7 @@ const Profile = () => {
             </CardContent>
           </Card>
 
+          </div>
         </div>
       </div>
     </div>

@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Shield, Menu, User, Crown, LogOut, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface NavigationProps {
   onAuthClick: () => void;
@@ -11,6 +13,7 @@ interface NavigationProps {
 const Navigation = ({ onAuthClick }: NavigationProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { subscription } = useSubscription();
   const location = useLocation();
 
   const navItems = [
@@ -63,6 +66,11 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
                 <span className="text-sm text-muted-foreground">
                   Olá, {user.email?.split('@')[0]}
                 </span>
+                {subscription.subscribed && (
+                  <Badge variant="secondary" className="mr-2">
+                    {subscription.subscription_tier === "basico" ? "Básico" : "Premium"}
+                  </Badge>
+                )}
                 <Button 
                   onClick={signOut} 
                   variant="outline"
@@ -79,10 +87,12 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
                   <User className="w-4 h-4 mr-2" />
                   Entrar
                 </Button>
-                <Button className="divine-button">
-                  <Crown className="w-4 h-4 mr-2" />
-                  Premium
-                </Button>
+                <Link to="/assinatura">
+                  <Button className="divine-button">
+                    <Crown className="w-4 h-4 mr-2" />
+                    Premium
+                  </Button>
+                </Link>
               </>
             )}
           </div>
@@ -139,10 +149,12 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
                       <User className="w-4 h-4 mr-2" />
                       Entrar
                     </Button>
-                    <Button className="divine-button justify-start">
-                      <Crown className="w-4 h-4 mr-2" />
-                      Premium
-                    </Button>
+                    <Link to="/assinatura">
+                      <Button className="divine-button justify-start">
+                        <Crown className="w-4 h-4 mr-2" />
+                        Premium
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </div>
