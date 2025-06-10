@@ -7,6 +7,21 @@ import { useAuth } from "@/hooks/useAuth";
 
 const plans = [
   {
+    id: 'free',
+    name: 'Plano Free',
+    price: 'Grátis',
+    period: '',
+    description: 'Acesso básico aos recursos espirituais',
+    features: [
+      'Leitura limitada da Bíblia',
+      'Sistema de favoritos básico',
+      'Chat espiritual limitado (5 mensagens/dia)',
+      'Acesso a alguns devocionais'
+    ],
+    popular: false,
+    isFree: true
+  },
+  {
     id: 'padrao',
     name: 'Plano Padrão',
     price: 'R$ 25',
@@ -58,19 +73,26 @@ export const SubscriptionPlans = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {plans.map((plan) => {
-          const isCurrentPlan = subscribed && subscription_tier === plan.id;
+          const isCurrentPlan = subscribed ? subscription_tier === plan.id : plan.id === 'free';
+          const isFreeUser = !subscribed && plan.id === 'free';
           
           return (
-            <Card key={plan.id} className={`relative ${plan.popular ? 'border-primary' : ''}`}>
+            <Card key={plan.id} className={`relative ${plan.popular ? 'border-primary' : ''} ${isFreeUser ? 'border-accent' : ''}`}>
               {plan.popular && (
                 <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2">
                   Mais Popular
                 </Badge>
               )}
               
-              {isCurrentPlan && (
+              {isFreeUser && (
+                <Badge variant="outline" className="absolute -top-2 left-1/2 transform -translate-x-1/2 border-accent text-accent">
+                  Seu Plano Atual
+                </Badge>
+              )}
+              
+              {isCurrentPlan && subscribed && (
                 <Badge variant="secondary" className="absolute -top-2 right-4">
                   Plano Atual
                 </Badge>
@@ -95,7 +117,15 @@ export const SubscriptionPlans = () => {
                   ))}
                 </ul>
 
-                {isCurrentPlan ? (
+                {plan.isFree ? (
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    disabled
+                  >
+                    Plano Atual
+                  </Button>
+                ) : isCurrentPlan && subscribed ? (
                   <Button 
                     onClick={openCustomerPortal}
                     variant="outline" 
