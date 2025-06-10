@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, BookOpen, MessageCircle, Crown, Star, Shield, Sparkles } from "lucide-react";
+import { Heart, BookOpen, MessageCircle, Star, Shield, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
-import { SubscriptionPlans } from "@/components/SubscriptionPlans";
+
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
@@ -28,11 +28,6 @@ const Index = () => {
       title: "Seus Favoritos",
       description: "Salve versículos, salmos e mensagens importantes para você"
     },
-    {
-      icon: Crown,
-      title: "Assinatura Premium",
-      description: "Acesso completo a todas as funcionalidades espirituais"
-    }
   ];
 
   return (
@@ -137,7 +132,7 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <Card key={index} className="spiritual-card group cursor-pointer">
               <CardHeader className="text-center">
@@ -156,10 +151,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Subscription Plans Section */}
-      <div className="bg-gradient-to-b from-background to-primary/5 py-20">
-        <SubscriptionPlans />
-      </div>
 
       {/* Call to Action */}
       {!user && (

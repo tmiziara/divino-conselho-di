@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
+
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import Navigation from "@/components/Navigation";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const profileSchema = z.object({
   display_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -37,7 +33,7 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 
 const Profile = () => {
   const { user } = useAuth();
-  const { subscribed, subscription_tier, subscription_end, openCustomerPortal, checkSubscription } = useSubscription();
+  
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -154,37 +150,6 @@ const Profile = () => {
     }
   };
 
-  const getSubscriptionStatus = () => {
-    if (!subscribed) return "Não assinante";
-    
-    if (subscription_end) {
-      const endDate = new Date(subscription_end);
-      const now = new Date();
-      
-      if (endDate > now) {
-        const timeLeft = formatDistanceToNow(endDate, { 
-          locale: ptBR,
-          addSuffix: false 
-        });
-        return `Renovação em ${timeLeft}`;
-      } else {
-        return "Assinatura expirada";
-      }
-    }
-    
-    return "Assinatura ativa";
-  };
-
-  const getSubscriptionTierLabel = () => {
-    switch (subscription_tier) {
-      case 'padrao':
-        return 'Plano Padrão';
-      case 'premium':
-        return 'Plano Premium';
-      default:
-        return 'Gratuito';
-    }
-  };
 
   if (loading) {
     return (
@@ -204,7 +169,7 @@ const Profile = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Meu Perfil</h1>
-          <p className="text-muted-foreground">Gerencie suas informações pessoais e assinatura</p>
+          <p className="text-muted-foreground">Gerencie suas informações pessoais</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -339,69 +304,6 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Informações da Assinatura */}
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Assinatura</CardTitle>
-              <CardDescription>
-                Gerencie sua assinatura e pagamentos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Status da Assinatura</h3>
-                    <p className="text-sm text-muted-foreground">{getSubscriptionStatus()}</p>
-                  </div>
-                  <Badge variant={subscribed ? "default" : "secondary"}>
-                    {getSubscriptionTierLabel()}
-                  </Badge>
-                </div>
-
-                {subscribed && subscription_end && (
-                  <div>
-                    <h3 className="font-medium mb-2">Próxima Renovação</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(subscription_end).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                )}
-
-                <Separator />
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button 
-                    onClick={checkSubscription}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    Atualizar Status
-                  </Button>
-                  
-                  {subscribed ? (
-                    <Button 
-                      onClick={openCustomerPortal}
-                      className="flex-1"
-                    >
-                      Gerenciar Assinatura
-                    </Button>
-                  ) : (
-                    <Button 
-                      onClick={() => window.location.href = '/'}
-                      className="flex-1"
-                    >
-                      Ver Planos
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
