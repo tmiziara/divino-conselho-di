@@ -15,7 +15,7 @@ export const useAuth = () => {
 
   const validateUserExists = async (currentUser: User) => {
     try {
-      // Try to get user profile to validate if user exists in database
+      // Only validate if the user session appears to be corrupted
       const { error } = await supabase.auth.getUser();
       if (error && error.message.includes("User from sub claim in JWT does not exist")) {
         console.log("[useAuth] Invalid JWT detected - user doesn't exist in database");
@@ -58,8 +58,13 @@ export const useAuth = () => {
       console.log("[useAuth] Auth state change:", event);
       
       if (session?.user) {
-        const isValid = await validateUserExists(session.user);
-        if (isValid) {
+        // Only validate on sign in or token refresh, not on every state change
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          const isValid = await validateUserExists(session.user);
+          if (isValid) {
+            setUser(session.user);
+          }
+        } else {
           setUser(session.user);
         }
       } else {
