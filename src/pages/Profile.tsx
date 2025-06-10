@@ -1,0 +1,411 @@
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import Navigation from "@/components/Navigation";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+const profileSchema = z.object({
+  display_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  email: z.string().email("Email inválido"),
+  gender: z.enum(["masculino", "feminino", "outros"]),
+});
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(6, "Senha atual obrigatória"),
+  newPassword: z.string().min(6, "Nova senha deve ter pelo menos 6 caracteres"),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Senhas não coincidem",
+  path: ["confirmPassword"],
+});
+
+type ProfileFormData = z.infer<typeof profileSchema>;
+type PasswordFormData = z.infer<typeof passwordSchema>;
+
+const Profile = () => {
+  const { user } = useAuth();
+  const { subscribed, subscription_tier, subscription_end, openCustomerPortal, checkSubscription } = useSubscription();
+  const { toast } = useToast();
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const profileForm = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      display_name: "",
+      email: "",
+      gender: "masculino",
+    },
+  });
+
+  const passwordForm = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  useEffect(() => {
+    fetchProfile();
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setProfile(data);
+        profileForm.reset({
+          display_name: data.display_name || "",
+          email: data.email || user.email || "",
+          gender: (data.gender as "masculino" | "feminino" | "outros") || "masculino",
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar perfil:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar o perfil",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onProfileSubmit = async (data: ProfileFormData) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          display_name: data.display_name,
+          email: data.email,
+          gender: data.gender,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Perfil atualizado com sucesso",
+      });
+
+      fetchProfile();
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o perfil",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const onPasswordSubmit = async (data: PasswordFormData) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: data.newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Senha atualizada com sucesso",
+      });
+
+      passwordForm.reset();
+    } catch (error) {
+      console.error('Erro ao atualizar senha:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a senha",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getSubscriptionStatus = () => {
+    if (!subscribed) return "Não assinante";
+    
+    if (subscription_end) {
+      const endDate = new Date(subscription_end);
+      const now = new Date();
+      
+      if (endDate > now) {
+        const timeLeft = formatDistanceToNow(endDate, { 
+          locale: ptBR,
+          addSuffix: false 
+        });
+        return `Renovação em ${timeLeft}`;
+      } else {
+        return "Assinatura expirada";
+      }
+    }
+    
+    return "Assinatura ativa";
+  };
+
+  const getSubscriptionTierLabel = () => {
+    switch (subscription_tier) {
+      case 'padrao':
+        return 'Plano Padrão';
+      case 'premium':
+        return 'Plano Premium';
+      default:
+        return 'Gratuito';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation onAuthClick={() => {}} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Carregando...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation onAuthClick={() => {}} />
+      
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Meu Perfil</h1>
+          <p className="text-muted-foreground">Gerencie suas informações pessoais e assinatura</p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Informações Pessoais */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações Pessoais</CardTitle>
+              <CardDescription>
+                Atualize suas informações de perfil
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...profileForm}>
+                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                  <FormField
+                    control={profileForm.control}
+                    name="display_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome de Exibição</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Seu nome" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={profileForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="seu@email.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={profileForm.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gênero</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione seu gênero" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="masculino">Masculino</SelectItem>
+                            <SelectItem value="feminino">Feminino</SelectItem>
+                            <SelectItem value="outros">Outros</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" className="w-full">
+                    Atualizar Perfil
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Alterar Senha */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Alterar Senha</CardTitle>
+              <CardDescription>
+                Mantenha sua conta segura
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha Atual</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={passwordForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nova Senha</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar Nova Senha</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" className="w-full">
+                    Alterar Senha
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Informações da Assinatura */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Assinatura</CardTitle>
+              <CardDescription>
+                Gerencie sua assinatura e pagamentos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">Status da Assinatura</h3>
+                    <p className="text-sm text-muted-foreground">{getSubscriptionStatus()}</p>
+                  </div>
+                  <Badge variant={subscribed ? "default" : "secondary"}>
+                    {getSubscriptionTierLabel()}
+                  </Badge>
+                </div>
+
+                {subscribed && subscription_end && (
+                  <div>
+                    <h3 className="font-medium mb-2">Próxima Renovação</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(subscription_end).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                <Separator />
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    onClick={checkSubscription}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Atualizar Status
+                  </Button>
+                  
+                  {subscribed ? (
+                    <Button 
+                      onClick={openCustomerPortal}
+                      className="flex-1"
+                    >
+                      Gerenciar Assinatura
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => window.location.href = '/'}
+                      className="flex-1"
+                    >
+                      Ver Planos
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;

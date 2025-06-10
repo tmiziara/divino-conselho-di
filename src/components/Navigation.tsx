@@ -20,6 +20,11 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
     { name: "Favoritos", path: "/favoritos" },
   ];
 
+  const userNavItems = user ? [
+    ...navItems,
+    { name: "Perfil", path: "/perfil" },
+  ] : navItems;
+
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -36,7 +41,7 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
+            {userNavItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -98,7 +103,7 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col space-y-4">
-              {navItems.map((item) => (
+              {userNavItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
