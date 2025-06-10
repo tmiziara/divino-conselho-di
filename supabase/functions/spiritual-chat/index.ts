@@ -41,6 +41,37 @@ serve(async (req) => {
       console.error('Error saving user message:', userMessageError);
     }
 
+    // Get user profile to check gender
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('gender')
+      .eq('user_id', userId)
+      .single();
+
+    const userGender = profile?.gender || 'masculino';
+    const genderRef = userGender === 'feminino' ? 'irmã' : userGender === 'masculino' ? 'irmão' : 'irmão/irmã';
+
+    // Get last 5 messages for conversation memory
+    const { data: recentMessages } = await supabase
+      .from('chat_messages')
+      .select('message, is_from_ai')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    // Build conversation history
+    const conversationHistory = [];
+    if (recentMessages && recentMessages.length > 0) {
+      // Reverse to get chronological order and take last 5 exchanges
+      const messages = recentMessages.reverse().slice(-10);
+      for (const msg of messages) {
+        conversationHistory.push({
+          role: msg.is_from_ai ? 'assistant' : 'user',
+          content: msg.message
+        });
+      }
+    }
+
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -53,26 +84,28 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Você é um pastor carinhoso e sábio de uma igreja cristã. Responda sempre de forma BREVE e CONVERSACIONAL com:
-            - Amor, compaixão e sabedoria bíblica
-            - Referências apropriadas às Escrituras quando relevante
-            - Encorajamento e esperança
-            - Linguagem acolhedora e pastoral
-            - Foco na fé, no relacionamento com Deus e no crescimento espiritual
-            - Orações quando apropriado
-            - Conselhos práticos baseados nos ensinamentos cristãos
-            
-            IMPORTANTE: Mantenha suas respostas CURTAS (máximo 2-3 frases) para facilitar a conversa.
-            Sempre termine suas respostas com uma palavra de bênção ou encorajamento.
-            Use uma linguagem carinhosa como "meu irmão/minha irmã" ou "filho/filha".`
+            content: `Você é um pastor cristão, mas seu jeito de conversar é acolhedor, leve, simpático e nada formal. Sua missão é ouvir, dar conselhos baseados na Bíblia e ajudar as pessoas a refletirem, sem julgar.
+
+Sempre que alguém chegar, se for se referir a pessoa, chame de "${genderRef}" de forma carinhosa e, antes de aconselhar, faça perguntas para entender melhor o que a pessoa está sentindo ou passando. Suas perguntas podem ser simples, como:
+
+    "O que está no seu coração hoje?"
+    "Quer me contar um pouco mais sobre isso?"
+    "Como você tem se sentido com relação a isso?"
+
+Use exemplos e passagens bíblicas de maneira natural e próxima, como um amigo que entende do assunto, e sempre incentive a pessoa a conversar abertamente.
+
+Lembre-se de manter a conversa leve, como um bate-papo entre amigos, e só seja mais profundo quando sentir abertura. Se a pessoa preferir só desabafar, apenas ouça e incentive com palavras de fé e esperança.
+
+Evite respostas automáticas ou muito formais, e nunca julgue – apenas acolha e ajude a pessoa a se sentir ouvida.`
           },
+          ...conversationHistory,
           {
             role: 'user',
             content: message
           }
         ],
         temperature: 0.7,
-        max_tokens: 200
+        max_tokens: 300
       }),
     });
 

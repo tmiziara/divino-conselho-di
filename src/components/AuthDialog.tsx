@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Heart, Mail, Lock, User, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +19,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [gender, setGender] = useState("masculino");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -45,6 +47,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           options: {
             data: {
               display_name: name,
+              gender: gender,
             },
           },
         });
@@ -61,6 +64,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       setEmail("");
       setPassword("");
       setName("");
+      setGender("masculino");
     } catch (error: any) {
       toast({
         title: isLogin ? "Erro no login" : "Erro ao criar conta",
@@ -109,6 +113,26 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                   required
                 />
               </div>
+            </div>
+          )}
+
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label>Gênero</Label>
+              <RadioGroup value={gender} onValueChange={setGender} className="flex gap-6">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="masculino" id="masculino" />
+                  <Label htmlFor="masculino">Masculino</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="feminino" id="feminino" />
+                  <Label htmlFor="feminino">Feminino</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="outros" id="outros" />
+                  <Label htmlFor="outros">Outros</Label>
+                </div>
+              </RadioGroup>
             </div>
           )}
 
