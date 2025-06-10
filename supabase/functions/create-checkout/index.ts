@@ -49,7 +49,7 @@ serve(async (req) => {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
     } else {
-      logStep("No existing customer found, will create new one");
+      logStep("No existing customer found, will create new one during checkout");
     }
 
     // Define pricing based on tier

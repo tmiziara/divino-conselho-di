@@ -44,10 +44,35 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
+    // First check if we have a stored customer_id that might be invalid
+    const { data: existingSubscriber } = await supabaseClient
+      .from("subscribers")
+      .select("stripe_customer_id")
+      .eq("email", user.email)
+      .single();
+    
+    let customers;
+    if (existingSubscriber?.stripe_customer_id) {
+      // Try to verify the existing customer still exists in Stripe
+      try {
+        const customer = await stripe.customers.retrieve(existingSubscriber.stripe_customer_id);
+        if (customer.deleted) {
+          logStep("Stored customer was deleted in Stripe, searching by email");
+          customers = await stripe.customers.list({ email: user.email, limit: 1 });
+        } else {
+          customers = { data: [customer] };
+        }
+      } catch (error) {
+        logStep("Stored customer not found in Stripe, searching by email", { error: error.message });
+        customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      }
+    } else {
+      customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    }
     
     if (customers.data.length === 0) {
-      logStep("No customer found, updating unsubscribed state");
+      logStep("No customer found in Stripe, updating unsubscribed state");
       await supabaseClient.from("subscribers").upsert({
         email: user.email,
         user_id: user.id,
