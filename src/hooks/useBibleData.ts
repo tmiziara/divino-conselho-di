@@ -17,6 +17,9 @@ export const useBibleData = () => {
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Debug: Log verses state changes
+  console.log("[useBibleData] Current state - verses count:", verses.length, "loading:", loading, "selectedBook:", selectedBook, "selectedChapter:", selectedChapter);
+
   const loadChapters = async (book: string) => {
     try {
       setLoading(true);
@@ -62,6 +65,8 @@ export const useBibleData = () => {
         .eq("capitulo", chapter)
         .order("versiculo");
 
+      console.log("[useBibleData] Query result - data:", data, "error:", error);
+
       if (error) {
         console.error("[useBibleData] Error loading verses:", error);
         throw error;
@@ -73,13 +78,15 @@ export const useBibleData = () => {
         return;
       }
 
-      console.log("[useBibleData] Loaded verses:", data.length);
+      console.log("[useBibleData] Successfully loaded verses:", data.length);
+      console.log("[useBibleData] First verse:", data[0]);
       setVerses(data);
     } catch (error) {
       console.error("[useBibleData] Error loading verses:", error);
       setVerses([]);
     } finally {
       setLoading(false);
+      console.log("[useBibleData] Loading finished for:", book, chapter);
     }
   };
 
