@@ -86,6 +86,16 @@ const BibleReader = () => {
   }, [selectedBook, selectedChapter]);
 
   const handleBookChange = (book: string) => {
+    // If user is not logged in and tries to select a book other than Genesis
+    if (!user && book !== "gn") {
+      toast({
+        title: "Cadastro necessário",
+        description: "Faça seu cadastro gratuito para ler todos os livros da Bíblia",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedBook(book);
     setSelectedChapter(1);
   };
@@ -153,6 +163,29 @@ const BibleReader = () => {
 
   return (
     <div className="space-y-6">
+      {/* Free Access Notice for non-logged users */}
+      {!user && (
+        <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
+          <div className="text-center">
+            <h3 className="font-semibold text-foreground mb-2">
+              📖 Leitura Gratuita de Gênesis
+            </h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Você pode ler o livro de Gênesis gratuitamente. Para acessar todos os 66 livros da Bíblia, 
+              faça seu <span className="font-medium text-foreground">cadastro gratuito</span>.
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.location.href = '/'}
+              className="text-primary hover:text-primary-foreground"
+            >
+              Fazer Cadastro Gratuito
+            </Button>
+          </div>
+        </div>
+      )}
+      
       {/* Navigation Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
         <Select value={selectedBook || ""} onValueChange={handleBookChange}>
@@ -161,8 +194,15 @@ const BibleReader = () => {
           </SelectTrigger>
           <SelectContent>
             {BIBLICAL_BOOKS.map((book) => (
-              <SelectItem key={book} value={book}>
-                {BOOK_NAMES[book as keyof typeof BOOK_NAMES] || book}
+              <SelectItem key={book} value={book} disabled={!user && book !== "gn"}>
+                <div className="flex items-center justify-between w-full">
+                  <span className={!user && book !== "gn" ? "text-muted-foreground" : ""}>
+                    {BOOK_NAMES[book as keyof typeof BOOK_NAMES] || book}
+                  </span>
+                  {!user && book !== "gn" && (
+                    <span className="text-xs text-muted-foreground ml-2">🔒</span>
+                  )}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
