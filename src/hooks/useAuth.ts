@@ -15,17 +15,16 @@ export const useAuth = () => {
 
   const validateUserExists = async (currentUser: User) => {
     try {
-      // Only validate if the user session appears to be corrupted
+      // Simplified validation - only clear auth on specific JWT errors
       const { error } = await supabase.auth.getUser();
-      if (error && error.message.includes("User from sub claim in JWT does not exist")) {
-        console.log("[useAuth] Invalid JWT detected - user doesn't exist in database");
-        await clearInvalidAuth();
-        return false;
+      if (error && error.message.includes("JWT expired")) {
+        console.log("[useAuth] JWT expired - refreshing session");
+        return true; // Let Supabase handle token refresh
       }
       return true;
     } catch (error) {
       console.log("[useAuth] Error validating user:", error);
-      return true; // Don't clear auth on network errors
+      return true; // Don't clear auth on errors
     }
   };
 
@@ -34,20 +33,15 @@ export const useAuth = () => {
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
         console.log("[useAuth] Session error:", error);
+        // Only clear auth on very specific errors
         if (error.message.includes("User from sub claim in JWT does not exist")) {
           await clearInvalidAuth();
           return;
         }
       }
 
-      if (session?.user) {
-        const isValid = await validateUserExists(session.user);
-        if (isValid) {
-          setUser(session.user);
-        }
-      } else {
-        setUser(null);
-      }
+      // Set user from session without extensive validation
+      setUser(session?.user || null);
       setLoading(false);
     });
 
@@ -57,19 +51,8 @@ export const useAuth = () => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("[useAuth] Auth state change:", event);
       
-      if (session?.user) {
-        // Only validate on sign in or token refresh, not on every state change
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          const isValid = await validateUserExists(session.user);
-          if (isValid) {
-            setUser(session.user);
-          }
-        } else {
-          setUser(session.user);
-        }
-      } else {
-        setUser(null);
-      }
+      // Simplified auth state handling
+      setUser(session?.user || null);
       setLoading(false);
     });
 
