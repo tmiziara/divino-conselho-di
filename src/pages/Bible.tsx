@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Search, Bookmark, Heart } from "lucide-react";
 import Navigation from "@/components/Navigation";
@@ -20,9 +21,13 @@ const Bible = () => {
     setActiveTab('search');
   };
 
+  const handleAuthClick = () => {
+    setShowAuthDialog(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <Navigation onAuthClick={() => setShowAuthDialog(true)} />
+      <Navigation onAuthClick={handleAuthClick} />
       
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
@@ -77,7 +82,7 @@ const Bible = () => {
 
           {/* Content */}
           <div className="bg-card rounded-lg border p-6">
-            {activeTab === 'reader' && <BibleReader />}
+            {activeTab === 'reader' && <BibleReader onAuthClick={handleAuthClick} />}
             {activeTab === 'search' && <BibleSearch searchQuery={searchQuery} />}
           </div>
         </div>

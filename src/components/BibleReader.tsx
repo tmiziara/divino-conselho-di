@@ -27,7 +27,11 @@ const BOOK_NAMES = {
   "1jo": "1 João", "2jo": "2 João", "3jo": "3 João", "jd": "Judas", "ap": "Apocalipse"
 };
 
-const BibleReader = () => {
+interface BibleReaderProps {
+  onAuthClick?: () => void;
+}
+
+const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { 
@@ -58,17 +62,21 @@ const BibleReader = () => {
   useEffect(() => {
     if (user) {
       loadFavorites();
-    }
-    
-    // Load last reading position
-    const lastPosition = getLastPosition();
-    if (lastPosition.book) {
-      setSelectedBook(lastPosition.book);
-      if (lastPosition.chapter) {
-        setSelectedChapter(lastPosition.chapter);
+      
+      // Load last reading position for logged in users
+      const lastPosition = getLastPosition();
+      if (lastPosition.book) {
+        setSelectedBook(lastPosition.book);
+        if (lastPosition.chapter) {
+          setSelectedChapter(lastPosition.chapter);
+        }
+      } else {
+        setSelectedBook(BIBLICAL_BOOKS[0]); // Default to Genesis
       }
     } else {
-      setSelectedBook(BIBLICAL_BOOKS[0]); // Default to Genesis
+      // For users not logged in, always reset to Genesis 1
+      setSelectedBook("gn");
+      setSelectedChapter(1);
     }
   }, [user]);
 
@@ -177,7 +185,7 @@ const BibleReader = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.location.href = '/'}
+              onClick={onAuthClick}
               className="text-primary hover:text-primary-foreground"
             >
               Fazer Cadastro Gratuito
