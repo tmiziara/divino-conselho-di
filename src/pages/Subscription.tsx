@@ -136,12 +136,12 @@ const Subscription = () => {
     <div className="min-h-screen celestial-bg">
       <Navigation onAuthClick={() => setShowAuth(true)} />
       
-      <div className="container mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4 heavenly-text">
+      <div className="container mx-auto px-4 md:px-6 py-12 md:py-20">
+        <div className="text-center mb-12 md:mb-16">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 heavenly-text">
             Escolha Seu Plano Espiritual
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Desbloqueie todo o potencial da sua jornada espiritual com nossos planos personalizados
           </p>
           
@@ -163,7 +163,7 @@ const Subscription = () => {
           )}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {plans.map((plan) => {
             const IconComponent = plan.icon;
             const isCurrent = isCurrentPlan(plan.id);
@@ -173,7 +173,8 @@ const Subscription = () => {
                 key={plan.id} 
                 className={`spiritual-card relative ${
                   plan.popular ? 'ring-2 ring-primary' : ''
-                } ${isCurrent ? 'bg-primary/5 border-primary' : ''}`}
+                } ${isCurrent ? 'bg-primary/5 border-primary' : ''} 
+                h-fit md:h-auto flex flex-col`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -183,30 +184,30 @@ const Subscription = () => {
                   </div>
                 )}
                 
-                <CardHeader className="text-center">
-                  <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${
+                <CardHeader className="text-center pb-4">
+                  <div className={`w-12 h-12 md:w-14 md:h-14 mx-auto rounded-full flex items-center justify-center mb-3 ${
                     isCurrent ? 'bg-primary/20' : 'bg-primary/10'
                   }`}>
-                    <IconComponent className={`w-8 h-8 ${
+                    <IconComponent className={`w-6 h-6 md:w-7 md:h-7 ${
                       isCurrent ? 'text-primary' : 'text-primary'
                     }`} />
                   </div>
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <div className="text-3xl font-bold text-primary">
+                  <CardTitle className="text-xl md:text-2xl">{plan.name}</CardTitle>
+                  <div className="text-2xl md:text-3xl font-bold text-primary">
                     {plan.price}
-                    <span className="text-lg text-muted-foreground font-normal">
+                    <span className="text-sm md:text-lg text-muted-foreground font-normal">
                       {plan.period}
                     </span>
                   </div>
-                  <CardDescription>{plan.description}</CardDescription>
+                  <CardDescription className="text-sm md:text-base">{plan.description}</CardDescription>
                 </CardHeader>
                 
-                <CardContent>
-                  <ul className="space-y-3 mb-8">
+                <CardContent className="flex-1 flex flex-col">
+                  <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-1">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
-                        <Check className="w-5 h-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
+                        <Check className="w-4 h-4 md:w-5 md:h-5 text-primary mr-2 md:mr-3 mt-0.5 flex-shrink-0" />
+                        <span className="text-xs md:text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -218,6 +219,7 @@ const Subscription = () => {
                       plan.popular && !isCurrent ? 'divine-button' : ''
                     } ${isCurrent ? 'bg-muted text-muted-foreground' : ''}`}
                     variant={plan.popular && !isCurrent ? 'default' : 'outline'}
+                    size="sm"
                   >
                     {checkoutLoading === plan.id ? (
                       <>
@@ -234,8 +236,8 @@ const Subscription = () => {
           })}
         </div>
 
-        <div className="text-center mt-16">
-          <p className="text-muted-foreground">
+        <div className="text-center mt-12 md:mt-16">
+          <p className="text-muted-foreground text-sm md:text-base">
             Tem dúvidas? Entre em contato conosco e teremos prazer em ajudar.
           </p>
         </div>

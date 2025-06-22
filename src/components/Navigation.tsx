@@ -1,7 +1,8 @@
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Menu, User, Crown, LogOut, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -15,6 +16,7 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
   const { user, signOut } = useAuth();
   const { subscription } = useSubscription();
   const location = useLocation();
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
     { name: "Início", path: "/" },
@@ -30,8 +32,30 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
+  // Close menu when route changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
   return (
-    <nav className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+    <nav className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50" ref={menuRef}>
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
