@@ -184,7 +184,7 @@ const Subscription = () => {
                   </div>
                 )}
                 
-                <CardHeader className="text-center pb-4">
+                <CardHeader className="text-center pb-2 md:pb-4">
                   <div className={`w-12 h-12 md:w-14 md:h-14 mx-auto rounded-full flex items-center justify-center mb-3 ${
                     isCurrent ? 'bg-primary/20' : 'bg-primary/10'
                   }`}>
@@ -192,17 +192,19 @@ const Subscription = () => {
                       isCurrent ? 'text-primary' : 'text-primary'
                     }`} />
                   </div>
-                  <CardTitle className="text-xl md:text-2xl">{plan.name}</CardTitle>
-                  <div className="text-2xl md:text-3xl font-bold text-primary">
-                    {plan.price}
-                    <span className="text-sm md:text-lg text-muted-foreground font-normal">
-                      {plan.period}
+                  <CardTitle className="text-xl md:text-2xl mb-1 md:mb-2">{plan.name}</CardTitle>
+                  <div className="text-2xl md:text-3xl font-bold text-primary mb-1 md:mb-2">
+                    <span className="whitespace-nowrap">
+                      {plan.price}
+                      <span className="text-sm md:text-lg text-muted-foreground font-normal">
+                        {plan.period}
+                      </span>
                     </span>
                   </div>
                   <CardDescription className="text-sm md:text-base">{plan.description}</CardDescription>
                 </CardHeader>
                 
-                <CardContent className="flex-1 flex flex-col">
+                <CardContent className="flex-1 flex flex-col pt-2 md:pt-4">
                   <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-1">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
