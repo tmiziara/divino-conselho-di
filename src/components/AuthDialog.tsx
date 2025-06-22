@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Heart, Mail, Lock, User, Shield } from "lucide-react";
+import { Heart, Mail, Lock, User, Shield, Crown, Star, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AuthDialogProps {
   open: boolean;
@@ -20,8 +22,36 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [gender, setGender] = useState("masculino");
+  const [selectedPlan, setSelectedPlan] = useState("free");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const plans = [
+    {
+      id: "free",
+      name: "Gratuito",
+      price: "R$ 0",
+      description: "Recursos básicos para começar",
+      icon: Star,
+      features: ["Leitura completa da Bíblia", "Busca básica", "Favoritos limitados (10)"]
+    },
+    {
+      id: "basico",
+      name: "Básico",
+      price: "R$ 25/mês",
+      description: "Ideal para estudos bíblicos",
+      icon: Crown,
+      features: ["Tudo do Gratuito", "Favoritos ilimitados", "Chat expandido", "Planos de leitura"]
+    },
+    {
+      id: "premium",
+      name: "Premium",
+      price: "R$ 45/mês",
+      description: "Para líderes espirituais",
+      icon: Zap,
+      features: ["Tudo do Básico", "Chat ilimitado", "Comentários avançados", "Grupos de estudo"]
+    }
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +70,10 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           title: "Bem-vindo de volta!",
           description: "Login realizado com sucesso.",
         });
+        
+        onOpenChange(false);
       } else {
+        // Sign up process
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -49,6 +82,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
             data: {
               display_name: name,
               gender: gender,
+              selected_plan: selectedPlan,
             },
           },
         });
@@ -59,13 +93,23 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           title: "Conta criada com sucesso!",
           description: "Verifique seu email para confirmar a conta.",
         });
+
+        onOpenChange(false);
+
+        // If user selected a paid plan, redirect to subscription page
+        if (selectedPlan !== "free") {
+          setTimeout(() => {
+            window.location.href = "/assinatura";
+          }, 2000);
+        }
       }
       
-      onOpenChange(false);
+      // Reset form
       setEmail("");
       setPassword("");
       setName("");
       setGender("masculino");
+      setSelectedPlan("free");
     } catch (error: any) {
       toast({
         title: isLogin ? "Erro no login" : "Erro ao criar conta",
@@ -79,7 +123,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
             <div className="relative">
@@ -168,6 +212,58 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
               />
             </div>
           </div>
+
+          {!isLogin && (
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Escolha seu plano</Label>
+              <div className="grid grid-cols-1 gap-3">
+                {plans.map((plan) => {
+                  const IconComponent = plan.icon;
+                  return (
+                    <Card 
+                      key={plan.id}
+                      className={`cursor-pointer transition-all ${
+                        selectedPlan === plan.id 
+                          ? 'ring-2 ring-primary bg-primary/5' 
+                          : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => setSelectedPlan(plan.id)}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <IconComponent className="w-4 h-4 text-primary" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-lg">{plan.name}</CardTitle>
+                              <CardDescription className="text-sm">{plan.description}</CardDescription>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-primary">{plan.price}</div>
+                            <RadioGroupItem value={plan.id} className="mt-1" />
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          {plan.features.map((feature, index) => (
+                            <li key={index}>• {feature}</li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan} className="hidden">
+                {plans.map((plan) => (
+                  <RadioGroupItem key={plan.id} value={plan.id} />
+                ))}
+              </RadioGroup>
+            </div>
+          )}
 
           <Button type="submit" className="w-full divine-button" disabled={isLoading}>
             {isLoading ? (isLogin ? "Entrando..." : "Criando conta...") : (isLogin ? "Entrar" : "Criar conta")}
