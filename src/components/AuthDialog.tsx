@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -216,51 +215,50 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           {!isLogin && (
             <div className="space-y-4">
               <Label className="text-base font-semibold">Escolha seu plano</Label>
-              <div className="grid grid-cols-1 gap-3">
-                {plans.map((plan) => {
-                  const IconComponent = plan.icon;
-                  return (
-                    <Card 
-                      key={plan.id}
-                      className={`cursor-pointer transition-all ${
-                        selectedPlan === plan.id 
-                          ? 'ring-2 ring-primary bg-primary/5' 
-                          : 'hover:bg-muted/50'
-                      }`}
-                      onClick={() => setSelectedPlan(plan.id)}
-                    >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <IconComponent className="w-4 h-4 text-primary" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg">{plan.name}</CardTitle>
-                              <CardDescription className="text-sm">{plan.description}</CardDescription>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-primary">{plan.price}</div>
-                            <RadioGroupItem value={plan.id} className="mt-1" />
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          {plan.features.map((feature, index) => (
-                            <li key={index}>• {feature}</li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-              <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan} className="hidden">
-                {plans.map((plan) => (
-                  <RadioGroupItem key={plan.id} value={plan.id} />
-                ))}
+              <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan}>
+                <div className="grid grid-cols-1 gap-3">
+                  {plans.map((plan) => {
+                    const IconComponent = plan.icon;
+                    return (
+                      <div key={plan.id} className="flex items-center space-x-2">
+                        <RadioGroupItem value={plan.id} id={plan.id} />
+                        <Label htmlFor={plan.id} className="flex-1">
+                          <Card 
+                            className={`cursor-pointer transition-all ${
+                              selectedPlan === plan.id 
+                                ? 'ring-2 ring-primary bg-primary/5' 
+                                : 'hover:bg-muted/50'
+                            }`}
+                          >
+                            <CardHeader className="pb-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <IconComponent className="w-4 h-4 text-primary" />
+                                  </div>
+                                  <div>
+                                    <CardTitle className="text-lg">{plan.name}</CardTitle>
+                                    <CardDescription className="text-sm">{plan.description}</CardDescription>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-bold text-primary">{plan.price}</div>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <ul className="text-xs text-muted-foreground space-y-1">
+                                {plan.features.map((feature, index) => (
+                                  <li key={index}>• {feature}</li>
+                                ))}
+                              </ul>
+                            </CardContent>
+                          </Card>
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
               </RadioGroup>
             </div>
           )}
