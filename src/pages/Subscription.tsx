@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -195,9 +196,14 @@ const Subscription = () => {
                   </div>
                   <CardTitle className="text-lg md:text-xl mb-1">{plan.name}</CardTitle>
                   <div className="mb-1 md:mb-2">
-                    <span className="text-xl md:text-2xl font-bold text-primary whitespace-nowrap">
-                      {plan.price}<span className="text-sm md:text-base text-muted-foreground font-normal">{plan.period}</span>
-                    </span>
+                    <div className="flex items-baseline justify-center gap-0">
+                      <span className="text-xl md:text-2xl font-bold text-primary">
+                        {plan.price}
+                      </span>
+                      <span className="text-sm md:text-base text-muted-foreground font-normal">
+                        {plan.period}
+                      </span>
+                    </div>
                   </div>
                   <CardDescription className="text-xs md:text-sm leading-tight">{plan.description}</CardDescription>
                 </CardHeader>
@@ -249,3 +255,4 @@ const Subscription = () => {
 };
 
 export default Subscription;
+
