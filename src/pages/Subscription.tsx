@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,7 +164,7 @@ const Subscription = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
           {plans.map((plan) => {
             const IconComponent = plan.icon;
             const isCurrent = isCurrentPlan(plan.id);
@@ -174,7 +175,7 @@ const Subscription = () => {
                 className={`spiritual-card relative ${
                   plan.popular ? 'ring-2 ring-primary' : ''
                 } ${isCurrent ? 'bg-primary/5 border-primary' : ''} 
-                h-fit md:h-auto flex flex-col`}
+                h-fit flex flex-col`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -184,32 +185,29 @@ const Subscription = () => {
                   </div>
                 )}
                 
-                <CardHeader className="text-center pb-2 md:pb-4">
-                  <div className={`w-12 h-12 md:w-14 md:h-14 mx-auto rounded-full flex items-center justify-center mb-3 ${
+                <CardHeader className="text-center pb-2 md:pb-3">
+                  <div className={`w-10 h-10 md:w-12 md:h-12 mx-auto rounded-full flex items-center justify-center mb-2 md:mb-3 ${
                     isCurrent ? 'bg-primary/20' : 'bg-primary/10'
                   }`}>
-                    <IconComponent className={`w-6 h-6 md:w-7 md:h-7 ${
+                    <IconComponent className={`w-5 h-5 md:w-6 md:h-6 ${
                       isCurrent ? 'text-primary' : 'text-primary'
                     }`} />
                   </div>
-                  <CardTitle className="text-xl md:text-2xl mb-1 md:mb-2">{plan.name}</CardTitle>
-                  <div className="text-2xl md:text-3xl font-bold text-primary mb-1 md:mb-2">
-                    <span className="whitespace-nowrap">
-                      {plan.price}
-                      <span className="text-sm md:text-lg text-muted-foreground font-normal">
-                        {plan.period}
-                      </span>
+                  <CardTitle className="text-lg md:text-xl mb-1">{plan.name}</CardTitle>
+                  <div className="mb-1 md:mb-2">
+                    <span className="text-xl md:text-2xl font-bold text-primary whitespace-nowrap">
+                      {plan.price}<span className="text-sm md:text-base text-muted-foreground font-normal">{plan.period}</span>
                     </span>
                   </div>
-                  <CardDescription className="text-sm md:text-base">{plan.description}</CardDescription>
+                  <CardDescription className="text-xs md:text-sm leading-tight">{plan.description}</CardDescription>
                 </CardHeader>
                 
-                <CardContent className="flex-1 flex flex-col pt-2 md:pt-4">
-                  <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-1">
+                <CardContent className="flex-1 flex flex-col pt-0 md:pt-2">
+                  <ul className="space-y-1.5 md:space-y-2 mb-4 md:mb-6 flex-1">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start">
-                        <Check className="w-4 h-4 md:w-5 md:h-5 text-primary mr-2 md:mr-3 mt-0.5 flex-shrink-0" />
-                        <span className="text-xs md:text-sm">{feature}</span>
+                        <Check className="w-3 h-3 md:w-4 md:h-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-xs md:text-sm leading-tight">{feature}</span>
                       </li>
                     ))}
                   </ul>
