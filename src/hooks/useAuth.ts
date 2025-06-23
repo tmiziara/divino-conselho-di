@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,18 @@ export const useAuth = () => {
       // Simplified auth state handling
       setUser(session?.user || null);
       setLoading(false);
+
+      // Handle redirect after login
+      if (event === 'SIGNED_IN' && session?.user) {
+        const redirectPath = localStorage.getItem('redirectAfterLogin');
+        if (redirectPath && redirectPath !== '/') {
+          localStorage.removeItem('redirectAfterLogin');
+          // Use setTimeout to ensure the state update is complete
+          setTimeout(() => {
+            window.location.href = redirectPath;
+          }, 100);
+        }
+      }
     });
 
     return () => subscription.unsubscribe();

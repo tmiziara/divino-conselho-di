@@ -54,6 +54,12 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
+  const handleAuthClick = () => {
+    // Store current page before redirecting to login
+    localStorage.setItem('redirectAfterLogin', location.pathname);
+    onAuthClick();
+  };
+
   return (
     <nav className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50" ref={menuRef}>
       <div className="container mx-auto px-6">
@@ -107,7 +113,7 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
               </>
             ) : (
               <>
-                <Button variant="ghost" onClick={onAuthClick}>
+                <Button variant="ghost" onClick={handleAuthClick}>
                   <User className="w-4 h-4 mr-2" />
                   Entrar
                 </Button>
@@ -169,7 +175,7 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <Button variant="ghost" onClick={onAuthClick} className="justify-start">
+                    <Button variant="ghost" onClick={handleAuthClick} className="justify-start">
                       <User className="w-4 h-4 mr-2" />
                       Entrar
                     </Button>

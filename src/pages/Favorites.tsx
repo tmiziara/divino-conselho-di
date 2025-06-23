@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, BookOpen, MessageCircle, Trash2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +26,7 @@ interface Favorite {
 const Favorites = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [showAuth, setShowAuth] = useState(false);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -129,10 +132,14 @@ const Favorites = () => {
     }
   };
 
+  const handleAuthClick = () => {
+    setShowAuth(true);
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen celestial-bg">
-        <Navigation onAuthClick={() => {}} />
+        <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-6 py-20">
           <Card className="spiritual-card max-w-md mx-auto">
             <CardHeader>
@@ -145,19 +152,20 @@ const Favorites = () => {
               <p className="text-muted-foreground mb-4">
                 Faça login para salvar e visualizar seus versículos e mensagens favoritas
               </p>
-              <Button className="divine-button">
+              <Button className="divine-button" onClick={handleAuthClick}>
                 Fazer Login
               </Button>
             </CardContent>
           </Card>
         </div>
+        <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen celestial-bg">
-      <Navigation onAuthClick={() => {}} />
+      <Navigation onAuthClick={handleAuthClick} />
       
       <div className="container mx-auto px-6 py-8">
         <div className="text-center mb-8">
