@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Heart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useBibleFavorites } from "@/hooks/useBibleFavorites";
 import { useToast } from "@/hooks/use-toast";
+import SocialShare from "@/components/SocialShare";
 
 const BibleFavorites = () => {
   const { favorites, loading, loadFavorites, removeFromFavorites } = useBibleFavorites();
@@ -63,19 +65,26 @@ const BibleFavorites = () => {
                   {favorite.content}
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleRemoveFavorite(
-                  favorite.book || '', 
-                  favorite.chapter || 0, 
-                  favorite.verse || 0, 
-                  favorite.title
-                )}
-                className="flex-shrink-0 text-red-500 hover:text-red-700"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <SocialShare 
+                  title={favorite.title}
+                  content={favorite.content}
+                  reference={favorite.reference || undefined}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveFavorite(
+                    favorite.book || '', 
+                    favorite.chapter || 0, 
+                    favorite.verse || 0, 
+                    favorite.title
+                  )}
+                  className="h-8 w-8 text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </Card>
         ))}

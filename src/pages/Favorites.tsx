@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, BookOpen, MessageCircle, Trash2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
+import SocialShare from "@/components/SocialShare";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -229,6 +229,11 @@ const Favorites = () => {
                             <Badge className={`${getTypeColor(favorite.type)} text-xs`}>
                               {getTypeLabel(favorite.type)}
                             </Badge>
+                            <SocialShare 
+                              title={favorite.title}
+                              content={favorite.content}
+                              reference={favorite.reference}
+                            />
                             <Button 
                               variant="ghost" 
                               size="sm" 
