@@ -122,7 +122,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
             <div className="relative">
@@ -213,10 +213,10 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           </div>
 
           {!isLogin && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <Label className="text-base font-semibold">Escolha seu plano</Label>
               <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan}>
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-2">
                   {plans.map((plan) => {
                     const IconComponent = plan.icon;
                     return (
@@ -230,24 +230,24 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                                 : 'hover:bg-muted/50'
                             }`}
                           >
-                            <CardHeader className="pb-2">
+                            <CardHeader className="pb-1 pt-3 px-3">
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <IconComponent className="w-4 h-4 text-primary" />
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <IconComponent className="w-3 h-3 text-primary" />
                                   </div>
                                   <div>
-                                    <CardTitle className="text-lg">{plan.name}</CardTitle>
-                                    <CardDescription className="text-sm">{plan.description}</CardDescription>
+                                    <CardTitle className="text-sm">{plan.name}</CardTitle>
+                                    <CardDescription className="text-xs">{plan.description}</CardDescription>
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <div className="font-bold text-primary">{plan.price}</div>
+                                  <div className="font-bold text-primary text-sm">{plan.price}</div>
                                 </div>
                               </div>
                             </CardHeader>
-                            <CardContent className="pt-0">
-                              <ul className="text-xs text-muted-foreground space-y-1">
+                            <CardContent className="pt-0 pb-2 px-3">
+                              <ul className="text-xs text-muted-foreground space-y-0.5">
                                 {plan.features.map((feature, index) => (
                                   <li key={index}>• {feature}</li>
                                 ))}
