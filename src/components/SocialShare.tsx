@@ -39,6 +39,14 @@ const SocialShare: React.FC<SocialShareProps> = ({ title, content, reference }) 
     }
   };
 
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  const canUseWebShare = () => {
+    return navigator.share !== undefined;
+  };
+
   const shareOnWhatsApp = () => {
     const text = encodeURIComponent(formatShareText("whatsapp"));
     const url = `https://wa.me/?text=${text}`;
@@ -50,10 +58,50 @@ const SocialShare: React.FC<SocialShareProps> = ({ title, content, reference }) 
     });
   };
 
-  const shareOnFacebook = () => {
-    const text = encodeURIComponent(formatShareText("facebook"));
-    const url = `https://www.facebook.com/sharer/sharer.php?quote=${text}`;
-    window.open(url, "_blank");
+  const shareOnFacebook = async () => {
+    const text = formatShareText("facebook");
+
+    // Tentar Web Share API primeiro (funciona melhor no mobile)
+    if (canUseWebShare() && isMobileDevice()) {
+      try {
+        await navigator.share({
+          title: title,
+          text: text,
+          url: window.location.href
+        });
+        
+        toast({
+          title: "Compartilhado no Facebook",
+          description: "O versículo foi compartilhado com sucesso!"
+        });
+        return;
+      } catch (error) {
+        console.log("Web Share não funcionou, tentando método alternativo");
+      }
+    }
+
+    // Fallback para Facebook App (mobile)
+    if (isMobileDevice()) {
+      const facebookAppUrl = `fb://facewebmodal/f?href=${encodeURIComponent(window.location.href)}`;
+      const facebookWebUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(text)}`;
+      
+      // Tentar abrir o app do Facebook primeiro
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = facebookAppUrl;
+      document.body.appendChild(iframe);
+      
+      // Se não conseguir abrir o app, usar versão web
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        window.open(facebookWebUrl, "_blank");
+      }, 1000);
+    } else {
+      // Desktop - usar versão web
+      const encodedText = encodeURIComponent(text);
+      const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodedText}`;
+      window.open(url, "_blank");
+    }
     
     toast({
       title: "Compartilhado no Facebook",
@@ -72,14 +120,57 @@ const SocialShare: React.FC<SocialShareProps> = ({ title, content, reference }) 
     });
   };
 
-  const shareOnInstagram = () => {
+  const shareOnInstagram = async () => {
     const text = formatShareText("instagram");
-    navigator.clipboard.writeText(text);
-    
-    toast({
-      title: "Texto copiado para Instagram",
-      description: "Cole o texto na sua postagem do Instagram!"
-    });
+
+    // Tentar Web Share API primeiro (funciona melhor no mobile)
+    if (canUseWebShare() && isMobileDevice()) {
+      try {
+        await navigator.share({
+          title: title,
+          text: text
+        });
+        
+        toast({
+          title: "Compartilhado no Instagram",
+          description: "O versículo foi compartilhado com sucesso!"
+        });
+        return;
+      } catch (error) {
+        console.log("Web Share não funcionou, tentando método alternativo");
+      }
+    }
+
+    // Para mobile, tentar deep link do Instagram
+    if (isMobileDevice()) {
+      try {
+        // Copiar texto primeiro
+        await navigator.clipboard.writeText(text);
+        
+        // Tentar abrir o Instagram
+        const instagramUrl = 'instagram://camera';
+        window.location.href = instagramUrl;
+        
+        toast({
+          title: "Texto copiado e Instagram aberto",
+          description: "Cole o texto copiado na sua postagem!"
+        });
+      } catch (error) {
+        // Fallback para cópia simples
+        await navigator.clipboard.writeText(text);
+        toast({
+          title: "Texto copiado para Instagram",
+          description: "Abra o Instagram e cole o texto na sua postagem!"
+        });
+      }
+    } else {
+      // Desktop - apenas copiar texto
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Texto copiado para Instagram",
+        description: "Abra o Instagram no seu celular e cole o texto!"
+      });
+    }
   };
 
   const copyToClipboard = async () => {
