@@ -249,11 +249,8 @@ const Favorites = () => {
                         <p className="text-base sm:text-lg leading-relaxed mb-4">
                           {favorite.content}
                         </p>
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground">
                           <span>Salvo em {new Date(favorite.created_at).toLocaleDateString()}</span>
-                          <Button variant="ghost" size="sm" className="text-xs sm:text-sm w-fit">
-                            Configurar como wallpaper
-                          </Button>
                         </div>
                       </CardContent>
                     </Card>

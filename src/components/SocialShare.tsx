@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Share2, Facebook, Twitter, MessageCircle, Copy, Check } from "lucide-react";
+import { Share2, Facebook, Twitter, MessageCircle, Copy, Check, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -32,6 +32,8 @@ const SocialShare: React.FC<SocialShareProps> = ({ title, content, reference }) 
         return `${baseText}${refText} #Biblia #Fe${appText}`;
       case "facebook":
         return `${baseText}${refText}${appText}`;
+      case "instagram":
+        return `${baseText}${refText} #Biblia #Fe #Deus #Versiculos${appText}`;
       default:
         return `${baseText}${refText}${appText}`;
     }
@@ -67,6 +69,16 @@ const SocialShare: React.FC<SocialShareProps> = ({ title, content, reference }) 
     toast({
       title: "Compartilhado no Twitter",
       description: "O versículo foi compartilhado com sucesso!"
+    });
+  };
+
+  const shareOnInstagram = () => {
+    const text = formatShareText("instagram");
+    navigator.clipboard.writeText(text);
+    
+    toast({
+      title: "Texto copiado para Instagram",
+      description: "Cole o texto na sua postagem do Instagram!"
     });
   };
 
@@ -110,6 +122,10 @@ const SocialShare: React.FC<SocialShareProps> = ({ title, content, reference }) 
         <DropdownMenuItem onClick={shareOnTwitter} className="flex items-center gap-2">
           <Twitter className="w-4 h-4 text-blue-400" />
           Twitter
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={shareOnInstagram} className="flex items-center gap-2">
+          <Instagram className="w-4 h-4 text-pink-600" />
+          Instagram
         </DropdownMenuItem>
         <DropdownMenuItem onClick={copyToClipboard} className="flex items-center gap-2">
           {copied ? (
