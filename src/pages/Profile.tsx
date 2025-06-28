@@ -196,13 +196,11 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation onAuthClick={() => {}} />
-      
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Meu Perfil</h1>
+      <div className="container mx-auto px-4 pt-4 pb-8 max-w-4xl flex flex-col items-center">
+        <div className="mb-6 w-full text-center">
+          <h1 className="text-3xl font-bold mx-auto">Meu Perfil</h1>
           <p className="text-muted-foreground">Gerencie suas informações pessoais</p>
         </div>
-
         <div className="grid gap-6">
           {/* Subscription Status */}
           <Card>

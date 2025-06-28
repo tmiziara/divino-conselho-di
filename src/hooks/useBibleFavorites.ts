@@ -38,7 +38,7 @@ export const useBibleFavorites = () => {
         .from("favorites")
         .select("*")
         .eq("user_id", user.id)
-        .eq("type", "verse")
+        .in("type", ["verse", "study"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -59,7 +59,7 @@ export const useBibleFavorites = () => {
         .from("favorites")
         .insert({
           user_id: user.id,
-          type: "verse",
+          type: favoriteData.book === 'study' ? 'study' : 'verse',
           title: favoriteData.title,
           content: favoriteData.content,
           reference: favoriteData.reference,
@@ -102,11 +102,31 @@ export const useBibleFavorites = () => {
     }
   };
 
+  const removeFavoriteByTitle = async (title: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from("favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("title", title);
+
+      if (error) throw error;
+
+      setFavorites(prev => prev.filter(fav => fav.title !== title));
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      throw error;
+    }
+  };
+
   return {
     favorites,
     loading,
     loadFavorites,
     addToFavorites,
-    removeFromFavorites
+    removeFromFavorites,
+    removeFavoriteByTitle
   };
 };

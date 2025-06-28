@@ -1,73 +1,191 @@
-# Welcome to your Lovable project
+# Conexão com Deus - Aplicativo Cristão
 
-## Project info
+Um aplicativo cristão moderno para fortalecer sua fé através de estudos bíblicos, orações e conversas espirituais.
 
-**URL**: https://lovable.dev/projects/5098d454-c3ab-40ac-a695-55b1ce62422c
+## 🚀 Funcionalidades
 
-## How can I edit this code?
+- **📖 Leitura da Bíblia**: Navegue por todos os 66 livros bíblicos
+- **💬 Conversa Espiritual**: IA para orientação espiritual e orações
+- **❤️ Favoritos**: Salve versículos e mensagens importantes
+- **👤 Perfil Personalizado**: Acompanhe seu progresso espiritual
+- **📱 Experiência Mobile**: Otimizado para Android e iOS
 
-There are several ways of editing your application.
+## 🛠️ Tecnologias
 
-**Use Lovable**
+- **Frontend**: React + TypeScript + Vite
+- **UI**: Tailwind CSS + Shadcn/ui
+- **Mobile**: Capacitor
+- **Backend**: Supabase
+- **PWA**: Vite PWA Plugin
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5098d454-c3ab-40ac-a695-55b1ce62422c) and start prompting.
+## 📱 Build para Android
 
-Changes made via Lovable will be committed automatically to this repo.
+### Pré-requisitos
 
-**Use your preferred IDE**
+1. **Node.js** (versão 18 ou superior)
+2. **Android Studio** com Android SDK
+3. **Java JDK** (versão 11 ou superior)
+4. **Gradle** (gerenciado pelo Android Studio)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Instalação
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```bash
+# Clone o repositório
+git clone <repository-url>
+cd divino-conselho-di
 
-Follow these steps:
+# Instale as dependências
+npm install
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Instale as dependências do Capacitor
+npm install @capacitor/app @capacitor/haptics @capacitor/keyboard @capacitor/status-bar @capacitor/splash-screen @capacitor/storage @capacitor/device @capacitor/network
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Instale o plugin PWA
+npm install vite-plugin-pwa --save-dev
 ```
 
-**Edit a file directly in GitHub**
+### Build e Deploy
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+# Build do projeto
+npm run build
 
-**Use GitHub Codespaces**
+# Sincronize com o Android
+npx cap sync android
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Abra no Android Studio
+npx cap open android
 
-## What technologies are used for this project?
+# Ou execute diretamente no dispositivo/emulador
+npx cap run android
+```
 
-This project is built with:
+### Scripts Disponíveis
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+# Desenvolvimento
+npm run dev
 
-## How can I deploy this project?
+# Build para produção
+npm run build
 
-Simply open [Lovable](https://lovable.dev/projects/5098d454-c3ab-40ac-a695-55b1ce62422c) and click on Share -> Publish.
+# Build e abrir Android Studio
+npm run android:build
 
-## Can I connect a custom domain to my Lovable project?
+# Executar no Android
+npm run android
+```
 
-Yes, you can!
+## 🎨 Melhorias Mobile Implementadas
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### 1. **Navegação Mobile**
+- Bottom navigation para dispositivos móveis
+- Navegação por gestos
+- Feedback háptico
+- Ícones intuitivos
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### 2. **Experiência do Usuário**
+- Design responsivo otimizado
+- Touch targets adequados (44px mínimo)
+- Scroll suave e natural
+- Loading states melhorados
+
+### 3. **Funcionalidades Nativas**
+- Feedback háptico
+- Gerenciamento de teclado
+- Status bar personalizada
+- Splash screen otimizada
+- Detecção de conectividade
+
+### 4. **Performance**
+- Cache inteligente
+- Lazy loading
+- Otimização de imagens
+- Service Worker para offline
+
+### 5. **PWA (Progressive Web App)**
+- Instalação na tela inicial
+- Funcionamento offline
+- Atualizações automáticas
+- Experiência nativa
+
+## 📋 Configurações Android
+
+### Permissões
+- `INTERNET`: Conexão com APIs
+- `ACCESS_NETWORK_STATE`: Detecção de conectividade
+- `VIBRATE`: Feedback háptico
+- `WAKE_LOCK`: Manter tela ativa durante leitura
+
+### Configurações de Segurança
+- HTTPS obrigatório
+- Configuração de segurança de rede
+- Certificados SSL válidos
+
+## 🔧 Configurações do Capacitor
+
+### Splash Screen
+- Duração: 2 segundos
+- Cor de fundo: #3b82f6 (azul primário)
+- Modo fullscreen
+- Sem spinner
+
+### Status Bar
+- Estilo: dark
+- Cor de fundo: #3b82f6
+- Integração com tema do app
+
+### Teclado
+- Redimensionamento automático
+- Estilo dark
+- Modo fullscreen
+
+## 📊 Monitoramento
+
+### Métricas de Performance
+- Tempo de carregamento inicial
+- Tempo de resposta da API
+- Uso de memória
+- Taxa de erro
+
+### Analytics
+- Eventos de navegação
+- Interações do usuário
+- Tempo de sessão
+- Funcionalidades mais usadas
+
+## 🚀 Deploy
+
+### Google Play Store
+1. Build de release: `npm run build`
+2. Sincronizar: `npx cap sync android`
+3. Gerar APK/AAB no Android Studio
+4. Upload para Google Play Console
+
+### PWA
+1. Build: `npm run build`
+2. Deploy para servidor HTTPS
+3. Configurar Service Worker
+4. Testar instalação
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature
+3. Commit suas mudanças
+4. Push para a branch
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+## 🙏 Agradecimentos
+
+- Comunidade cristã
+- Contribuidores do projeto
+- Bibliotecas open source utilizadas
+
+---
+
+**Conexão com Deus** - Fortalecendo vidas através da tecnologia e fé. 🙏✨

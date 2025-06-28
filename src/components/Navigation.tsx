@@ -1,196 +1,161 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Menu, User, Crown, LogOut, X } from "lucide-react";
+import { Shield, Menu, User, Crown, LogOut, Home, BookOpen, MessageCircle, Heart, User as UserIcon, X, GraduationCap } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useIsMobile, useMobileFeatures } from "@/hooks/use-mobile";
+import { useSystemNavigation } from "@/hooks/useSystemNavigation";
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose
+} from "@/components/ui/drawer";
 
 interface NavigationProps {
   onAuthClick: () => void;
 }
 
 const Navigation = ({ onAuthClick }: NavigationProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { subscription } = useSubscription();
+  const isMobile = useIsMobile();
+  const { hapticFeedback } = useMobileFeatures();
   const location = useLocation();
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const navItems = [
-    { name: "Início", path: "/" },
-    { name: "Bíblia", path: "/biblia" },
-    { name: "Conversa", path: "/conversa" },
-    { name: "Favoritos", path: "/favoritos" },
-  ];
-
-  const userNavItems = user ? [
-    ...navItems,
-    { name: "Perfil", path: "/perfil" },
-  ] : navItems;
-
-  const isActive = (path: string) => location.pathname === path;
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuOpen]);
-
-  // Close menu when route changes
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location.pathname]);
+  const handleMenuClick = () => {
+    hapticFeedback();
+    setIsDrawerOpen(true);
+  };
 
   const handleAuthClick = () => {
-    // Store current page before redirecting to login
-    localStorage.setItem('redirectAfterLogin', location.pathname);
+    hapticFeedback();
     onAuthClick();
   };
 
+  const handleSignOut = async () => {
+    hapticFeedback();
+    await signOut();
+  };
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const menuItems = [
+    { path: '/', label: 'Início', icon: Home },
+    { path: '/biblia', label: 'Bíblia', icon: BookOpen },
+    { path: '/estudos', label: 'Estudos Bíblicos', icon: GraduationCap },
+    { path: '/conversa', label: 'Conversa', icon: MessageCircle },
+    { path: '/favoritos', label: 'Favoritos', icon: Heart },
+    { path: '/perfil', label: 'Perfil', icon: UserIcon },
+  ];
+
   return (
-    <nav className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50" ref={menuRef}>
-      <div className="container mx-auto px-6">
+    <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b sticky top-0 z-50">
+      <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <Shield className="w-8 h-8 text-primary" />
-            <span className="text-xl font-bold heavenly-text">
-              Conexão com Deus
-            </span>
+            <span className="font-bold text-xl hidden sm:block">Conexão com Deus</span>
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            {userNavItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`transition-colors ${
-                  isActive(item.path)
-                    ? "text-primary font-medium"
-                    : "text-foreground hover:text-primary"
-                }`}
-              >
-                {item.name}
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-4">
+            {menuItems.map((item) => (
+              <Link key={item.path} to={item.path}>
+                <Button
+                  variant={isActive(item.path) ? "default" : "ghost"}
+                  className="flex items-center space-x-2"
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </Button>
               </Link>
             ))}
           </div>
 
-          {/* Auth Section */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* User Menu / Auth */}
+          <div className="flex items-center space-x-2">
             {user ? (
               <>
-                <span className="text-sm text-muted-foreground">
-                  Olá, {user.email?.split('@')[0]}
-                </span>
-                {subscription.subscribed && (
-                  <Badge variant="secondary" className="mr-2">
-                    {subscription.subscription_tier === "basico" ? "Básico" : "Premium"}
+                {subscription?.subscribed && (
+                  <Badge variant="secondary" className="hidden sm:flex">
+                    <Crown className="w-3 h-3 mr-1" />
+                    {subscription.subscription_tier === 'premium' ? 'Premium' : 'Básico'}
                   </Badge>
                 )}
-                <Button 
-                  onClick={signOut} 
-                  variant="outline"
-                  size="sm"
-                  className="border-primary/20"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sair
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:ml-2">Sair</span>
                 </Button>
               </>
             ) : (
-              <>
-                <Button variant="ghost" onClick={handleAuthClick}>
-                  <User className="w-4 h-4 mr-2" />
-                  Entrar
-                </Button>
-                <Link to="/assinatura">
-                  <Button className="divine-button">
-                    <Crown className="w-4 h-4 mr-2" />
-                    Premium
+              <Button onClick={handleAuthClick} className="divine-button">
+                <User className="w-4 h-4 mr-2" />
+                <span className="hidden sm:block">Entrar</span>
+              </Button>
+            )}
+
+            {/* Mobile Menu Button */}
+            {isMobile && (
+              <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+                <DrawerTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={handleMenuClick}>
+                    <Menu className="w-5 h-5" />
                   </Button>
-                </Link>
-              </>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <DrawerHeader>
+                    <DrawerTitle className="flex items-center space-x-2">
+                      <Shield className="w-6 h-6 text-primary" />
+                      <span>Conexão com Deus</span>
+                    </DrawerTitle>
+                    <DrawerClose asChild>
+                      <Button variant="ghost" size="sm" className="absolute right-4 top-4">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </DrawerClose>
+                  </DrawerHeader>
+                  
+                  <div className="px-4 pb-4 space-y-2">
+                    {menuItems.map((item) => (
+                      <Link key={item.path} to={item.path} onClick={() => setIsDrawerOpen(false)}>
+                        <Button
+                          variant={isActive(item.path) ? "default" : "ghost"}
+                          className="w-full justify-start"
+                        >
+                          <item.icon className="w-4 h-4 mr-3" />
+                          {item.label}
+                        </Button>
+                      </Link>
+                    ))}
+                    
+                    {user && (
+                      <div className="pt-4 border-t">
+                        <Button 
+                          variant="ghost" 
+                          className="w-full justify-start text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            handleSignOut();
+                            setIsDrawerOpen(false);
+                          }}
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Sair
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </DrawerContent>
+              </Drawer>
             )}
           </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </Button>
-          </div>
         </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
-            <div className="flex flex-col space-y-4">
-              {userNavItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`transition-colors ${
-                    isActive(item.path)
-                      ? "text-primary font-medium"
-                      : "text-foreground hover:text-primary"
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
-              
-              <div className="flex flex-col space-y-2 pt-4 border-t border-border">
-                {user ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Logado: {user.email?.split('@')[0]}
-                    </p>
-                    <Button 
-                      onClick={signOut} 
-                      variant="outline"
-                      className="justify-start border-primary/20"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sair
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Button variant="ghost" onClick={handleAuthClick} className="justify-start">
-                      <User className="w-4 h-4 mr-2" />
-                      Entrar
-                    </Button>
-                    <Link to="/assinatura">
-                      <Button className="divine-button justify-start">
-                        <Crown className="w-4 h-4 mr-2" />
-                        Premium
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   );

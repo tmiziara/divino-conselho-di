@@ -108,6 +108,31 @@
 
   body {
     @apply bg-background text-foreground font-sans;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+    /* Improve touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Garantir que o conteúdo não seja coberto pela barra de navegação */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Mobile-specific improvements */
+  @media (max-width: 768px) {
+    html {
+      font-size: 14px;
+    }
+    
+    body {
+      /* Ajustar padding para considerar a barra de navegação do sistema */
+      padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Esconder a barra de navegação do sistema quando possível */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      body {
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+      }
+    }
   }
 
   .divine-gradient {
@@ -137,6 +162,37 @@
     background-image: linear-gradient(135deg, hsl(213, 78%, 56%) 0%, hsl(45, 93%, 47%) 100%);
   }
 
+  /* Mobile-specific components */
+  .mobile-card {
+    @apply bg-card border border-border rounded-lg p-4 shadow-sm;
+  }
+
+  .mobile-button {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+
+  .mobile-input {
+    @apply bg-background border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary;
+  }
+
+  /* Safe area for devices with notches */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Mobile bottom navigation - Posicionado acima da barra de navegação do sistema */
+  .mobile-bottom-nav {
+    bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
   /* Mobile text alignment consistency */
   @media (max-width: 768px) {
     .mobile-text-left {
@@ -145,6 +201,165 @@
     
     .mobile-center-titles {
       @apply text-center;
+    }
+
+    .mobile-padding {
+      @apply px-4 py-6;
+    }
+
+    .mobile-container {
+      @apply max-w-full mx-auto px-4;
+    }
+
+    /* Improve touch targets */
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Better scrolling for mobile */
+    .mobile-scroll {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* Mobile-friendly cards */
+    .mobile-card {
+      @apply rounded-lg p-4 shadow-sm border border-border;
+    }
+
+    /* Mobile-friendly buttons */
+    .mobile-button {
+      @apply px-4 py-3 rounded-lg font-medium text-sm;
+    }
+
+    /* Mobile-friendly inputs */
+    .mobile-input {
+      @apply px-3 py-3 rounded-lg text-base;
+    }
+
+    /* Mobile-friendly spacing */
+    .mobile-space-y > * + * {
+      margin-top: 1rem;
+    }
+
+    .mobile-space-x > * + * {
+      margin-left: 0.75rem;
+    }
+
+    /* Garantir que o conteúdo não seja coberto pela barra de navegação */
+    .mobile-content {
+      padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Esconder barra de navegação do sistema quando possível */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .mobile-content {
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+      }
+    }
+  }
+
+  /* Mobile gesture improvements */
+  .mobile-touch {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Mobile loading states */
+  .mobile-loading {
+    @apply animate-pulse bg-muted rounded;
+  }
+
+  /* Mobile-friendly typography */
+  @media (max-width: 768px) {
+    h1 {
+      @apply text-2xl font-bold;
+    }
+    
+    h2 {
+      @apply text-xl font-semibold;
+    }
+    
+    h3 {
+      @apply text-lg font-medium;
+    }
+    
+    p {
+      @apply text-sm leading-relaxed;
+    }
+  }
+
+  /* Configurações específicas para Samsung Galaxy e outros dispositivos Android */
+  @media screen and (max-width: 768px) {
+    /* Garantir que a navegação fique acima da barra do sistema */
+    .mobile-bottom-nav {
+      z-index: 9999;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      height: 4rem; /* Altura fixa menor */
+    }
+
+    /* Centralizar botões da navegação */
+    .mobile-bottom-nav .flex {
+      height: 100%;
+      align-items: center;
+      justify-content: space-around;
+    }
+
+    /* Ajustar padding do conteúdo para considerar a navegação */
+    body {
+      padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Garantir que botões sejam clicáveis */
+    .mobile-bottom-nav button,
+    .mobile-bottom-nav a {
+      position: relative;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 0.5rem 0;
+    }
+
+    /* Centralizar ícones e texto */
+    .mobile-bottom-nav .w-5 {
+      margin-bottom: 0.25rem;
+    }
+
+    .mobile-bottom-nav .text-xs {
+      line-height: 1;
+    }
+
+    /* Ajustar espaçamento das páginas */
+    .container {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+
+    /* Centralizar títulos das páginas */
+    .text-center h1,
+    .text-center h2 {
+      margin-bottom: 1rem;
+    }
+
+    /* Ajustar espaçamento dos cards */
+    .spiritual-card {
+      margin-bottom: 1rem;
+    }
+
+    /* Garantir que botões não sejam cobertos */
+    .mobile-bottom-padding {
+      padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
     }
   }
 }

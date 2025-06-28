@@ -97,6 +97,8 @@ const Favorites = () => {
     switch (type) {
       case "verse":
         return <BookOpen className="w-4 h-4" />;
+      case "study":
+        return <BookOpen className="w-4 h-4" />;
       case "psalm":
         return <Heart className="w-4 h-4" />;
       case "message":
@@ -110,6 +112,8 @@ const Favorites = () => {
     switch (type) {
       case "verse":
         return "Versículo";
+      case "study":
+        return "Estudo Bíblico";
       case "psalm":
         return "Salmo";
       case "message":
@@ -123,6 +127,8 @@ const Favorites = () => {
     switch (type) {
       case "verse":
         return "bg-primary/10 text-primary";
+      case "study":
+        return "bg-blue-500/10 text-blue-500";
       case "psalm":
         return "bg-accent/10 text-accent";
       case "message":
@@ -217,23 +223,15 @@ const Favorites = () => {
                           <div className="flex-1 min-w-0">
                             <CardTitle className="flex items-center gap-2 text-base sm:text-xl">
                               {getTypeIcon(favorite.type)}
-                              <span className="truncate">{favorite.title}</span>
+                              <span className="truncate">
+                                {favorite.reference || favorite.title}
+                              </span>
                             </CardTitle>
-                            {favorite.reference && (
-                              <CardDescription className="text-primary font-medium text-sm">
-                                {favorite.reference}
-                              </CardDescription>
-                            )}
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <Badge className={`${getTypeColor(favorite.type)} text-xs`}>
                               {getTypeLabel(favorite.type)}
                             </Badge>
-                            <SocialShare 
-                              title={favorite.title}
-                              content={favorite.content}
-                              reference={favorite.reference}
-                            />
                             <Button 
                               variant="ghost" 
                               size="sm" 

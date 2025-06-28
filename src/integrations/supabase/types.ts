@@ -36,6 +36,92 @@ export type Database = {
         }
         Relationships: []
       }
+      bible_studies: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          cover_image: string | null
+          total_chapters: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          cover_image?: string | null
+          total_chapters?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          cover_image?: string | null
+          total_chapters?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bible_study_chapters: {
+        Row: {
+          id: string
+          study_id: string
+          chapter_number: number
+          title: string
+          main_verse: string
+          main_verse_reference: string
+          reflective_reading: string
+          reflection_question: string
+          chapter_prayer: string
+          practical_application: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          study_id: string
+          chapter_number: number
+          title: string
+          main_verse: string
+          main_verse_reference: string
+          reflective_reading: string
+          reflection_question: string
+          chapter_prayer: string
+          practical_application: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          study_id?: string
+          chapter_number?: number
+          title?: string
+          main_verse?: string
+          main_verse_reference?: string
+          reflective_reading?: string
+          reflection_question?: string
+          chapter_prayer?: string
+          practical_application?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bible_study_chapters_study_id_fkey"
+            columns: ["study_id"]
+            isOneToOne: false
+            referencedRelation: "bible_studies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -207,30 +293,118 @@ export type Database = {
         }
         Relationships: []
       }
-      versiculos: {
+      user_study_favorites: {
         Row: {
-          capitulo: number
-          id: number
-          livro: string
-          texto: string
-          versao: string | null
-          versiculo: number
+          id: string
+          user_id: string
+          chapter_id: string
+          created_at: string
         }
         Insert: {
-          capitulo: number
-          id?: number
-          livro: string
-          texto: string
-          versao?: string | null
-          versiculo: number
+          id?: string
+          user_id: string
+          chapter_id: string
+          created_at?: string
         }
         Update: {
-          capitulo?: number
-          id?: number
-          livro?: string
-          texto?: string
-          versao?: string | null
-          versiculo?: number
+          id?: string
+          user_id?: string
+          chapter_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_study_favorites_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "bible_study_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_study_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_study_progress: {
+        Row: {
+          id: string
+          user_id: string
+          study_id: string
+          chapter_id: string
+          is_completed: boolean
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          study_id: string
+          chapter_id: string
+          is_completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          study_id?: string
+          chapter_id?: string
+          is_completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_study_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "bible_study_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_study_progress_study_id_fkey"
+            columns: ["study_id"]
+            isOneToOne: false
+            referencedRelation: "bible_studies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_study_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      versiculos: {
+        Row: {
+          book: string
+          chapter: number
+          content: string
+          id: string
+          verse: number
+        }
+        Insert: {
+          book: string
+          chapter: number
+          content: string
+          id?: string
+          verse: number
+        }
+        Update: {
+          book?: string
+          chapter?: number
+          content?: string
+          id?: string
+          verse?: number
         }
         Relationships: []
       }

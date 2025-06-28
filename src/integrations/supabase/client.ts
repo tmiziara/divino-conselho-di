@@ -5,6 +5,9 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://ssylplbgacuwkqkkhric.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzeWxwbGJnYWN1d2txa2tocmljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzNDM5MzAsImV4cCI6MjA2NDkxOTkzMH0.u8riSndU2DDD22e6lwdhDo5S6ezN_LxAbBwwQz8rn4s";
 
+// Configurações específicas para mobile
+const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase());
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
