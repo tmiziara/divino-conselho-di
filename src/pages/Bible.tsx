@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Search, Bookmark, Heart } from "lucide-react";
+import { Search, Bookmark, Heart, BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
 import BibleReader from "@/components/BibleReader";
@@ -33,7 +32,8 @@ const Bible = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold heavenly-text mb-4">
+            <h1 className="flex justify-center items-center text-4xl font-bold heavenly-text mb-4">
+              <BookOpen className="w-8 h-8 md:w-10 md:h-10 mr-3 text-primary" />
               Bíblia Sagrada
             </h1>
             <p className="text-muted-foreground">

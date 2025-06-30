@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -100,8 +99,8 @@ const Chat = () => {
       
       <div className="container mx-auto px-6 py-8">
         <div className="text-center md:text-center mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold heavenly-text mb-4">
-            <MessageCircle className="w-8 h-8 md:w-10 md:h-10 inline-block mr-3" />
+          <h1 className="flex justify-center items-center text-2xl md:text-4xl font-bold heavenly-text mb-4">
+            <MessageCircle className="w-8 h-8 md:w-10 md:h-10 mr-3 text-primary" />
             Conversa Espiritual
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground">

@@ -65,20 +65,22 @@ const StudyChapter = () => {
 
   const fetchStudyInfo = async (slug: string) => {
     try {
-      // Converter o slug de volta para o título
-      const title = decodeURIComponent(slug).replace(/-/g, ' ');
+      // Usar o sistema local em vez do Supabase
+      const { localContent } = await import('@/lib/localContent');
+      const studyData = await localContent.getStudyBySlug(slug);
       
-      const { data, error } = await import('@/integrations/supabase/client').then(
-        ({ supabase }) => supabase
-          .from('bible_studies')
-          .select('*')
-          .ilike('title', title)
-          .eq('is_active', true)
-          .single()
-      );
-
-      if (error) throw error;
-      setStudy(data);
+      if (studyData) {
+        setStudy({
+          id: studyData.id,
+          title: studyData.title,
+          description: studyData.description,
+          cover_image: studyData.cover_image,
+          total_chapters: studyData.total_chapters,
+          is_active: studyData.is_active,
+          created_at: studyData.created_at,
+          updated_at: studyData.updated_at
+        });
+      }
     } catch (error) {
       console.error('Error fetching study:', error);
     }
@@ -93,12 +95,6 @@ const StudyChapter = () => {
       console.log('Missing chapter or study:', { chapter, study });
       return;
     }
-    
-    console.log('Marking chapter as completed:', {
-      chapterId: chapter.id,
-      studyId: study.id,
-      chapterNumber: chapter.chapter_number
-    });
     
     setIsMarkingCompleted(true);
     
@@ -121,6 +117,11 @@ const StudyChapter = () => {
       }
     } catch (error) {
       console.error('Error marking chapter as completed:', error);
+      toast({
+        title: "Erro ao salvar progresso",
+        description: "Não foi possível marcar o capítulo como concluído.",
+        variant: "destructive"
+      });
     } finally {
       setIsMarkingCompleted(false);
     }

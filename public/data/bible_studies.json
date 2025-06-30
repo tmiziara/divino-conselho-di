@@ -1,0 +1,54 @@
+[
+  {
+    "id": "fc1af9d3-5510-43a5-a22a-4a30a7fc0dbd",
+    "title": "Vencendo a Ansiedade com Fé",
+    "description": "Um estudo bíblico de 7 capítulos que combina versículos poderosos, reflexões profundas e aplicações práticas para superar a ansiedade através da fé em Deus.",
+    "cover_image": "",
+    "total_chapters": 7,
+    "is_active": true,
+    "is_premium": false,
+    "slug": "vencendo-ansiedade-fe",
+    "category": "vida-espiritual",
+    "created_at": "2025-06-27T19:30:53.286463+00:00",
+    "updated_at": "2025-06-27T19:30:53.286463+00:00"
+  },
+  {
+    "id": "8f2e9a1c-4b73-4d2e-a981-7c3f8e9b2a1d",
+    "title": "O Poder do Perdão e da Reconciliação",
+    "description": "Um estudo bíblico profundo de 7 capítulos que explora a natureza transformadora do perdão divino e humano, oferecendo princípios práticos para viver em liberdade e restaurar relacionamentos quebrados.",
+    "cover_image": "",
+    "total_chapters": 7,
+    "is_active": true,
+    "is_premium": false,
+    "slug": "poder-perdao-reconciliacao",
+    "category": "relacionamentos",
+    "created_at": "2025-06-28T19:30:53.286463+00:00",
+    "updated_at": "2025-06-28T19:30:53.286463+00:00"
+  },
+  {
+    "id": "9f3e8b2d-5c64-4e3f-b982-8d4f9e0c3b2a",
+    "title": "Desenvolvendo um Coração Grato - A Transformação pela Gratidão",
+    "description": "Um estudo bíblico transformador de 7 capítulos que explora o poder da gratidão para mudar nossa perspectiva, fortalecer nossa fé e transformar nossa vida em uma jornada de louvor e adoração a Deus.",
+    "cover_image": "",
+    "total_chapters": 7,
+    "is_active": true,
+    "is_premium": true,
+    "slug": "coracao-grato-gratidao",
+    "category": "vida-espiritual",
+    "created_at": "2025-06-29T19:30:53.286463+00:00",
+    "updated_at": "2025-06-29T19:30:53.286463+00:00"
+  },
+  {
+    "id": "a1b2c3d4-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
+    "title": "Construindo uma Família Forte",
+    "description": "Um estudo bíblico prático de 5 capítulos que oferece princípios fundamentais para construir relacionamentos familiares saudáveis baseados na Palavra de Deus.",
+    "cover_image": "",
+    "total_chapters": 5,
+    "is_active": true,
+    "is_premium": false,
+    "slug": "construindo-familia-forte",
+    "category": "familia",
+    "created_at": "2025-06-30T19:30:53.286463+00:00",
+    "updated_at": "2025-06-30T19:30:53.286463+00:00"
+  }
+] 

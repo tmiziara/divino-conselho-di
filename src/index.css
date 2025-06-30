@@ -275,18 +275,71 @@
   @media (max-width: 768px) {
     h1 {
       @apply text-2xl font-bold;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      hyphens: auto;
     }
     
     h2 {
       @apply text-xl font-semibold;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      hyphens: auto;
     }
     
     h3 {
       @apply text-lg font-medium;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      hyphens: auto;
     }
     
     p {
       @apply text-sm leading-relaxed;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+
+    /* Melhorar centralização dos títulos */
+    .text-center h1,
+    .text-center h2,
+    .text-center h3 {
+      text-align: center !important;
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 100%;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    /* Garantir que textos não saiam da tela */
+    .break-words {
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      max-width: 100%;
+    }
+
+    /* Melhorar espaçamento dos containers */
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Garantir que cards não saiam da tela */
+    .spiritual-card {
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .spiritual-card * {
+      max-width: 100%;
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
   }
 

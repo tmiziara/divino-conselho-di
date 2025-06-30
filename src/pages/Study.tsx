@@ -18,12 +18,15 @@ import {
   Target,
   Lightbulb,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  Lock
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useBibleStudies, type BibleStudy, type BibleStudyChapter } from '@/hooks/useBibleStudies';
 import { useBibleFavorites } from '@/hooks/useBibleFavorites';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useContentAccess } from '@/hooks/useContentAccess';
+import { localContent } from '@/lib/localContent';
 import { cn } from '@/lib/utils';
 import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,180 +52,78 @@ const Study = () => {
     getStudyProgress
   } = useBibleStudies();
 
+  const { hasAccess, isLoading: accessLoading } = useContentAccess();
+
   useEffect(() => {
     if (studyId) {
-      console.log('Study component: studyId received:', studyId);
-      console.log('Is mobile:', isMobile);
       setStudyLoading(true);
+      
+      // Timeout de segurança para evitar travamento
+      const timeoutId = setTimeout(() => {
+        setStudyLoading(false);
+      }, 15000); // 15 segundos
       
       const loadStudyData = async () => {
         try {
-          // Primeiro, buscar todos os estudos ativos
-          console.log('Fetching all active studies...');
-          const { data: allStudies, error: allStudiesError } = await import('@/integrations/supabase/client').then(
-            ({ supabase }) => supabase
-              .from('bible_studies')
-              .select('*')
-              .eq('is_active', true)
-          );
+          // Usar o sistema simplificado
+          await fetchChapters(studyId);
           
-          console.log('All studies result:', { allStudies, allStudiesError });
+          // Buscar informações do estudo local (agora assíncrono)
+          const studyData = await localContent.getStudyBySlug(studyId);
           
-          if (allStudies && allStudies.length > 0) {
-            // Converter o slug para título para comparação
-            const searchTitle = decodeURIComponent(studyId).replace(/-/g, ' ').toLowerCase();
-            console.log('Searching for title:', searchTitle);
-            
-            // Encontrar o estudo que corresponde ao título
-            const foundStudy = allStudies.find(study => 
-              study.title.toLowerCase().includes(searchTitle) ||
-              searchTitle.includes(study.title.toLowerCase())
-            );
-            
-            if (foundStudy) {
-              console.log('Found study by title comparison:', foundStudy);
-              setStudy(foundStudy);
-              
-              // Agora buscar os capítulos usando o ID do estudo encontrado
-              console.log('Fetching chapters for study ID:', foundStudy.id);
-              await fetchChapters(studyId);
-            } else {
-              console.log('No study found by title, using first study');
-              setStudy(allStudies[0]);
-              await fetchChapters(studyId);
-            }
+          if (studyData) {
+            setStudy({
+              id: studyData.id,
+              title: studyData.title,
+              description: studyData.description,
+              cover_image: studyData.cover_image,
+              total_chapters: studyData.total_chapters,
+              is_active: studyData.is_active,
+              slug: studyData.slug,
+              created_at: studyData.created_at,
+              updated_at: studyData.updated_at
+            });
           } else {
-            console.error('No active studies found, using hardcoded fallback');
-            
-            // Fallback hardcoded para o estudo "Vencendo a Ansiedade com Fé"
-            const fallbackStudy = {
-              id: '550e8400-e29b-41d4-a716-446655440000',
-              title: 'Vencendo a Ansiedade com Fé',
-              description: 'Um estudo bíblico de 7 capítulos para superar a ansiedade através da fé em Deus, baseado em passagens fundamentais da Escritura.',
-              total_chapters: 7,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-            
-            console.log('Using hardcoded fallback study:', fallbackStudy);
-            setStudy(fallbackStudy);
-            await fetchChapters(studyId);
+            // Não deixar o app travar - definir loading como false mesmo com erro
+            setStudyLoading(false);
           }
         } catch (error) {
           console.error('Error in loadStudyData:', error);
+          // Não deixar o app travar - definir loading como false mesmo com erro
+          setStudyLoading(false);
           
-          // Último recurso: usar estudo hardcoded
-          console.log('Using hardcoded study as last resort');
-          const fallbackStudy = {
-            id: '550e8400-e29b-41d4-a716-446655440000',
-            title: 'Vencendo a Ansiedade com Fé',
-            description: 'Um estudo bíblico de 7 capítulos para superar a ansiedade através da fé em Deus, baseado em passagens fundamentais da Escritura.',
-            total_chapters: 7,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          
-          setStudy(fallbackStudy);
-          await fetchChapters(studyId);
+          // Mostrar toast de erro se disponível
+          if (error.message && error.message !== 'Estudo não encontrado') {
+            // Tentar usar o toast se disponível
+            try {
+              const { toast } = require('@/hooks/use-toast');
+              toast({
+                title: "Erro ao carregar estudo",
+                description: "Não foi possível carregar o estudo. Tente novamente.",
+                variant: "destructive"
+              });
+            } catch (toastError) {
+              console.error('Could not show toast:', toastError);
+            }
+          }
         } finally {
+          clearTimeout(timeoutId);
           setStudyLoading(false);
         }
       };
       
-      loadStudyData();
+      loadStudyData().catch(error => {
+        console.error('Unhandled error in loadStudyData:', error);
+        clearTimeout(timeoutId);
+        setStudyLoading(false);
+      });
+      
+      // Cleanup function
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
   }, [studyId]);
-
-  const fetchStudyInfo = async (slug: string) => {
-    try {
-      console.log('fetchStudyInfo called with slug:', slug);
-      // Converter o slug de volta para o título
-      const title = decodeURIComponent(slug).replace(/-/g, ' ');
-      console.log('fetchStudyInfo: decoded title:', title);
-      
-      // Primeiro vamos buscar todos os estudos para debug
-      const { data: allStudies, error: allStudiesError } = await import('@/integrations/supabase/client').then(
-        ({ supabase }) => supabase
-          .from('bible_studies')
-          .select('*')
-          .eq('is_active', true)
-      );
-      
-      console.log('All active studies:', allStudies);
-      
-      // Agora buscar o estudo específico
-      const { data, error } = await import('@/integrations/supabase/client').then(
-        ({ supabase }) => supabase
-          .from('bible_studies')
-          .select('*')
-          .eq('is_active', true)
-          .ilike('title', `%${title}%`)
-          .single()
-      );
-
-      console.log('fetchStudyInfo result:', { data, error, searchTitle: title });
-
-      if (error) {
-        console.error('Error in fetchStudyInfo:', error);
-        throw error;
-      }
-      setStudy(data);
-    } catch (error) {
-      console.error('Error fetching study:', error);
-      
-      // Se os capítulos foram carregados, vamos buscar o estudo pelo ID do primeiro capítulo
-      if (chapters.length > 0) {
-        try {
-          console.log('Trying to get study from first chapter...');
-          const firstChapter = chapters[0];
-          console.log('First chapter:', firstChapter);
-          
-          const { data: studyFromChapter, error: studyError } = await import('@/integrations/supabase/client').then(
-            ({ supabase }) => supabase
-              .from('bible_studies')
-              .select('*')
-              .eq('id', firstChapter.study_id)
-              .single()
-          );
-          
-          console.log('Study from chapter result:', { studyFromChapter, studyError });
-          
-          if (studyFromChapter) {
-            console.log('Found study from chapter:', studyFromChapter);
-            setStudy(studyFromChapter);
-            return;
-          }
-        } catch (chapterError) {
-          console.error('Error getting study from chapter:', chapterError);
-        }
-      }
-      
-      // Vamos tentar uma busca mais flexível
-      try {
-        console.log('Trying alternative search...');
-        const { data: alternativeData, error: alternativeError } = await import('@/integrations/supabase/client').then(
-          ({ supabase }) => supabase
-            .from('bible_studies')
-            .select('*')
-            .eq('is_active', true)
-            .ilike('title', `%vencendo%ansiedade%`)
-            .single()
-        );
-        
-        console.log('Alternative search result:', { alternativeData, alternativeError });
-        
-        if (alternativeData) {
-          setStudy(alternativeData);
-        }
-      } catch (altError) {
-        console.error('Alternative search also failed:', altError);
-      }
-    } finally {
-      setStudyLoading(false);
-    }
-  };
 
   const handleAuthClick = () => {
     setShowAuthDialog(true);
@@ -256,7 +157,7 @@ const Study = () => {
   }
 
   // Mostrar loading enquanto está carregando o estudo
-  if (studyLoading || loading) {
+  if (studyLoading || loading || accessLoading) {
     return (
       <div className="min-h-screen celestial-bg">
         <Navigation onAuthClick={handleAuthClick} />
@@ -272,6 +173,7 @@ const Study = () => {
               <div className="text-xs text-muted-foreground">
                 <p>Study Loading: {studyLoading.toString()}</p>
                 <p>Chapters Loading: {loading.toString()}</p>
+                <p>Access Loading: {accessLoading.toString()}</p>
                 <p>Study ID: {studyId}</p>
               </div>
             </CardContent>
@@ -282,7 +184,7 @@ const Study = () => {
   }
 
   // Só mostrar "estudo não encontrado" se não estiver carregando E não encontrou o estudo
-  if (!study && !studyLoading && !loading) {
+  if (!study && !studyLoading && !loading && !accessLoading) {
     return (
       <div className="min-h-screen celestial-bg">
         <Navigation onAuthClick={handleAuthClick} />
@@ -314,173 +216,153 @@ const Study = () => {
     <div className="min-h-screen celestial-bg">
       <Navigation onAuthClick={handleAuthClick} />
       
-      <div className="container mx-auto px-6 py-8">
-        {/* Header */}
+      <div className="container mx-auto px-4 sm:px-6 py-8">
+        {/* Header do Estudo */}
         <div className="mb-8">
-          <Link to="/estudos">
-            <Button variant="ghost" className="mb-4">
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Voltar aos Estudos
-            </Button>
-          </Link>
+          <div className="flex items-center gap-4 mb-4">
+            <Link to="/estudos">
+              <Button variant="ghost" size="sm">
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Voltar aos Estudos
+              </Button>
+            </Link>
+          </div>
           
-          <div className="text-center">
-            <h1 className="text-3xl md:text-4xl font-bold heavenly-text mb-4">
-              {study.title}
+          <div className="text-center mb-8">
+            <h1 className="flex justify-center items-center text-2xl sm:text-3xl md:text-4xl font-bold heavenly-text mb-4 break-words">
+              <BookOpen className="w-8 h-8 md:w-10 md:h-10 mr-3 text-primary" />
+              {study?.title}
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-6 max-w-3xl mx-auto">
-              {study.description}
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto break-words px-2">
+              {study?.description}
             </p>
             
-            {/* Progresso geral */}
-            <Card className="spiritual-card max-w-md mx-auto mb-6">
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Seu Progresso</span>
-                  <span className="text-sm text-muted-foreground">
-                    {progress.completed}/{progress.total} capítulos
-                  </span>
-                </div>
-                <Progress value={progress.percentage} className="h-3 mb-2" />
-                <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{study.total_chapters} capítulos</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Target className="w-3 h-3" />
-                    <span>Navegação livre</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Estatísticas do estudo */}
+            <div className="flex items-center justify-center gap-4 sm:gap-6 text-sm text-muted-foreground mt-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                <span>{chapters.length} capítulos</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                <span>~{Math.ceil(chapters.length * 15)} min</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4" />
+                <span>Estudo prático</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Lista de capítulos */}
-        {(() => {
-          console.log('Study render: loading =', loading, 'chapters.length =', chapters.length);
-          console.log('Study render: chapters =', chapters);
-          
-          if (loading) {
-            return (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                  <Card key={i} className="spiritual-card">
-                    <CardHeader>
-                      <div className="h-6 bg-muted rounded animate-pulse mb-2" />
-                      <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-16 bg-muted rounded animate-pulse mb-4" />
-                      <div className="h-8 bg-muted rounded animate-pulse" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            );
-          } else if (chapters.length > 0) {
-            return (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {chapters.map((chapter) => {
-                  const isCompleted = isChapterCompleted(chapter.id);
-                  const isFavorite = isChapterFavorite(chapter.id);
-                  
-                  return (
-                    <Card 
-                      key={chapter.id} 
-                      className={`spiritual-card group hover:shadow-lg transition-all duration-300 ${
-                        isCompleted ? 'ring-2 ring-green-500/20' : ''
-                      }`}
-                    >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="outline" className="text-xs">
-                                Capítulo {chapter.chapter_number}
-                              </Badge>
-                              {isCompleted && (
-                                <Badge variant="default" className="bg-green-500 text-xs">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Concluído
-                                </Badge>
-                              )}
-                            </div>
-                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                              {chapter.title}
-                            </CardTitle>
-                          </div>
-                          <div className="ml-4">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                              <BookOpen className="w-5 h-5 text-primary" />
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      
-                      <CardContent className="space-y-4">
-                        {/* Versículo principal */}
-                        <div className="bg-muted/50 p-3 rounded-lg">
-                          <p className="text-sm font-medium mb-1">Versículo Principal</p>
-                          <p className="text-xs text-muted-foreground italic">
-                            "{chapter.main_verse}"
-                          </p>
-                          <p className="text-xs text-primary font-medium mt-1">
-                            {chapter.main_verse_reference}
-                          </p>
-                        </div>
-
-                        {/* Estatísticas do capítulo */}
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            <span>Leitura Reflexiva</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Heart className="w-3 h-3" />
-                            <span>Oração</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Target className="w-3 h-3" />
-                            <span>Aplicação</span>
-                          </div>
-                        </div>
-
-                        {/* Botão de ação */}
-                        <Link to={`/estudos/${encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/${chapter.chapter_number}`}>
-                          <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
-                            <span>
-                              {isCompleted ? 'Revisar Capítulo' : 'Ler Capítulo'}
-                            </span>
-                            <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                          </Button>
-                        </Link>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            );
-          } else {
-            return (
-              <Card className="spiritual-card max-w-md mx-auto">
-                <CardContent className="py-12 text-center">
-                  <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">Nenhum capítulo encontrado</h3>
-                  <p className="text-muted-foreground">
-                    Este estudo ainda não possui capítulos disponíveis.
-                  </p>
-                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      <strong>Debug:</strong> Loading: {loading.toString()}, Chapters: {chapters.length}
-                    </p>
-                  </div>
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <Card key={i} className="spiritual-card">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded animate-pulse mb-2" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-16 bg-muted rounded animate-pulse mb-4" />
+                  <div className="h-8 bg-muted rounded animate-pulse" />
                 </CardContent>
               </Card>
-            );
-          }
-        })()}
+            ))}
+          </div>
+        ) : chapters.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {chapters.map((chapter) => {
+              const isCompleted = isChapterCompleted(chapter.id);
+              const isFavorite = isChapterFavorite(chapter.id);
+              
+              return (
+                <Card 
+                  key={chapter.id} 
+                  className={`spiritual-card group hover:shadow-lg transition-all duration-300 ${
+                    isCompleted ? 'ring-2 ring-green-500/20' : ''
+                  }`}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            Capítulo {chapter.chapter_number}
+                          </Badge>
+                          {isCompleted && (
+                            <Badge variant="default" className="bg-green-500 text-xs">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Concluído
+                            </Badge>
+                          )}
+                        </div>
+                        <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                          {chapter.title}
+                        </CardTitle>
+                      </div>
+                      <div className="ml-4">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <BookOpen className="w-5 h-5 text-primary" />
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    {/* Versículo principal */}
+                    <div className="bg-muted/50 p-3 rounded-lg">
+                      <p className="text-sm font-medium mb-1">Versículo Principal</p>
+                      <p className="text-xs text-muted-foreground italic">
+                        "{chapter.main_verse}"
+                      </p>
+                      <p className="text-xs text-primary font-medium mt-1">
+                        {chapter.main_verse_reference}
+                      </p>
+                    </div>
+
+                    {/* Estatísticas do capítulo */}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        <span>Leitura Reflexiva</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Heart className="w-3 h-3" />
+                        <span>Oração</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Target className="w-3 h-3" />
+                        <span>Aplicação</span>
+                      </div>
+                    </div>
+
+                    {/* Botão de ação */}
+                    <Link to={`/estudos/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/${chapter.chapter_number}`}>
+                      <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
+                        <span>
+                          {isCompleted ? 'Revisar Capítulo' : 'Ler Capítulo'}
+                        </span>
+                        <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <Card className="spiritual-card max-w-md mx-auto">
+            <CardContent className="py-12 text-center">
+              <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">Nenhum capítulo encontrado</h3>
+              <p className="text-muted-foreground">
+                Este estudo ainda não possui capítulos disponíveis.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Dicas de estudo */}
         <div className="mt-12">
