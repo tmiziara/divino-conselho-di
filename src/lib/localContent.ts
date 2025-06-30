@@ -11,7 +11,6 @@ export interface LocalStudy {
   category?: string;
   created_at: string;
   updated_at: string;
-  chapters: LocalChapter[];
 }
 
 export interface LocalChapter {
@@ -39,9 +38,10 @@ export interface LocalVerse {
 export class LocalContentManager {
   private static instance: LocalContentManager;
   private studies: LocalStudy[] = [];
-  private chapters: LocalChapter[] = [];
+  private chaptersByStudy: Map<string, LocalChapter[]> = new Map();
+  private loadedStudies = false;
+  private loadedChapters = false;
   private verses: LocalVerse[] = [];
-  private loaded = false;
   
   private constructor() {}
   
@@ -52,124 +52,115 @@ export class LocalContentManager {
     return LocalContentManager.instance;
   }
 
-  // Carregar conteúdo dos arquivos JSON
-  private async loadContent() {
-    if (this.loaded) {
-      // Remover o console.log para evitar spam
-      return;
-    }
-    
+  // Carregar apenas os metadados dos estudos
+  private async loadStudies() {
+    if (this.loadedStudies) return;
     try {
-      console.log('Loading local content...');
-      
-      // Carregar estudos
-      console.log('Fetching bible_studies.json...');
+      console.time('FetchStudiesJSON');
       const studiesResponse = await fetch('/data/bible_studies.json');
-      if (!studiesResponse.ok) {
-        throw new Error(`Failed to load studies: ${studiesResponse.status}`);
-      }
-      const studiesData = await studiesResponse.json();
-      console.log('Studies loaded:', studiesData.length);
-      
-      // Carregar capítulos
-      console.log('Fetching bible_study_chapters.json...');
-      const chaptersResponse = await fetch('/data/bible_study_chapters.json');
-      if (!chaptersResponse.ok) {
-        throw new Error(`Failed to load chapters: ${chaptersResponse.status}`);
-      }
-      const chaptersData = await chaptersResponse.json();
-      console.log('Chapters loaded:', chaptersData.length);
-      
-      // Organizar estudos com seus capítulos
+      if (!studiesResponse.ok) throw new Error(`Failed to load studies: ${studiesResponse.status}`);
+      const studiesDataText = await studiesResponse.text();
+      console.timeEnd('FetchStudiesJSON');
+      console.time('ParseStudiesJSON');
+      const studiesData = JSON.parse(studiesDataText);
+      console.timeEnd('ParseStudiesJSON');
       this.studies = studiesData.map((study: any) => ({
         ...study,
-        is_premium: study.is_premium || false, // Usar a propriedade do JSON
-        slug: study.slug || study.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''), // Fallback para slug baseado no título
-        chapters: chaptersData.filter((chapter: any) => chapter.study_id === study.id)
+        is_premium: study.is_premium || false,
+        slug: study.slug || study.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        // chapters: [] // Não carregar capítulos aqui
       }));
-      
-      this.chapters = chaptersData;
-      this.loaded = true;
-      
-      console.log('Local content loaded successfully:', {
-        studies: this.studies.length,
-        chapters: this.chapters.length
-      });
-      
+      this.loadedStudies = true;
     } catch (error) {
-      console.error('Error loading local content:', error);
-      // Não deixar o app travar - definir como carregado mesmo com erro
-      this.loaded = true;
+      console.error('Error loading studies:', error);
       this.studies = [];
-      this.chapters = [];
-      console.log('Set fallback empty data to prevent infinite loops');
+      this.loadedStudies = true;
     }
   }
 
-  // Obter todos os estudos (públicos e premium)
+  // Carregar todos os capítulos (usado apenas para cache, se necessário)
+  private async loadAllChapters() {
+    if (this.loadedChapters) return;
+    try {
+      const chaptersResponse = await fetch('/data/bible_study_chapters.json');
+      if (!chaptersResponse.ok) throw new Error(`Failed to load chapters: ${chaptersResponse.status}`);
+      const chaptersData = await chaptersResponse.json();
+      // Indexar capítulos por study_id
+      this.chaptersByStudy = new Map();
+      chaptersData.forEach((chapter: any) => {
+        if (!this.chaptersByStudy.has(chapter.study_id)) {
+          this.chaptersByStudy.set(chapter.study_id, []);
+        }
+        this.chaptersByStudy.get(chapter.study_id)!.push(chapter);
+      });
+      this.loadedChapters = true;
+    } catch (error) {
+      console.error('Error loading chapters:', error);
+      this.chaptersByStudy = new Map();
+      this.loadedChapters = true;
+    }
+  }
+
+  // Obter todos os estudos (apenas metadados)
   async getAllStudies(): Promise<LocalStudy[]> {
-    await this.loadContent();
+    await this.loadStudies();
     return this.studies.filter(study => study.is_active);
   }
 
-  // Obter estudos públicos (não premium)
-  async getPublicStudies(): Promise<LocalStudy[]> {
-    await this.loadContent();
-    return this.studies.filter(study => study.is_active && !study.is_premium);
+  // Obter capítulos de um estudo sob demanda (agora busca arquivo separado)
+  async getChaptersByStudyId(studyId: string): Promise<LocalChapter[]> {
+    // Cache simples em memória
+    if (!this.chaptersByStudy.has(studyId)) {
+      try {
+        console.time(`FetchChaptersJSON_${studyId}`);
+        const response = await fetch(`/data/chapters_${studyId}.json`);
+        if (!response.ok) throw new Error('Capítulos não encontrados para o estudo');
+        const chaptersText = await response.text();
+        console.timeEnd(`FetchChaptersJSON_${studyId}`);
+        console.time(`ParseChaptersJSON_${studyId}`);
+        const chapters = JSON.parse(chaptersText);
+        console.timeEnd(`ParseChaptersJSON_${studyId}`);
+        this.chaptersByStudy.set(studyId, chapters);
+      } catch (error) {
+        console.error('Erro ao buscar capítulos do estudo', studyId, error);
+        this.chaptersByStudy.set(studyId, []);
+      }
+    }
+    return this.chaptersByStudy.get(studyId) || [];
   }
 
-  // Obter estudos premium
-  async getPremiumStudies(): Promise<LocalStudy[]> {
-    await this.loadContent();
-    return this.studies.filter(study => study.is_active && study.is_premium);
-  }
-
-  // Obter estudo por ID
+  // Obter estudo por ID (sem capítulos)
   async getStudyById(studyId: string): Promise<LocalStudy | null> {
-    await this.loadContent();
+    await this.loadStudies();
     return this.studies.find(study => study.id === studyId) || null;
   }
 
-  // Obter estudo por slug (título convertido)
+  // Obter estudo por slug (sem capítulos)
   async getStudyBySlug(slug: string): Promise<LocalStudy | null> {
-    await this.loadContent();
-    
-    // Primeiro, tentar encontrar por slug exato
+    await this.loadStudies();
     const foundBySlug = this.studies.find(study => study.slug === slug);
-    if (foundBySlug) {
-      return foundBySlug;
-    }
-    
-    // Se não encontrar por slug, tentar por título (compatibilidade)
+    if (foundBySlug) return foundBySlug;
     const searchTitle = decodeURIComponent(slug).replace(/-/g, ' ').toLowerCase();
-    
-    // Busca simples e direta
     const foundStudy = this.studies.find(study => {
       const studyTitle = study.title.toLowerCase();
-      
-      // Correspondência exata
-      if (studyTitle === searchTitle) {
-        return true;
-      }
-      
-      // Correspondência parcial
-      if (studyTitle.includes(searchTitle) || searchTitle.includes(studyTitle)) {
-        return true;
-      }
-      
+      if (studyTitle === searchTitle) return true;
+      if (studyTitle.includes(searchTitle) || searchTitle.includes(studyTitle)) return true;
       return false;
     });
-    
     return foundStudy || null;
+  }
+
+  // Obter capítulos de um estudo por slug
+  async getChaptersByStudySlug(slug: string): Promise<LocalChapter[]> {
+    const study = await this.getStudyBySlug(slug);
+    if (!study) return [];
+    return this.getChaptersByStudyId(study.id);
   }
 
   // Obter capítulo específico
   async getChapter(studyId: string, chapterNumber: number): Promise<LocalChapter | null> {
-    await this.loadContent();
-    const study = await this.getStudyById(studyId);
-    if (!study) return null;
-    
-    return study.chapters.find(chapter => chapter.chapter_number === chapterNumber) || null;
+    const chapters = await this.getChaptersByStudyId(studyId);
+    return chapters.find(chapter => chapter.chapter_number === chapterNumber) || null;
   }
 
   // Obter versículos básicos (sempre disponíveis)
@@ -190,13 +181,11 @@ export class LocalContentManager {
 
   // Obter estatísticas
   async getStats() {
-    await this.loadContent();
+    await this.loadStudies();
     return {
       totalStudies: this.studies.length,
-      publicStudies: (await this.getPublicStudies()).length,
-      premiumStudies: (await this.getPremiumStudies()).length,
       totalVerses: this.verses.length,
-      totalChapters: this.studies.reduce((total, study) => total + study.chapters.length, 0)
+      totalChapters: this.studies.reduce((total, study) => total + study.total_chapters, 0)
     };
   }
 }

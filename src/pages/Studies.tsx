@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBibleStudies } from "@/hooks/useBibleStudies";
 import { useStudyCategories } from "@/hooks/useStudyCategories";
 import { useSubscription } from "@/hooks/useSubscription";
+import { getCategoryConfig } from "@/lib/categories";
 
 const Studies = () => {
   const [showAuth, setShowAuth] = useState(false);
@@ -21,35 +22,19 @@ const Studies = () => {
   const { studies, loading, progress } = useBibleStudies();
   const categorizedStudies = useStudyCategories(studies, progress);
 
-  // Função para verificar se tem acesso premium
-  const hasPremiumAccess = () => {
-    // Se ainda está carregando, não mostrar o card de assinatura
-    if (subscriptionLoading) {
-      return false; // Não tem acesso durante o carregamento
-    }
-    
-    // Se tem subscription premium, tem acesso
+  // Função para verificar se tem acesso premium (memoizada)
+  const hasPremiumAccess = useMemo(() => {
+    if (subscriptionLoading || subscription === undefined) return undefined;
     if (subscription.subscribed && subscription.subscription_tier === 'premium') {
       return true;
     }
-    
-    // Se não tem subscription ou é free, não tem acesso
     return false;
-  };
+  }, [subscription, subscriptionLoading]);
 
   // Determinar se deve mostrar o card de assinatura
   const shouldShowSubscriptionCard = () => {
-    // Não mostrar se ainda está carregando
-    if (subscriptionLoading) {
-      return false;
-    }
-    
-    // Não mostrar se tem acesso premium
-    if (hasPremiumAccess()) {
-      return false;
-    }
-    
-    // Mostrar se não tem acesso premium
+    if (subscriptionLoading || subscription === undefined) return false;
+    if (hasPremiumAccess) return false;
     return true;
   };
 
@@ -57,7 +42,41 @@ const Studies = () => {
     setShowAuth(true);
   };
 
+  console.time('StudiesPageLoad');
+
+  // Ordenar categorias conforme desejado (sempre antes de qualquer return!)
+  const orderedCategories = useMemo(() => {
+    const order = [
+      'completos',
+      'em-progresso',
+      'familia',
+      'relacionamentos',
+      'proposito-carreira',
+      'financas',
+      'vida-espiritual',
+    ];
+    return order
+      .map(id => categorizedStudies.find(cat => cat.id === id))
+      .filter(Boolean);
+  }, [categorizedStudies]);
+
+  // Log para depuração robusta
+  console.log('categorizedStudies.length:', categorizedStudies.length);
+  console.log('orderedCategories.length:', orderedCategories.length);
+  try {
+    console.log('categorizedStudies:', JSON.stringify(categorizedStudies));
+    console.log('orderedCategories:', JSON.stringify(orderedCategories));
+  } catch (e) {
+    console.log('Erro ao serializar arrays para log:', e);
+  }
+
+  // Separar categorias
+  const inProgressCategory = orderedCategories.find(cat => cat.id === 'em-progresso' && cat.count > 0);
+  const completedCategory = orderedCategories.find(cat => cat.id === 'completos');
+  const otherCategories = orderedCategories.filter(cat => cat.id !== 'em-progresso' && cat.id !== 'completos');
+
   if (!user) {
+    console.timeEnd('StudiesPageLoad');
     return (
       <div className="min-h-screen celestial-bg">
         <Navigation onAuthClick={handleAuthClick} />
@@ -84,6 +103,34 @@ const Studies = () => {
     );
   }
 
+  if (loading || subscriptionLoading || subscription === undefined) {
+    // Mostra loading
+    return (
+      <div className="min-h-screen celestial-bg">
+        <Navigation onAuthClick={handleAuthClick} />
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="spiritual-card">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded animate-pulse mb-2" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-20 bg-muted rounded animate-pulse mb-4" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Quando dados carregados, medir tempo até o conteúdo aparecer
+  console.timeEnd('StudiesPageLoad');
+
   return (
     <div className="min-h-screen celestial-bg">
       <Navigation onAuthClick={handleAuthClick} />
@@ -99,7 +146,7 @@ const Studies = () => {
           </p>
         </div>
 
-        {(loading || subscriptionLoading) ? (
+        {(loading || subscriptionLoading || subscription === undefined) ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="spiritual-card">
@@ -114,7 +161,7 @@ const Studies = () => {
               </Card>
             ))}
           </div>
-        ) : categorizedStudies.length > 0 ? (
+        ) : orderedCategories.length > 0 ? (
           <>
             {/* Botão de Assinatura - Só aparece se deve mostrar */}
             {shouldShowSubscriptionCard() && (
@@ -140,16 +187,44 @@ const Studies = () => {
               </div>
             )}
 
-            {/* Grid de Categorias */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categorizedStudies.map((category) => (
-                <CategoryCard 
-                  key={category.id} 
-                  category={category} 
-                  hasPremiumAccess={hasPremiumAccess()}
-                />
-              ))}
-            </div>
+            {/* Grid de Categorias 2 colunas, cards menores */}
+            {orderedCategories.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4">
+                {/* Em Progresso centralizado se existir */}
+                {inProgressCategory && (
+                  <div className="col-span-2 flex justify-center">
+                    <CategoryCard 
+                      key={inProgressCategory.id}
+                      category={inProgressCategory}
+                      hasPremiumAccess={hasPremiumAccess}
+                      small
+                    />
+                  </div>
+                )}
+                {/* Outras categorias (exceto completos) */}
+                {otherCategories.map((category, idx) => (
+                  <CategoryCard 
+                    key={category.id || idx}
+                    category={category}
+                    hasPremiumAccess={hasPremiumAccess}
+                    small
+                  />
+                ))}
+                {/* Completos sempre no final */}
+                {completedCategory && (
+                  <CategoryCard 
+                    key={completedCategory.id}
+                    category={completedCategory}
+                    hasPremiumAccess={hasPremiumAccess}
+                    small
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground py-12">
+                Nenhuma categoria disponível.
+              </div>
+            )}
           </>
         ) : (
           <Card className="spiritual-card max-w-md mx-auto">

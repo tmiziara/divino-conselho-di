@@ -42,7 +42,7 @@ const AppContent = () => {
   }, [isNative, hideSystemUI]);
 
   return (
-    <BrowserRouter>
+    <>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/biblia" element={<Bible />} />
@@ -62,7 +62,7 @@ const AppContent = () => {
       <Toaster />
       <Sonner />
       <OfflineIndicator />
-    </BrowserRouter>
+    </>
   );
 };
 

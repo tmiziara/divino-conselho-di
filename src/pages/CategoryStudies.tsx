@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,14 +19,14 @@ const CategoryStudies = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { subscription } = useSubscription();
+  const { subscription, loading: subscriptionLoading } = useSubscription();
   const { studies, loading, progress } = useBibleStudies();
   const categorizedStudies = useStudyCategories(studies, progress);
 
-  // Função para verificar se tem acesso premium
-  const hasPremiumAccess = () => {
+  const hasPremiumAccess = useMemo(() => {
+    if (subscriptionLoading || subscription === undefined) return undefined;
     return subscription.subscribed && subscription.subscription_tier === 'premium';
-  };
+  }, [subscription, subscriptionLoading]);
 
   const handleAuthClick = () => {
     setShowAuth(true);
@@ -36,7 +36,10 @@ const CategoryStudies = () => {
   const currentCategory = categorizedStudies.find(cat => cat.id === categoryId);
   const categoryConfig = getCategoryConfig(categoryId || '');
 
+  console.time('CategoryStudiesPageLoad');
+
   if (!user) {
+    console.timeEnd('CategoryStudiesPageLoad');
     return (
       <div className="min-h-screen celestial-bg">
         <Navigation onAuthClick={handleAuthClick} />
@@ -64,6 +67,7 @@ const CategoryStudies = () => {
   }
 
   if (!currentCategory || !categoryConfig) {
+    console.timeEnd('CategoryStudiesPageLoad');
     return (
       <div className="min-h-screen celestial-bg">
         <Navigation onAuthClick={handleAuthClick} />
@@ -87,6 +91,34 @@ const CategoryStudies = () => {
   }
 
   const IconComponent = categoryConfig.icon;
+
+  if (loading || subscriptionLoading || subscription === undefined) {
+    // Mostra loading
+    return (
+      <div className="min-h-screen celestial-bg">
+        <Navigation onAuthClick={handleAuthClick} />
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="spiritual-card">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded animate-pulse mb-2" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-20 bg-muted rounded animate-pulse mb-4" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Quando dados carregados, medir tempo até o conteúdo aparecer
+  console.timeEnd('CategoryStudiesPageLoad');
 
   return (
     <div className="min-h-screen celestial-bg">
@@ -129,7 +161,7 @@ const CategoryStudies = () => {
           </div>
         </div>
 
-        {loading ? (
+        {loading || subscriptionLoading || subscription === undefined ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="spiritual-card">
@@ -150,6 +182,7 @@ const CategoryStudies = () => {
               const studyProgress = progress.filter(p => p.study_id === study.id);
               const completedChapters = studyProgress.filter(p => p.is_completed).length;
               const totalChapters = study.total_chapters;
+              const categoryConfig = getCategoryConfig(study.category);
               
               return (
                 <Card key={study.id} className="spiritual-card group hover:shadow-lg transition-all duration-300">
@@ -162,6 +195,13 @@ const CategoryStudies = () => {
                         <CardDescription className="text-sm break-words">
                           {study.description}
                         </CardDescription>
+                        {/* Categoria do estudo */}
+                        {categoryConfig && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <categoryConfig.icon className="w-4 h-4 text-gray-500" />
+                            <span className="text-xs text-gray-500">{categoryConfig.name}</span>
+                          </div>
+                        )}
                       </div>
                       <div className="relative flex-shrink-0">
                         <div className="flex flex-col items-center gap-1">
@@ -202,7 +242,7 @@ const CategoryStudies = () => {
                     </div>
 
                     {/* Botão de ação */}
-                    {study.is_premium && !hasPremiumAccess() ? (
+                    {study.is_premium && hasPremiumAccess === false ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -221,14 +261,14 @@ const CategoryStudies = () => {
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
-                    ) : (
+                    ) : hasPremiumAccess === true || !study.is_premium ? (
                       <Link to={`/estudos/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}`}>
                         <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
                           <span>Começar Estudo</span>
                           <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       </Link>
-                    )}
+                    ) : null}
                   </CardContent>
                 </Card>
               );

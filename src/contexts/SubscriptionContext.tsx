@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useMemo } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getSubscription, clearSubscriptionCache } from "@/lib/subscriptionSingleton";
 
 export interface SubscriptionData {
   subscribed: boolean;
@@ -8,8 +9,13 @@ export interface SubscriptionData {
   subscription_end: string | null;
 }
 
+interface SubscriptionProviderProps {
+  children: ReactNode;
+  initialSubscription?: SubscriptionData;
+}
+
 interface SubscriptionContextType {
-  subscription: SubscriptionData;
+  subscription: SubscriptionData | undefined;
   loading: boolean;
   refreshSubscription: () => Promise<void>;
   createCheckoutSession: (plan: "basico" | "premium") => Promise<any>;
@@ -32,133 +38,84 @@ let subscriptionCache: {
 // Cache válido por 10 minutos
 const CACHE_DURATION = 10 * 60 * 1000;
 
-export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ children, initialSubscription }) => {
+  console.log("[SubscriptionProvider] montado");
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<SubscriptionData>({
-    subscribed: false,
-    subscription_tier: "free",
-    subscription_end: null,
-  });
-  const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<SubscriptionData | undefined>(initialSubscription);
+  const [loading, setLoading] = useState(!initialSubscription);
+  const userIdRef = useRef<string | null>(user?.id || null);
 
-  const checkSubscription = async (forceRefresh = false) => {
-    // Se não há usuário, resetar para estado padrão
+  useEffect(() => {
     if (!user) {
-      setSubscription({
-        subscribed: false,
-        subscription_tier: "free",
-        subscription_end: null,
-      });
+      setSubscription(undefined);
       setLoading(false);
-      // Limpar cache quando não há usuário
-      subscriptionCache = { data: null, timestamp: 0, userId: null };
+      clearSubscriptionCache();
+      userIdRef.current = null;
       return;
     }
-
-    // Verificar cache
-    const now = Date.now();
-    const isCacheValid = subscriptionCache.data && 
-                        subscriptionCache.userId === user.id &&
-                        (now - subscriptionCache.timestamp) < CACHE_DURATION;
-
-    if (isCacheValid && !forceRefresh) {
-      console.log('[SubscriptionContext] Using cached data');
-      setSubscription(subscriptionCache.data);
+    // Se já existe valor carregado, nunca mostra loading
+    if (subscription && userIdRef.current === user.id) {
       setLoading(false);
       return;
     }
-
     setLoading(true);
-
-    try {
+    userIdRef.current = user.id;
+    getSubscription(user.id, async () => {
+      console.log('[SubscriptionProvider] Buscando assinatura do usuário', user.id);
       const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) {
-        console.log('[SubscriptionContext] Error checking subscription:', error);
-        
-        // Check if it's an authentication error (invalid JWT)
-        if (error.message?.includes('Edge Function returned a non-2xx status code')) {
-          console.log('[SubscriptionContext] Detected invalid authentication, will be handled by useAuth');
-          setLoading(false);
-          return;
-        }
-        
-        // For other errors, set default state
-        const defaultState = {
-          subscribed: false,
-          subscription_tier: "free",
-          subscription_end: null,
-        };
-        setSubscription(defaultState);
-        // Não cachear dados de erro
-        subscriptionCache = { data: null, timestamp: 0, userId: null };
-      } else if (data) {
-        console.log('[SubscriptionContext] Subscription data received:', data);
-        const subscriptionData = {
-          subscribed: data.subscribed || false,
-          subscription_tier: data.subscription_tier || "free",
-          subscription_end: data.subscription_end || null,
-        };
-        
-        setSubscription(subscriptionData);
-        
-        // Cachear os dados
-        subscriptionCache = {
-          data: subscriptionData,
-          timestamp: now,
-          userId: user.id
-        };
-      }
-    } catch (error) {
-      console.log('[SubscriptionContext] Error invoking subscription check:', error);
-      const defaultState = {
-        subscribed: false,
-        subscription_tier: "free",
-        subscription_end: null,
+      if (error) throw error;
+      return {
+        subscribed: data.subscribed || false,
+        subscription_tier: data.subscription_tier || "free",
+        subscription_end: data.subscription_end || null,
       };
-      setSubscription(defaultState);
-      // Não cachear dados de erro
-      subscriptionCache = { data: null, timestamp: 0, userId: null };
-    } finally {
-      setLoading(false);
-    }
-  };
+    })
+      .then((data) => {
+        setSubscription(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [user?.id]);
 
   const refreshSubscription = async () => {
-    await checkSubscription(true);
+    if (!user) return;
+    await getSubscription(user.id, async () => {
+      console.log('[SubscriptionProvider] Refresh assinatura do usuário', user.id);
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) throw error;
+      return {
+        subscribed: data.subscribed || false,
+        subscription_tier: data.subscription_tier || "free",
+        subscription_end: data.subscription_end || null,
+      };
+    })
+      .then(setSubscription);
   };
 
   const createCheckoutSession = async (plan: "basico" | "premium") => {
     if (!user) throw new Error("User must be authenticated");
-
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { plan },
     });
-
     if (error) throw error;
     return data;
   };
 
   const openCustomerPortal = async () => {
     if (!user) throw new Error("User must be authenticated");
-
     const { data, error } = await supabase.functions.invoke('customer-portal');
-    
     if (error) throw error;
     return data;
   };
 
-  useEffect(() => {
-    checkSubscription();
-  }, [user]);
-
-  const value = {
+  // Memoizar o valor do contexto para evitar re-renders e múltiplos fetches
+  const value = useMemo(() => ({
     subscription,
     loading,
     refreshSubscription,
     createCheckoutSession,
     openCustomerPortal,
-  };
+  }), [subscription, loading]);
 
   return (
     <SubscriptionContext.Provider value={value}>

@@ -54,6 +54,7 @@ export const useBibleStudies = () => {
   const [progress, setProgress] = useState<UserStudyProgress[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const chapterCache = new Map<string, BibleStudyChapter[]>();
 
   // Função para verificar se tem acesso premium
   const hasPremiumAccess = useCallback(() => {
@@ -72,11 +73,8 @@ export const useBibleStudies = () => {
   const fetchStudies = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Sempre carregar todos os estudos para que todos possam ver
+      // Carregar apenas metadados dos estudos
       const availableStudies = await localContent.getAllStudies();
-      
-      // Converter para o formato esperado
       const formattedStudies: BibleStudy[] = availableStudies.map(study => ({
         id: study.id,
         title: study.title,
@@ -90,45 +88,37 @@ export const useBibleStudies = () => {
         created_at: study.created_at,
         updated_at: study.updated_at
       }));
-      
       setStudies(formattedStudies);
     } catch (error) {
       console.error('Error fetching studies:', error);
-      // Não usar toast aqui para evitar dependência circular
     } finally {
       setLoading(false);
     }
-  }, []); // Removido toast da dependência
+  }, []);
 
-  // Buscar capítulos de um estudo
+  // Buscar capítulos de um estudo sob demanda
   const fetchChapters = useCallback(async (studySlug: string) => {
     try {
       setLoading(true);
-      
+      // Verificar cache
+      if (chapterCache.has(studySlug)) {
+        setChapters(chapterCache.get(studySlug)!);
+        return chapterCache.get(studySlug)!;
+      }
       // Buscar estudo local
       const study = await localContent.getStudyBySlug(studySlug);
-      
       if (!study) {
         setChapters([]);
         return [];
       }
-      
       // Verificar se é premium e se tem acesso
       if (study.is_premium && !hasPremiumAccess()) {
-        // Não usar toast aqui para evitar dependência circular
-        console.log('Premium access required for study:', study.title);
         setChapters([]);
         return [];
       }
-      
-      // Verificar se o estudo tem capítulos
-      if (!study.chapters || study.chapters.length === 0) {
-        setChapters([]);
-        return [];
-      }
-      
-      // Converter capítulos para o formato esperado
-      const formattedChapters: BibleStudyChapter[] = study.chapters.map(chapter => ({
+      // Buscar capítulos sob demanda
+      const rawChapters = await localContent.getChaptersByStudyId(study.id);
+      const formattedChapters: BibleStudyChapter[] = rawChapters.map(chapter => ({
         id: chapter.id,
         study_id: chapter.study_id,
         chapter_number: chapter.chapter_number,
@@ -142,8 +132,8 @@ export const useBibleStudies = () => {
         created_at: chapter.created_at,
         updated_at: chapter.updated_at
       }));
-      
       setChapters(formattedChapters);
+      chapterCache.set(studySlug, formattedChapters);
       return formattedChapters;
     } catch (error) {
       console.error('Error fetching chapters:', error);

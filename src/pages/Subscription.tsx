@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +13,7 @@ const Subscription = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const { user } = useAuth();
-  const { subscription, createCheckoutSession, openCustomerPortal } = useSubscription();
+  const { subscription, createCheckoutSession, openCustomerPortal, loading: subscriptionLoading } = useSubscription();
   const { toast } = useToast();
 
   const plans = [
@@ -147,7 +145,7 @@ const Subscription = () => {
             Desbloqueie todo o potencial da sua jornada espiritual com nossos planos personalizados
           </p>
           
-          {user && subscription.subscribed && (
+          {user && !subscriptionLoading && subscription !== undefined && subscription.subscribed && (
             <div className="mt-8">
               <Badge variant="secondary" className="text-lg px-4 py-2">
                 Plano Atual: {subscription.subscription_tier === "basico" ? "Básico" : "Premium"}

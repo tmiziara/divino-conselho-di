@@ -36,7 +36,7 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 
 const Profile = () => {
   const { user } = useAuth();
-  const { subscription, openCustomerPortal } = useSubscription();
+  const { subscription, openCustomerPortal, loading: subscriptionLoading } = useSubscription();
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -182,7 +182,7 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
+  if (loading || subscriptionLoading || subscription === undefined) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation onAuthClick={() => {}} />
@@ -201,6 +201,16 @@ const Profile = () => {
           <h1 className="text-3xl font-bold mx-auto">Meu Perfil</h1>
           <p className="text-muted-foreground">Gerencie suas informações pessoais</p>
         </div>
+        {!subscriptionLoading && subscription !== undefined && (
+          <div className="mb-6 w-full text-center">
+            {subscription.subscribed && (
+              <Badge variant="secondary" className="inline-flex items-center gap-1">
+                <Crown className="w-4 h-4 mr-1" />
+                {getPlanDisplayName(subscription.subscription_tier)}
+              </Badge>
+            )}
+          </div>
+        )}
         <div className="grid gap-6">
           {/* Subscription Status */}
           <Card>
