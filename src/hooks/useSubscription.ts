@@ -72,7 +72,7 @@ export const useSubscription = () => {
     }
   };
 
-  const createCheckoutSession = async (plan: "basico" | "premium") => {
+  const createCheckoutSession = async (plan: "premium") => {
     if (!user) throw new Error("User must be authenticated");
 
     const { data, error } = await supabase.functions.invoke('create-checkout', {

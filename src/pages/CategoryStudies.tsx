@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,10 +41,10 @@ const CategoryStudies = () => {
   if (!user) {
     console.timeEnd('CategoryStudiesPageLoad');
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card text-card-foreground dark:bg-zinc-900 dark:text-white">
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2" />
@@ -69,10 +69,10 @@ const CategoryStudies = () => {
   if (!currentCategory || !categoryConfig) {
     console.timeEnd('CategoryStudiesPageLoad');
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card text-card-foreground dark:bg-zinc-900 dark:text-white">
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-xl font-semibold mb-2">Categoria não encontrada</h3>
@@ -95,12 +95,12 @@ const CategoryStudies = () => {
   if (loading || subscriptionLoading || subscription === undefined) {
     // Mostra loading
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="spiritual-card">
+              <Card key={i} className="spiritual-card bg-card text-card-foreground dark:bg-zinc-900 dark:text-white">
                 <CardHeader>
                   <div className="h-6 bg-muted rounded animate-pulse mb-2" />
                   <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
@@ -121,7 +121,7 @@ const CategoryStudies = () => {
   console.timeEnd('CategoryStudiesPageLoad');
 
   return (
-    <div className="min-h-screen celestial-bg">
+    <div className="min-h-screen bg-background dark:bg-background">
       <Navigation onAuthClick={handleAuthClick} />
       
       <div className="container mx-auto px-4 sm:px-6 py-8">
@@ -164,7 +164,7 @@ const CategoryStudies = () => {
         {loading || subscriptionLoading || subscription === undefined ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="spiritual-card">
+              <Card key={i} className="spiritual-card bg-card text-card-foreground dark:bg-zinc-900 dark:text-white">
                 <CardHeader>
                   <div className="h-6 bg-muted rounded animate-pulse mb-2" />
                   <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
@@ -185,7 +185,7 @@ const CategoryStudies = () => {
               const categoryConfig = getCategoryConfig(study.category);
               
               return (
-                <Card key={study.id} className="spiritual-card group hover:shadow-lg transition-all duration-300">
+                <Card key={study.id} className="spiritual-card group hover:shadow-lg transition-all duration-300 bg-card text-card-foreground dark:bg-zinc-900 dark:text-white">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
@@ -262,7 +262,7 @@ const CategoryStudies = () => {
                         </Tooltip>
                       </TooltipProvider>
                     ) : hasPremiumAccess === true || !study.is_premium ? (
-                      <Link to={`/estudos/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}`}>
+                      <Link to={`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}`}>
                         <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
                           <span>Começar Estudo</span>
                           <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

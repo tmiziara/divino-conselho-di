@@ -36,19 +36,30 @@ const SocialShare = ({ open, onOpenChange, title, text, url }: SocialShareProps)
   };
 
   const handleNativeShare = async () => {
+    // Só tenta importar se estiver em ambiente Capacitor
+    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+      try {
+        const { Share } = await import('@capacitor/share');
+        await Share.share({
+          title: title || '',
+          text: text || '',
+          url: url || '',
+          dialogTitle: 'Compartilhar com...'
+        });
+        return;
+      } catch (e) {
+        // fallback
+      }
+    }
+    // Web Share API
     if (navigator.share) {
       try {
-        await navigator.share({
-          title,
-          text,
-          url,
-        });
-      } catch (error) {
-        // Usuário cancelou o compartilhamento
-      }
-    } else {
-      handleCopy();
+        await navigator.share({ title, text, url });
+        return;
+      } catch (error) {}
     }
+    // Fallback: copiar
+    handleCopy();
   };
 
   return (

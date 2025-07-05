@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,10 +78,10 @@ const Studies = () => {
   if (!user) {
     console.timeEnd('StudiesPageLoad');
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900">
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2" />
@@ -106,12 +106,12 @@ const Studies = () => {
   if (loading || subscriptionLoading || subscription === undefined) {
     // Mostra loading
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="spiritual-card">
+              <Card key={i} className="spiritual-card bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
                 <CardHeader>
                   <div className="h-6 bg-muted rounded animate-pulse mb-2" />
                   <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
@@ -132,7 +132,7 @@ const Studies = () => {
   console.timeEnd('StudiesPageLoad');
 
   return (
-    <div className="min-h-screen celestial-bg">
+    <div className="min-h-screen bg-background dark:bg-background">
       <Navigation onAuthClick={handleAuthClick} />
       
       <div className="container mx-auto px-4 sm:px-6 py-8">
@@ -149,7 +149,7 @@ const Studies = () => {
         {(loading || subscriptionLoading || subscription === undefined) ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="spiritual-card">
+              <Card key={i} className="spiritual-card bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
                 <CardHeader>
                   <div className="h-6 bg-muted rounded animate-pulse mb-2" />
                   <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
@@ -166,18 +166,18 @@ const Studies = () => {
             {/* Botão de Assinatura - Só aparece se deve mostrar */}
             {shouldShowSubscriptionCard() && (
               <div className="mb-8 text-center">
-                <Card className="spiritual-card max-w-md mx-auto bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+                <Card className="spiritual-card max-w-md mx-auto bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900 dark:to-orange-900 border-amber-200 dark:border-amber-700">
                   <CardContent className="py-6">
                     <div className="flex items-center justify-center gap-2 mb-3">
-                      <Sparkles className="w-5 h-5 text-amber-600" />
-                      <h3 className="text-lg font-semibold text-amber-800">Desbloqueie Todos os Estudos</h3>
+                      <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-200" />
+                      <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-100">Desbloqueie Todos os Estudos</h3>
                     </div>
-                    <p className="text-sm text-amber-700 mb-4">
+                    <p className="text-sm text-amber-700 dark:text-amber-200 mb-4">
                       Faça upgrade da sua assinatura para acessar estudos premium exclusivos
                     </p>
                     <Button 
                       onClick={() => window.location.href = '/assinatura'}
-                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 dark:from-amber-700 dark:to-orange-700 text-white"
                     >
                       <Lock className="w-4 h-4 mr-2" />
                       Fazer Assinatura
@@ -227,7 +227,7 @@ const Studies = () => {
             )}
           </>
         ) : (
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900">
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-xl font-semibold mb-2">Nenhum estudo disponível</h3>
@@ -240,7 +240,7 @@ const Studies = () => {
 
         {/* Informações adicionais */}
         <div className="mt-12">
-          <Card className="spiritual-card">
+          <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />

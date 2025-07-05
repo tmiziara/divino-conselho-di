@@ -40,3 +40,8 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Garantir que o WebView não sobreponha o banner AdMob */
+body {
+  padding-bottom: 80px !important;
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Bookmark, Heart, BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";

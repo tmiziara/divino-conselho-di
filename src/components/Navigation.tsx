@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Menu, User, Crown, LogOut, Home, BookOpen, MessageCircle, Heart, User as UserIcon, X, GraduationCap } from "lucide-react";
+import { Shield, Menu, User, Crown, LogOut, Home, BookOpen, MessageCircle, Heart, User as UserIcon, X, GraduationCap, Sparkles, Settings as SettingsIcon, Bell, Sun, Moon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,32 @@ interface NavigationProps {
   onAuthClick: () => void;
 }
 
+const useTheme = () => {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark' ||
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  return {
+    isDark,
+    setIsDark,
+    toggle: () => setIsDark((v) => !v),
+  };
+};
+
 const Navigation = ({ onAuthClick }: NavigationProps) => {
   const { user, signOut } = useAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
@@ -27,6 +53,7 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
   const { hapticFeedback } = useMobileFeatures();
   const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { isDark, toggle } = useTheme();
 
   const handleMenuClick = () => {
     hapticFeedback();
@@ -49,9 +76,11 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
     { path: '/', label: 'Início', icon: Home },
     { path: '/biblia', label: 'Bíblia', icon: BookOpen },
     { path: '/estudos', label: 'Estudos Bíblicos', icon: GraduationCap },
-    { path: '/conversa', label: 'Conversa', icon: MessageCircle },
+    { path: '/chat', label: 'Conversa', icon: MessageCircle },
     { path: '/favoritos', label: 'Favoritos', icon: Heart },
+    { path: '/notificacoes', label: 'Notificações', icon: Bell },
     { path: '/perfil', label: 'Perfil', icon: UserIcon },
+    { path: '/configuracoes', label: 'Configurações', icon: SettingsIcon },
   ];
 
   return (
@@ -60,8 +89,13 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <Shield className="w-8 h-8 text-primary" />
-            <span className="font-bold text-xl hidden sm:block">Conexão com Deus</span>
+            <span className="flex items-center relative">
+              <span className="relative">
+                <Shield className="w-8 h-8 text-primary" />
+                <Sparkles className="w-4 h-4 text-yellow-400 absolute -top-2 -right-2" />
+              </span>
+              <span className="ml-3 font-bold text-xl heavenly-text">Conexão com Deus</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -81,79 +115,52 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
 
           {/* User Menu / Auth */}
           <div className="flex items-center space-x-2">
+            {/* Botão de alternância de tema */}
+            <Button variant="ghost" size="sm" onClick={toggle} aria-label="Alternar modo noturno">
+              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+            {/* Botão de login/logout */}
             {user ? (
-              <>
-                {!subscriptionLoading && subscription !== undefined && subscription?.subscribed && (
-                  <Badge variant="secondary" className="hidden sm:flex">
-                    <Crown className="w-3 h-3 mr-1" />
-                    {subscription.subscription_tier === 'premium' ? 'Premium' : 'Básico'}
-                  </Badge>
-                )}
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:ml-2">Sair</span>
-                </Button>
-              </>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:ml-2">Sair</span>
+              </Button>
             ) : (
               <Button onClick={handleAuthClick} className="divine-button">
                 <User className="w-4 h-4 mr-2" />
                 <span className="hidden sm:block">Entrar</span>
               </Button>
             )}
-
-            {/* Mobile Menu Button */}
-            {isMobile && (
-              <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-                <DrawerTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={handleMenuClick}>
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent>
-                  <DrawerHeader>
-                    <DrawerTitle className="flex items-center space-x-2">
-                      <Shield className="w-6 h-6 text-primary" />
-                      <span>Conexão com Deus</span>
-                    </DrawerTitle>
-                    <DrawerClose asChild>
-                      <Button variant="ghost" size="sm" className="absolute right-4 top-4">
-                        <X className="w-4 h-4" />
+            {/* Botão do menu lateral (Drawer) */}
+            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+              <DrawerTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={handleMenuClick}>
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerClose asChild>
+                    <Button variant="ghost" size="sm" className="absolute right-4 top-4">
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </DrawerClose>
+                </DrawerHeader>
+                <div className="px-4 pb-16 space-y-2">
+                  {menuItems.map((item) => (
+                    <Link key={item.path} to={item.path} onClick={() => setIsDrawerOpen(false)}>
+                      <Button
+                        variant={isActive(item.path) ? "default" : "ghost"}
+                        className="w-full justify-start"
+                      >
+                        <item.icon className="w-4 h-4 mr-3" />
+                        {item.label}
                       </Button>
-                    </DrawerClose>
-                  </DrawerHeader>
-                  
-                  <div className="px-4 pb-4 space-y-2">
-                    {menuItems.map((item) => (
-                      <Link key={item.path} to={item.path} onClick={() => setIsDrawerOpen(false)}>
-                        <Button
-                          variant={isActive(item.path) ? "default" : "ghost"}
-                          className="w-full justify-start"
-                        >
-                          <item.icon className="w-4 h-4 mr-3" />
-                          {item.label}
-                        </Button>
-                      </Link>
-                    ))}
-                    
-                    {user && (
-                      <div className="pt-4 border-t">
-                        <Button 
-                          variant="ghost" 
-                          className="w-full justify-start text-red-600 hover:text-red-700"
-                          onClick={() => {
-                            handleSignOut();
-                            setIsDrawerOpen(false);
-                          }}
-                        >
-                          <LogOut className="w-4 h-4 mr-3" />
-                          Sair
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            )}
+                    </Link>
+                  ))}
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         </div>
       </div>

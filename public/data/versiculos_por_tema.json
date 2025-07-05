@@ -1,0 +1,1462 @@
+[
+  {
+    "tema": "fé",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Tiago 1:6"
+  },
+  {
+    "tema": "fé",
+    "referencia": "2 Coríntios 5:7"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Romanos 10:9"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Mateus 21:22"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Hebreus 11:1"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Isaías 40:31"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 130:5"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Lamentações 3:24"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Jeremias 29:11"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Romanos 15:13"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 39:7"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 João 4:18"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Efésios 5:2"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Pedro 4:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Coríntios 13:4"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 15:13"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Romanos 5:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 3:16"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Salmo 103:12"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "1 João 1:9"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Isaías 1:18"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Mateus 6:14"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Efésios 4:32"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Colossenses 3:13"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Eclesiastes 7:12"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 4:7"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 16:16"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Salmo 111:10"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Tiago 1:5"
+  },
+  {
+    "tema": "força",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "força",
+    "referencia": "Isaías 41:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Neemias 8:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Filipenses 4:13"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 18:2"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 46:1"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Tiago 5:16"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Mateus 6:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Lucas 11:9"
+  },
+  {
+    "tema": "oração",
+    "referencia": "1 Tessalonicenses 5:17"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Filipenses 4:6"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Filipenses 4:7"
+  },
+  {
+    "tema": "paz",
+    "referencia": "João 14:27"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Isaías 26:3"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Colossenses 3:15"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Salmo 4:8"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Romanos 5:1"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Isaías 12:2"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Jeremias 17:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 56:3"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 37:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 28:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Romanos 6:14"
+  },
+  {
+    "tema": "graça",
+    "referencia": "João 1:16"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Tito 2:11"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Hebreus 4:16"
+  },
+  {
+    "tema": "graça",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "fé",
+    "referencia": "2 Coríntios 5:7"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Tiago 1:6"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Mateus 21:22"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Romanos 10:9"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Hebreus 11:1"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 130:5"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Romanos 15:13"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Jeremias 29:11"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Lamentações 3:24"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 39:7"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Isaías 40:31"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 João 4:18"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Romanos 5:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 15:13"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Coríntios 13:4"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 3:16"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Efésios 5:2"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Pedro 4:8"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Salmo 103:12"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Isaías 1:18"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Colossenses 3:13"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "1 João 1:9"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Mateus 6:14"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Efésios 4:32"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Salmo 111:10"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Eclesiastes 7:12"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 16:16"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 4:7"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Tiago 1:5"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "força",
+    "referencia": "Isaías 41:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 46:1"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 18:2"
+  },
+  {
+    "tema": "força",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "força",
+    "referencia": "Filipenses 4:13"
+  },
+  {
+    "tema": "força",
+    "referencia": "Neemias 8:10"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Lucas 11:9"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Filipenses 4:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "oração",
+    "referencia": "1 Tessalonicenses 5:17"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Mateus 6:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Tiago 5:16"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Romanos 5:1"
+  },
+  {
+    "tema": "paz",
+    "referencia": "João 14:27"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Isaías 26:3"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Salmo 4:8"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Filipenses 4:7"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Colossenses 3:15"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Jeremias 17:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 37:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 56:3"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Isaías 12:2"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 28:7"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Romanos 6:14"
+  },
+  {
+    "tema": "graça",
+    "referencia": "João 1:16"
+  },
+  {
+    "tema": "graça",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Hebreus 4:16"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Tito 2:11"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Mateus 21:22"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Romanos 10:9"
+  },
+  {
+    "tema": "fé",
+    "referencia": "2 Coríntios 5:7"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Hebreus 11:1"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Tiago 1:6"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 39:7"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Isaías 40:31"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 130:5"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Jeremias 29:11"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Lamentações 3:24"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Romanos 15:13"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 3:16"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Coríntios 13:4"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Romanos 5:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 15:13"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Efésios 5:2"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Pedro 4:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 João 4:18"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Isaías 1:18"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Mateus 6:14"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Salmo 103:12"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Colossenses 3:13"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "1 João 1:9"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Efésios 4:32"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 16:16"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Salmo 111:10"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Eclesiastes 7:12"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 4:7"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Tiago 1:5"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "força",
+    "referencia": "Filipenses 4:13"
+  },
+  {
+    "tema": "força",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "força",
+    "referencia": "Neemias 8:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 18:2"
+  },
+  {
+    "tema": "força",
+    "referencia": "Isaías 41:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 46:1"
+  },
+  {
+    "tema": "oração",
+    "referencia": "1 Tessalonicenses 5:17"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Lucas 11:9"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Tiago 5:16"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Filipenses 4:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Mateus 6:6"
+  },
+  {
+    "tema": "paz",
+    "referencia": "João 14:27"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Salmo 4:8"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Filipenses 4:7"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Isaías 26:3"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Romanos 5:1"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Colossenses 3:15"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 37:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 28:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Jeremias 17:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 56:3"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Isaías 12:2"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Romanos 6:14"
+  },
+  {
+    "tema": "graça",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "graça",
+    "referencia": "João 1:16"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Tito 2:11"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Hebreus 4:16"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Mateus 21:22"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Hebreus 11:1"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Tiago 1:6"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Romanos 10:9"
+  },
+  {
+    "tema": "fé",
+    "referencia": "2 Coríntios 5:7"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Isaías 40:31"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Jeremias 29:11"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Lamentações 3:24"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Romanos 15:13"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 130:5"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 39:7"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Romanos 5:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 João 4:18"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 3:16"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Efésios 5:2"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Coríntios 13:4"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 15:13"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Pedro 4:8"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Colossenses 3:13"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Salmo 103:12"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Mateus 6:14"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Isaías 1:18"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "1 João 1:9"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Efésios 4:32"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Tiago 1:5"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Salmo 111:10"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 16:16"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 4:7"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Eclesiastes 7:12"
+  },
+  {
+    "tema": "força",
+    "referencia": "Isaías 41:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Neemias 8:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Filipenses 4:13"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 46:1"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 18:2"
+  },
+  {
+    "tema": "força",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "oração",
+    "referencia": "1 Tessalonicenses 5:17"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Tiago 5:16"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Filipenses 4:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Mateus 6:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Lucas 11:9"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Isaías 26:3"
+  },
+  {
+    "tema": "paz",
+    "referencia": "João 14:27"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Filipenses 4:7"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Salmo 4:8"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Colossenses 3:15"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Romanos 5:1"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 37:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 28:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Jeremias 17:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Isaías 12:2"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 56:3"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Romanos 6:14"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Tito 2:11"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "graça",
+    "referencia": "João 1:16"
+  },
+  {
+    "tema": "graça",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Hebreus 4:16"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Mateus 21:22"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Hebreus 11:1"
+  },
+  {
+    "tema": "fé",
+    "referencia": "2 Coríntios 5:7"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Romanos 10:9"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Tiago 1:6"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Jeremias 29:11"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Isaías 40:31"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 130:5"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Lamentações 3:24"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Romanos 15:13"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 39:7"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Efésios 5:2"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 João 4:18"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Coríntios 13:4"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 15:13"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 3:16"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Romanos 5:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Pedro 4:8"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "1 João 1:9"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Isaías 1:18"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Efésios 4:32"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Colossenses 3:13"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Mateus 6:14"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Salmo 103:12"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 16:16"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Salmo 111:10"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 4:7"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Tiago 1:5"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Eclesiastes 7:12"
+  },
+  {
+    "tema": "força",
+    "referencia": "Isaías 41:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 18:2"
+  },
+  {
+    "tema": "força",
+    "referencia": "Filipenses 4:13"
+  },
+  {
+    "tema": "força",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 46:1"
+  },
+  {
+    "tema": "força",
+    "referencia": "Neemias 8:10"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Mateus 6:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "1 Tessalonicenses 5:17"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Lucas 11:9"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Filipenses 4:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Tiago 5:16"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Filipenses 4:7"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Salmo 4:8"
+  },
+  {
+    "tema": "paz",
+    "referencia": "João 14:27"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Romanos 5:1"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Colossenses 3:15"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Isaías 26:3"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Isaías 12:2"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 28:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 37:5"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 56:3"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Jeremias 17:7"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Romanos 6:14"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Tito 2:11"
+  },
+  {
+    "tema": "graça",
+    "referencia": "Hebreus 4:16"
+  },
+  {
+    "tema": "graça",
+    "referencia": "João 1:16"
+  },
+  {
+    "tema": "graça",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Efésios 2:8"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Romanos 10:9"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Tiago 1:6"
+  },
+  {
+    "tema": "fé",
+    "referencia": "2 Coríntios 5:7"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Mateus 21:22"
+  },
+  {
+    "tema": "fé",
+    "referencia": "Hebreus 11:1"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Romanos 15:13"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 130:5"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Jeremias 29:11"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Lamentações 3:24"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Isaías 40:31"
+  },
+  {
+    "tema": "esperança",
+    "referencia": "Salmo 39:7"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Romanos 5:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "Efésios 5:2"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 3:16"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Pedro 4:8"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 Coríntios 13:4"
+  },
+  {
+    "tema": "amor",
+    "referencia": "João 15:13"
+  },
+  {
+    "tema": "amor",
+    "referencia": "1 João 4:18"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "1 João 1:9"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Efésios 4:32"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Salmo 103:12"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Isaías 1:18"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Mateus 6:14"
+  },
+  {
+    "tema": "perdão",
+    "referencia": "Colossenses 3:13"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 16:16"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 4:7"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Eclesiastes 7:12"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Tiago 1:5"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Salmo 111:10"
+  },
+  {
+    "tema": "sabedoria",
+    "referencia": "Provérbios 3:5"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 46:1"
+  },
+  {
+    "tema": "força",
+    "referencia": "2 Coríntios 12:9"
+  },
+  {
+    "tema": "força",
+    "referencia": "Isaías 41:10"
+  },
+  {
+    "tema": "força",
+    "referencia": "Filipenses 4:13"
+  },
+  {
+    "tema": "força",
+    "referencia": "Salmo 18:2"
+  },
+  {
+    "tema": "força",
+    "referencia": "Neemias 8:10"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Lucas 11:9"
+  },
+  {
+    "tema": "oração",
+    "referencia": "1 Tessalonicenses 5:17"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Tiago 5:16"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Mateus 6:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Filipenses 4:6"
+  },
+  {
+    "tema": "oração",
+    "referencia": "Marcos 11:24"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Isaías 26:3"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Salmo 4:8"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Filipenses 4:7"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Romanos 5:1"
+  },
+  {
+    "tema": "paz",
+    "referencia": "João 14:27"
+  },
+  {
+    "tema": "paz",
+    "referencia": "Colossenses 3:15"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Jeremias 17:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 56:3"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Isaías 12:2"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Salmo 28:7"
+  },
+  {
+    "tema": "confiança",
+    "referencia": "Provérbios 3:5"
+  }
+]

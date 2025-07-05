@@ -197,7 +197,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       {/* Navigation Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
         <Select value={selectedBook || ""} onValueChange={handleBookChange}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-48 bg-card dark:bg-zinc-900">
             <SelectValue placeholder="Selecione o livro" />
           </SelectTrigger>
           <SelectContent>
@@ -221,7 +221,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
           onValueChange={handleChapterChange}
           disabled={!selectedBook}
         >
-          <SelectTrigger className="w-full sm:w-32">
+          <SelectTrigger className="w-full sm:w-32 bg-card dark:bg-zinc-900">
             <SelectValue placeholder="Capítulo" />
           </SelectTrigger>
           <SelectContent>
@@ -238,6 +238,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
             variant="outline"
             onClick={() => navigateChapter('prev')}
             disabled={!selectedChapter || selectedChapter <= 1}
+            className="bg-card dark:bg-zinc-900"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -245,6 +246,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
             variant="outline"
             onClick={() => navigateChapter('next')}
             disabled={!selectedChapter || selectedChapter >= chapters.length}
+            className="bg-card dark:bg-zinc-900"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -263,7 +265,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       {/* Verses */}
       <div className="space-y-4">
         {verses.map((verse) => (
-          <Card key={`${verse.livro}-${verse.capitulo}-${verse.versiculo}`} className="p-4">
+          <Card key={`${verse.livro}-${verse.capitulo}-${verse.versiculo}`} className="p-4 bg-card dark:bg-zinc-900">
             <div className="flex gap-2 items-start">
               <span className="text-primary font-bold text-lg flex-shrink-0 w-8">
                 {verse.versiculo}

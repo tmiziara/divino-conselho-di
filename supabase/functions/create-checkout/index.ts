@@ -25,7 +25,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
 
     const { plan } = await req.json();
-    if (!plan || !["basico", "premium"].includes(plan)) {
+    if (!plan || plan !== "premium") {
       throw new Error("Invalid plan specified");
     }
 
@@ -42,12 +42,10 @@ serve(async (req) => {
 
     // Set price based on plan
     const prices = {
-      basico: 2500, // R$ 25.00 in cents
       premium: 4500, // R$ 45.00 in cents
     };
 
     const planNames = {
-      basico: "Plano Básico",
       premium: "Plano Premium",
     };
 
@@ -59,18 +57,18 @@ serve(async (req) => {
           price_data: {
             currency: "brl",
             product_data: { 
-              name: planNames[plan as keyof typeof planNames],
-              description: `Assinatura mensal do ${planNames[plan as keyof typeof planNames]}`
+              name: planNames[plan],
+              description: `Assinatura mensal do ${planNames[plan]}`
             },
-            unit_amount: prices[plan as keyof typeof prices],
+            unit_amount: prices[plan],
             recurring: { interval: "month" },
           },
           quantity: 1,
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/cancel`,
+      success_url: `conexaodeus://success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `conexaodeus://cancel`,
       locale: "pt-BR",
     });
 

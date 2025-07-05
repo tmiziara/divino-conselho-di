@@ -37,7 +37,7 @@ const Success = () => {
       
       <div className="container mx-auto px-6 py-20">
         <div className="max-w-2xl mx-auto text-center">
-          <Card className="spiritual-card">
+          <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
               <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
                 <CheckCircle className="w-12 h-12 text-green-600" />

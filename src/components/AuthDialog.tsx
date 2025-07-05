@@ -35,14 +35,6 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       features: ["Leitura completa da Bíblia", "Busca básica", "Favoritos limitados (10)"]
     },
     {
-      id: "basico",
-      name: "Básico",
-      price: "R$ 25/mês",
-      description: "Ideal para estudos bíblicos",
-      icon: Crown,
-      features: ["Tudo do Gratuito", "Favoritos ilimitados", "Chat expandido", "Planos de leitura"]
-    },
-    {
       id: "premium",
       name: "Premium",
       price: "R$ 45/mês",

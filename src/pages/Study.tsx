@@ -49,7 +49,8 @@ const Study = () => {
     fetchChapters,
     isChapterCompleted,
     isChapterFavorite,
-    getStudyProgress
+    getStudyProgress,
+    toggleFavorite
   } = useBibleStudies();
 
   const { hasAccess, isLoading: accessLoading } = useContentAccess();
@@ -131,10 +132,10 @@ const Study = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2" />
@@ -159,11 +160,11 @@ const Study = () => {
   // Mostrar loading enquanto está carregando o estudo
   if (studyLoading || loading || accessLoading) {
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         
         <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
             <CardContent className="py-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <h3 className="text-xl font-semibold mb-2">Carregando estudo...</h3>
@@ -186,11 +187,11 @@ const Study = () => {
   // Só mostrar "estudo não encontrado" se não estiver carregando E não encontrou o estudo
   if (!study && !studyLoading && !loading && !accessLoading) {
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         
         <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-xl font-semibold mb-2">Estudo não encontrado</h3>
@@ -213,7 +214,7 @@ const Study = () => {
   const progress = getStudyProgress(study.id);
 
   return (
-    <div className="min-h-screen celestial-bg">
+    <div className="min-h-screen bg-background dark:bg-background">
       <Navigation onAuthClick={handleAuthClick} />
       
       <div className="container mx-auto px-4 sm:px-6 py-8">
@@ -259,7 +260,7 @@ const Study = () => {
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <Card key={i} className="spiritual-card">
+              <Card key={i} className="spiritual-card bg-card dark:bg-zinc-900">
                 <CardHeader>
                   <div className="h-6 bg-muted rounded animate-pulse mb-2" />
                   <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
@@ -275,14 +276,11 @@ const Study = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {chapters.map((chapter) => {
               const isCompleted = isChapterCompleted(chapter.id);
-              const isFavorite = isChapterFavorite(chapter.id);
               
               return (
                 <Card 
                   key={chapter.id} 
-                  className={`spiritual-card group hover:shadow-lg transition-all duration-300 ${
-                    isCompleted ? 'ring-2 ring-green-500/20' : ''
-                  }`}
+                  className={`spiritual-card group hover:shadow-lg transition-all duration-300 bg-card dark:bg-zinc-900 ${isCompleted ? 'ring-2 ring-green-500/20' : ''}`}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -339,7 +337,7 @@ const Study = () => {
                     </div>
 
                     {/* Botão de ação */}
-                    <Link to={`/estudos/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/${chapter.chapter_number}`}>
+                    <Link to={`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/${chapter.chapter_number}`}>
                       <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
                         <span>
                           {isCompleted ? 'Revisar Capítulo' : 'Ler Capítulo'}
@@ -353,7 +351,7 @@ const Study = () => {
             })}
           </div>
         ) : (
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-xl font-semibold mb-2">Nenhum capítulo encontrado</h3>
@@ -366,7 +364,7 @@ const Study = () => {
 
         {/* Dicas de estudo */}
         <div className="mt-12">
-          <Card className="spiritual-card">
+          <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />

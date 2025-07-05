@@ -18,7 +18,7 @@ interface SubscriptionContextType {
   subscription: SubscriptionData | undefined;
   loading: boolean;
   refreshSubscription: () => Promise<void>;
-  createCheckoutSession: (plan: "basico" | "premium") => Promise<any>;
+  createCheckoutSession: (plan: "premium") => Promise<any>;
   openCustomerPortal: () => Promise<any>;
 }
 
@@ -92,7 +92,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       .then(setSubscription);
   };
 
-  const createCheckoutSession = async (plan: "basico" | "premium") => {
+  const createCheckoutSession = async (plan: "premium") => {
     if (!user) throw new Error("User must be authenticated");
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { plan },

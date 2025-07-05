@@ -15,7 +15,8 @@ import {
   Target,
   Lightbulb,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Share2
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
@@ -25,7 +26,7 @@ import { useBibleFavorites } from "@/hooks/useBibleFavorites";
 import { useToast } from "@/hooks/use-toast";
 
 const StudyChapter = () => {
-  const { studyId, chapterNumber } = useParams<{ studyId: string; chapterNumber: string }>();
+  const { studyId, chapterId } = useParams<{ studyId: string; chapterId: string }>();
   const [showAuth, setShowAuth] = useState(false);
   const [chapter, setChapter] = useState<BibleStudyChapter | null>(null);
   const [study, setStudy] = useState<any>(null);
@@ -57,11 +58,11 @@ const StudyChapter = () => {
   }, [user]);
 
   useEffect(() => {
-    if (chapters.length > 0 && chapterNumber) {
-      const currentChapter = chapters.find(c => c.chapter_number === parseInt(chapterNumber));
+    if (chapters.length > 0 && chapterId) {
+      const currentChapter = chapters.find(c => c.chapter_number === parseInt(chapterId));
       setChapter(currentChapter || null);
     }
-  }, [chapters, chapterNumber]);
+  }, [chapters, chapterId]);
 
   const fetchStudyInfo = async (slug: string) => {
     try {
@@ -107,12 +108,12 @@ const StudyChapter = () => {
       if (nextChapter) {
         // Aguardar um pouco para o usuário ver o toast
         setTimeout(() => {
-          navigate(`/estudos/${studyId}/capitulo/${nextChapter.chapter_number}`);
+          navigate(`/estudo/${studyId}/capitulo/${nextChapter.chapter_number}`);
         }, 1500);
       } else {
         // Se for o último capítulo, voltar para a lista de estudos
         setTimeout(() => {
-          navigate(`/estudos/${studyId}`);
+          navigate(`/estudo/${studyId}`);
         }, 1500);
       }
     } catch (error) {
@@ -157,7 +158,7 @@ const StudyChapter = () => {
         verse: 0,
         title: verseKey,
         content: chapter.main_verse,
-        reference: `${chapter.main_verse_reference} - ${chapter.title}`
+        reference: chapter.main_verse_reference
       });
       toast({
         title: "Adicionado aos favoritos",
@@ -229,12 +230,48 @@ const StudyChapter = () => {
     return currentIndex > 0 ? chapters[currentIndex - 1] : null;
   };
 
+  // Função utilitária para compartilhar
+  const shareContent = async (title: string, text: string) => {
+    console.log('[Share] Botão de compartilhar clicado');
+    try {
+      const isCapacitor = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      console.log('[Share] isCapacitor:', isCapacitor);
+      if (isCapacitor && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share) {
+        console.log('[Share] Usando window.Capacitor.Plugins.Share...');
+        await window.Capacitor.Plugins.Share.share({
+          title,
+          text,
+          dialogTitle: 'Compartilhar com...'
+        });
+        console.log('[Share] Menu nativo aberto com sucesso!');
+        return;
+      }
+      // Web Share API
+      if (navigator.share) {
+        try {
+          console.log('[Share] Usando Web Share API...');
+          await navigator.share({ title, text });
+          console.log('[Share] Web Share API chamada com sucesso!');
+          return;
+        } catch (error) {
+          console.error('[Share] Erro na Web Share API:', error);
+        }
+      }
+      // Fallback: copiar
+      console.log('[Share] Copiando para área de transferência...');
+      await navigator.clipboard.writeText(`${title}\n\n${text}`);
+      console.log('[Share] Copiado para área de transferência!');
+    } catch (err) {
+      console.error('[Share] Erro inesperado no compartilhamento:', err);
+    }
+  };
+
   if (!user) {
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto">
+          <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-card">
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2" />
@@ -258,19 +295,22 @@ const StudyChapter = () => {
 
   if (loading || !chapter) {
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
-        <div className="container mx-auto px-6 py-8">
-          <div className="max-w-4xl mx-auto">
-            <Card className="spiritual-card">
-              <CardContent className="py-12 text-center">
-                <div className="space-y-4">
-                  <div className="h-8 bg-muted rounded animate-pulse w-1/2 mx-auto" />
-                  <div className="h-4 bg-muted rounded animate-pulse w-3/4 mx-auto" />
-                  <div className="h-64 bg-muted rounded animate-pulse" />
-                </div>
-              </CardContent>
-            </Card>
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="spiritual-card bg-card text-card-foreground dark:bg-card dark:text-white">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded animate-pulse mb-2" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-20 bg-muted rounded animate-pulse mb-4" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
@@ -282,7 +322,7 @@ const StudyChapter = () => {
   const prevChapter = getPrevChapter();
 
   return (
-    <div className="min-h-screen celestial-bg">
+    <div className="min-h-screen bg-background dark:bg-background">
       <Navigation onAuthClick={handleAuthClick} />
       
       <div className="container mx-auto px-6 py-8">
@@ -290,7 +330,7 @@ const StudyChapter = () => {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <Link to={`/estudos/${studyId}`}>
+                                <Link to={`/estudo/${studyId}`}>
                 <Button variant="ghost">
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Voltar ao Estudo
@@ -322,7 +362,7 @@ const StudyChapter = () => {
           </div>
 
           {/* Conteúdo do capítulo */}
-          <Card className="spiritual-card mb-8">
+          <Card className="spiritual-card mb-8 bg-card dark:bg-zinc-900">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" />
@@ -331,31 +371,44 @@ const StudyChapter = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Versículo */}
-              <div className="bg-muted/30 p-6 rounded-lg border-l-4 border-primary relative">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-lg italic mb-2">
-                      "{chapter.main_verse}"
-                    </p>
-                    <p className="text-primary font-semibold">
-                      {chapter.main_verse_reference}
-                    </p>
-                  </div>
+              <div className="bg-muted/30 p-6 rounded-lg border-l-4 border-primary">
+                <div className="w-full flex justify-end gap-2 mb-2">
                   {user && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleVerseFavorite}
-                      className="flex-shrink-0 h-8 w-8 ml-2"
-                    >
-                      {isVerseFavorite() ? (
-                        <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                      ) : (
-                        <HeartOff className="w-4 h-4" />
-                      )}
-                    </Button>
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleVerseFavorite}
+                        className="h-8 w-8"
+                        aria-label={isVerseFavorite() ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                      >
+                        {isVerseFavorite() ? (
+                          <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                        ) : (
+                          <HeartOff className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => shareContent(
+                          'Versículo Inspirador',
+                          `"${chapter.main_verse}"\n${chapter.main_verse_reference}\n\nEnviado do app Conexão com Deus!`
+                        )}
+                        aria-label="Compartilhar versículo"
+                        className="h-8 w-8"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                    </>
                   )}
                 </div>
+                <p className="text-lg italic mb-2">
+                  "{chapter.main_verse}"
+                </p>
+                <p className="text-primary font-semibold">
+                  {chapter.main_verse_reference}
+                </p>
               </div>
 
               <Separator />
@@ -404,28 +457,41 @@ const StudyChapter = () => {
                   <Heart className="w-5 h-5 text-green-500" />
                   <h3 className="text-xl font-semibold">Oração do Capítulo</h3>
                 </div>
-                <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border-l-4 border-green-500 relative">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="italic leading-relaxed text-justify text-base">
-                        {chapter.chapter_prayer.replace(/\\n/g, '\n')}
-                      </p>
-                    </div>
+                <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border-l-4 border-green-500">
+                  <div className="w-full flex justify-end gap-2 mb-2">
                     {user && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={togglePrayerFavorite}
-                        className="flex-shrink-0 h-8 w-8 ml-2"
-                      >
-                        {isPrayerFavorite() ? (
-                          <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                        ) : (
-                          <HeartOff className="w-4 h-4" />
-                        )}
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={togglePrayerFavorite}
+                          className="h-8 w-8"
+                          aria-label={isPrayerFavorite() ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                        >
+                          {isPrayerFavorite() ? (
+                            <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                          ) : (
+                            <HeartOff className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => shareContent(
+                            'Oração do Capítulo',
+                            `${chapter.chapter_prayer}\n\nEnviado do app Conexão com Deus!`
+                          )}
+                          aria-label="Compartilhar oração"
+                          className="h-8 w-8"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </Button>
+                      </>
                     )}
                   </div>
+                  <p className="italic leading-relaxed text-justify text-base">
+                    {chapter.chapter_prayer.replace(/\n/g, '\n')}
+                  </p>
                 </div>
               </div>
 
@@ -478,7 +544,7 @@ const StudyChapter = () => {
             <div className="flex items-center justify-between bg-muted/30 p-4 rounded-lg">
               <div className="flex-1">
                 {prevChapter ? (
-                  <Link to={`/estudos/${studyId}/capitulo/${prevChapter.chapter_number}`}>
+                  <Link to={`/estudo/${studyId}/capitulo/${prevChapter.chapter_number}`}>
                     <Button variant="outline" className="w-full sm:w-auto">
                       <ChevronLeft className="w-4 h-4 mr-2" />
                       Capítulo {prevChapter.chapter_number}
@@ -499,7 +565,7 @@ const StudyChapter = () => {
               
               <div className="flex-1 text-right">
                 {nextChapter ? (
-                  <Link to={`/estudos/${studyId}/capitulo/${nextChapter.chapter_number}`}>
+                  <Link to={`/estudo/${studyId}/capitulo/${nextChapter.chapter_number}`}>
                     <Button className="divine-button w-full sm:w-auto">
                       Capítulo {nextChapter.chapter_number}
                       <ChevronRight className="w-4 h-4 ml-2" />

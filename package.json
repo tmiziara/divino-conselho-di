@@ -16,6 +16,7 @@
     "pwa:build": "npm run build && npx cap sync android"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^7.0.3",
     "@capacitor/android": "^7.4.0",
     "@capacitor/app": "^7.0.0",
     "@capacitor/cli": "^7.4.0",
@@ -24,10 +25,15 @@
     "@capacitor/haptics": "^7.0.0",
     "@capacitor/ios": "^7.4.0",
     "@capacitor/keyboard": "^7.0.0",
+    "@capacitor/local-notifications": "^7.0.1",
     "@capacitor/network": "^7.0.0",
+    "@capacitor/share": "^7.0.1",
     "@capacitor/splash-screen": "^7.0.0",
     "@capacitor/status-bar": "^7.0.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^3.9.0",
+    "@mui/material": "^7.2.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",

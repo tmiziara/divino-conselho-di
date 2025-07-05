@@ -176,7 +176,6 @@ const Profile = () => {
 
   const getPlanDisplayName = (tier: string) => {
     switch (tier) {
-      case "basico": return "Básico";
       case "premium": return "Premium";
       default: return "Gratuito";
     }
@@ -213,7 +212,7 @@ const Profile = () => {
         )}
         <div className="grid gap-6">
           {/* Subscription Status */}
-          <Card>
+          <Card className="bg-card dark:bg-zinc-900">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-primary" />
@@ -258,7 +257,7 @@ const Profile = () => {
                     Gerenciar Assinatura
                   </Button>
                 ) : (
-                  <Link to="/assinatura" className="flex-1">
+                  <Link to="/assinatura?plan=premium" className="flex-1">
                     <Button className="w-full divine-button">
                       <Crown className="w-4 h-4 mr-2" />
                       Upgrade para Premium
@@ -277,7 +276,7 @@ const Profile = () => {
 
           <div className="grid gap-6 md:grid-cols-2">
           {/* Informações Pessoais */}
-          <Card>
+          <Card className="bg-card dark:bg-zinc-900">
             <CardHeader>
               <CardTitle>Informações Pessoais</CardTitle>
               <CardDescription>
@@ -347,24 +346,24 @@ const Profile = () => {
           </Card>
 
           {/* Alterar Senha */}
-          <Card>
+          <Card className="bg-card dark:bg-zinc-900 mb-2">
             <CardHeader>
-              <CardTitle>Alterar Senha</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg">Alterar Senha</CardTitle>
+              <CardDescription className="text-sm">
                 Mantenha sua conta segura
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-2">
                   <FormField
                     control={passwordForm.control}
                     name="currentPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Senha Atual</FormLabel>
+                        <FormLabel className="text-sm">Senha Atual</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input type="password" {...field} className="h-9 py-2 text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -376,9 +375,9 @@ const Profile = () => {
                     name="newPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nova Senha</FormLabel>
+                        <FormLabel className="text-sm">Nova Senha</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input type="password" {...field} className="h-9 py-2 text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -390,16 +389,16 @@ const Profile = () => {
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Confirmar Nova Senha</FormLabel>
+                        <FormLabel className="text-sm">Confirmar Nova Senha</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input type="password" {...field} className="h-9 py-2 text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <Button type="submit" className="w-full">
+                  <Button type="submit" className="w-full h-9 text-sm mt-1">
                     Alterar Senha
                   </Button>
                 </form>

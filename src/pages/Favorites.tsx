@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart, BookOpen, MessageCircle, Trash2 } from "lucide-react";
+import { Heart, BookOpen, MessageCircle, Trash2, Share2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
 import SocialShare from "@/components/SocialShare";
@@ -96,15 +96,14 @@ const Favorites = () => {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "verse":
-        return <BookOpen className="w-4 h-4" />;
       case "study":
-        return <BookOpen className="w-4 h-4" />;
+        return <BookOpen className="w-5 h-5 min-w-[20px]" />;
       case "psalm":
-        return <Heart className="w-4 h-4" />;
+        return <Heart className="w-5 h-5 min-w-[20px]" />;
       case "message":
-        return <MessageCircle className="w-4 h-4" />;
+        return <MessageCircle className="w-5 h-5 min-w-[20px]" />;
       default:
-        return <Heart className="w-4 h-4" />;
+        return <Heart className="w-5 h-5 min-w-[20px]" />;
     }
   };
 
@@ -142,9 +141,32 @@ const Favorites = () => {
     setShowAuth(true);
   };
 
+  const shareContent = async (title: string, text: string) => {
+    try {
+      const shareText = `${title}\n\n${text}`;
+      const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor && (window as any).Capacitor.isNativePlatform && (window as any).Capacitor.isNativePlatform();
+      if (isCapacitor && (window as any).Capacitor && (window as any).Capacitor.Plugins && (window as any).Capacitor.Plugins.Share) {
+        await (window as any).Capacitor.Plugins.Share.share({
+          title,
+          text: shareText,
+          dialogTitle: 'Compartilhar com...'
+        });
+        return;
+      }
+      if (navigator.share) {
+        await navigator.share({ title, text: shareText });
+        return;
+      }
+      await navigator.clipboard.writeText(shareText);
+      toast({ title: 'Copiado!', description: 'Texto copiado para área de transferência.' });
+    } catch (err) {
+      toast({ title: 'Erro ao compartilhar', description: 'Não foi possível compartilhar.' });
+    }
+  };
+
   if (!user) {
     return (
-      <div className="min-h-screen celestial-bg">
+      <div className="min-h-screen bg-white dark:bg-[#0b101a]">
         <Navigation onAuthClick={handleAuthClick} />
         <div className="container mx-auto px-6 py-20">
           <Card className="spiritual-card max-w-md mx-auto">
@@ -170,9 +192,8 @@ const Favorites = () => {
   }
 
   return (
-    <div className="min-h-screen celestial-bg">
+    <div className="min-h-screen bg-white dark:bg-[#0b101a]">
       <Navigation onAuthClick={handleAuthClick} />
-      
       <div className="container mx-auto px-4 sm:px-6 py-8">
         <div className="text-center mb-8">
           <h1 className="flex justify-center items-center text-2xl sm:text-3xl md:text-4xl font-bold heavenly-text mb-4 break-words">
@@ -216,44 +237,65 @@ const Favorites = () => {
                 </Card>
               ) : (
                 <div className="grid gap-2 sm:gap-3 pb-6">
-                  {favorites.map((favorite) => (
-                    <Card key={favorite.id} className="spiritual-card">
-                      <CardHeader className="pb-1 pt-1 sm:pt-2">
-                        <div className="flex items-center justify-end gap-2 mb-2">
-                          <Badge className={`${getTypeColor(favorite.type)} text-xs`}>
-                            {getTypeLabel(favorite.type)}
+                  {favorites.map((fav) => {
+                    // Função para decidir o título exibido
+                    const getDisplayTitle = (fav: Favorite) => {
+                      if (fav.type === "study") {
+                        if (fav.title.startsWith("study-verse-") && fav.reference) {
+                          return fav.reference;
+                        }
+                        if (fav.title.startsWith("study-prayer-") && fav.reference) {
+                          return fav.reference;
+                        }
+                      }
+                      return fav.title;
+                    };
+                    console.log('Renderizando favorito:', fav.id, fav.reference);
+                    return (
+                      <Card key={fav.id} className="p-4 bg-card dark:bg-zinc-900">
+                        <div className="flex items-center gap-2 mb-2 justify-end">
+                          <Badge className={getTypeColor(fav.type)}>
+                            {getTypeLabel(fav.type)}
                           </Badge>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                            onClick={() => deleteFavorite(favorite.id)}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-500 hover:text-blue-700"
+                            onClick={() => shareContent(
+                              getDisplayTitle(fav),
+                              `${fav.content}\n\nEnviado do app Conexão com Deus!`
+                            )}
+                            aria-label="Compartilhar favorito"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-700"
+                            onClick={() => deleteFavorite(fav.id)}
+                            aria-label="Excluir favorito"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                        
-                        <div className="flex items-start gap-2">
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="flex items-center gap-2 text-base sm:text-xl break-words">
-                              {getTypeIcon(favorite.type)}
-                              <span className="break-words">
-                                {favorite.reference || favorite.title}
-                              </span>
-                            </CardTitle>
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              {getTypeIcon(fav.type)}
+                              <span className="font-semibold">{getDisplayTitle(fav)}</span>
+                            </div>
+                            <p className="text-foreground leading-relaxed">
+                              {fav.content}
+                            </p>
                           </div>
                         </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <p className="text-sm sm:text-base md:text-lg leading-relaxed mb-4 break-words">
-                          {favorite.content}
-                        </p>
-                        <div className="text-xs sm:text-sm text-muted-foreground">
-                          <span>Salvo em {new Date(favorite.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        <span className="text-xs text-muted-foreground">
+                          Salvo em {new Date(fav.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </div>
