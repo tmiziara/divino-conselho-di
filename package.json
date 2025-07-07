@@ -68,6 +68,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "cordova-plugin-android-fullscreen": "^1.0.0",
+    "cordova-plugin-device": "^3.0.0",
+    "cordova-plugin-local-notification": "^1.2.0",
     "crypto-js": "^4.2.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",

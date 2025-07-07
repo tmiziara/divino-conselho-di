@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ const Notifications = () => {
     schedules,
     verses,
     loading,
+    isMobile,
     addSchedule,
     toggleSchedule,
     deleteSchedule,
@@ -29,9 +30,27 @@ const Notifications = () => {
     getThemeLabel,
     getActiveSchedulesCount,
     getAvailableThemesCount,
+    getNotificationStatus,
+    resetAllNotifications,
+    testNotification,
+    emergencyReset,
     THEMES,
     DAYS_OF_WEEK,
   } = useNotifications();
+
+  const [notificationStatus, setNotificationStatus] = useState<{ enabled: boolean; message: string } | null>(null);
+
+  // Verificar status das notificações
+  useEffect(() => {
+    if (isMobile !== null) {
+      checkNotificationStatus();
+    }
+  }, [isMobile]);
+
+  const checkNotificationStatus = async () => {
+    const status = await getNotificationStatus();
+    setNotificationStatus(status);
+  };
 
   const handleAddSchedule = async () => {
     if (formData.days.length === 0) {
@@ -82,6 +101,42 @@ const Notifications = () => {
           </div>
         </div>
 
+        {/* Status das Notificações (Mobile) */}
+        {isMobile && notificationStatus && (
+          <Card className="mb-6 bg-card border border-border dark:bg-zinc-900 dark:border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Status das Notificações</p>
+                  <p className={`font-medium ${notificationStatus.enabled ? 'text-green-600' : 'text-red-600'}`}>
+                    {notificationStatus.message}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Aviso para Web */}
+        {!isMobile && (
+          <Card className="mb-6 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Notificações disponíveis apenas no app móvel
+                  </p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                    Para receber notificações, use o app no seu dispositivo móvel.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="bg-card border border-border dark:bg-zinc-900 dark:border-border">
@@ -120,7 +175,7 @@ const Notifications = () => {
         </div>
 
         {/* Botão Adicionar */}
-        <div className="mb-6">
+        <div className="mb-6 flex gap-2 flex-wrap">
           <Button 
             onClick={() => setShowForm(true)} 
             className="w-full md:w-auto"
@@ -128,6 +183,40 @@ const Notifications = () => {
             <Plus className="w-4 h-4 mr-2" />
             Novo Agendamento
           </Button>
+          
+          {isMobile && (
+            <Button 
+              variant="outline"
+              onClick={testNotification}
+              className="w-full md:w-auto"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              Testar Notificação
+            </Button>
+          )}
+          
+          {schedules.length > 0 && (
+            <Button 
+              variant="outline"
+              onClick={resetAllNotifications}
+              className="w-full md:w-auto"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Resetar Todas
+            </Button>
+          )}
+          
+          {/* Botão de emergência (oculto por padrão, apenas para debugging) */}
+          {process.env.NODE_ENV === 'development' && isMobile && (
+            <Button 
+              variant="outline"
+              onClick={emergencyReset}
+              className="w-full md:w-auto"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Reset de Emergência
+            </Button>
+          )}
         </div>
 
         {/* Formulário */}
