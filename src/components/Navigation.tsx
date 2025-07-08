@@ -140,6 +140,7 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
               </DrawerTrigger>
               <DrawerContent>
                 <DrawerHeader>
+                  <DrawerTitle>Menu</DrawerTitle>
                   <DrawerClose asChild>
                     <Button variant="ghost" size="sm" className="absolute right-4 top-4">
                       <X className="w-4 h-4" />

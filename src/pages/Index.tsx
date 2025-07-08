@@ -164,25 +164,27 @@ const Index = () => {
           </div>
 
           {/* CTA para upgrade premium */}
-          <div className="w-full flex flex-col items-center mt-6 mb-2">
-            <div className="bg-gradient-to-r from-yellow-200 via-yellow-100 to-blue-100 dark:from-yellow-900 dark:via-yellow-800 dark:to-blue-900 border border-yellow-300 dark:border-yellow-700 rounded-xl p-4 max-w-md w-full flex flex-col items-center shadow-md">
-              <span className="text-lg font-semibold text-yellow-700 dark:text-yellow-200 mb-1">Desbloqueie todo o conteúdo premium!</span>
-              <span className="text-sm text-gray-700 dark:text-gray-200 mb-3 text-center">Tenha acesso a estudos exclusivos, recursos avançados e uma experiência sem limites.</span>
-              <Button
-                className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 dark:bg-yellow-700 dark:hover:bg-yellow-600 dark:text-yellow-100 font-bold px-8 py-3 rounded-lg shadow-lg transition-all"
-                disabled={user && !subscriptionLoading && subscription?.subscription_tier === "premium"}
-                onClick={() => {
-                  if (!user) {
-                    setShowAuth(true);
-                  } else if (!subscriptionLoading && subscription?.subscription_tier !== "premium") {
-                    navigate("/assinatura?plan=premium");
-                  }
-                }}
-              >
-                Quero ser Premium
-              </Button>
+          {(!user || (!subscriptionLoading && subscription?.subscription_tier !== "premium")) && (
+            <div className="w-full flex flex-col items-center mt-6 mb-2">
+              <div className="bg-gradient-to-r from-yellow-200 via-yellow-100 to-blue-100 dark:from-yellow-900 dark:via-yellow-800 dark:to-blue-900 border border-yellow-300 dark:border-yellow-700 rounded-xl p-4 max-w-md w-full flex flex-col items-center shadow-md">
+                <span className="text-lg font-semibold text-yellow-700 dark:text-yellow-200 mb-1">Desbloqueie todo o conteúdo premium!</span>
+                <span className="text-sm text-gray-700 dark:text-gray-200 mb-3 text-center">Tenha acesso a estudos exclusivos, recursos avançados e uma experiência sem limites.</span>
+                <Button
+                  className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 dark:bg-yellow-700 dark:hover:bg-yellow-600 dark:text-yellow-100 font-bold px-8 py-3 rounded-lg shadow-lg transition-all"
+                  disabled={user && !subscriptionLoading && subscription?.subscription_tier === "premium"}
+                  onClick={() => {
+                    if (!user) {
+                      setShowAuth(true);
+                    } else if (!subscriptionLoading && subscription?.subscription_tier !== "premium") {
+                      navigate("/assinatura?plan=premium");
+                    }
+                  }}
+                >
+                  Quero ser Premium
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

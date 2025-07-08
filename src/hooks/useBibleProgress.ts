@@ -4,13 +4,14 @@ interface ReadingPosition {
   book: string;
   chapter: number;
   verse: number;
+  version: string;
 }
 
 export const useBibleProgress = () => {
   const { user } = useAuth();
 
-  const saveProgress = (book: string, chapter: number, verse: number = 1) => {
-    const position: ReadingPosition = { book, chapter, verse };
+  const saveProgress = (book: string, chapter: number, verse: number = 1, version: string = 'nvi') => {
+    const position: ReadingPosition = { book, chapter, verse, version };
     
     // Save to localStorage for all users
     localStorage.setItem('bible_reading_position', JSON.stringify(position));

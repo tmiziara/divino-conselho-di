@@ -33,7 +33,6 @@ const Notifications = () => {
     getNotificationStatus,
     resetAllNotifications,
     testNotification,
-    emergencyReset,
     THEMES,
     DAYS_OF_WEEK,
   } = useNotifications();
@@ -49,7 +48,9 @@ const Notifications = () => {
 
   const checkNotificationStatus = async () => {
     const status = await getNotificationStatus();
-    setNotificationStatus(status);
+    if (status && typeof status === 'object' && 'enabled' in status && 'message' in status) {
+      setNotificationStatus(status as { enabled: boolean; message: string });
+    }
   };
 
   const handleAddSchedule = async () => {
@@ -183,40 +184,6 @@ const Notifications = () => {
             <Plus className="w-4 h-4 mr-2" />
             Novo Agendamento
           </Button>
-          
-          {isMobile && (
-            <Button 
-              variant="outline"
-              onClick={testNotification}
-              className="w-full md:w-auto"
-            >
-              <Bell className="w-4 h-4 mr-2" />
-              Testar Notificação
-            </Button>
-          )}
-          
-          {schedules.length > 0 && (
-            <Button 
-              variant="outline"
-              onClick={resetAllNotifications}
-              className="w-full md:w-auto"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Resetar Todas
-            </Button>
-          )}
-          
-          {/* Botão de emergência (oculto por padrão, apenas para debugging) */}
-          {process.env.NODE_ENV === 'development' && isMobile && (
-            <Button 
-              variant="outline"
-              onClick={emergencyReset}
-              className="w-full md:w-auto"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Reset de Emergência
-            </Button>
-          )}
         </div>
 
         {/* Formulário */}
