@@ -13,6 +13,7 @@ const CategoryCard = ({ category, hasPremiumAccess, small }: CategoryCardProps) 
   // Fallback para Sparkles se não houver ícone
   const IconComponent = category.config.icon || require('lucide-react').Sparkles;
   
+  
   return (
     <Link to={`/categoria/${category.id}`}>
       <Card className={`spiritual-card group hover:shadow-lg transition-all duration-300 cursor-pointer ${category.config.bgColor} ${small ? 'p-2 h-32' : 'p-6 h-48'} flex items-center justify-center` +

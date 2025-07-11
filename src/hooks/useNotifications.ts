@@ -1,29 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { Device } from '@capacitor/device';
+import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 console.log('[DEBUG] Início do arquivo useNotifications.ts');
 
 // Declarações de tipo para Cordova
-declare global {
-  interface Window {
-    cordova?: {
-      plugins?: {
-        notification?: {
-          local?: {
-            schedule: (notification: any, callback: (scheduled: boolean) => void) => void;
-            cancel: (id: number, callback: () => void) => void;
-            cancelAll: (callback: () => void) => void;
-            hasPermission: (callback: (granted: boolean) => void) => void;
-            requestPermission: (callback: (granted: boolean) => void) => void;
-            on: (event: string, callback: (notification: any) => void) => void;
-            getPending: (callback: (notifications: any[]) => void) => void;
-          };
-        };
-      };
-    };
-  }
-}
+// Usando any para evitar conflitos com @types/cordova
 
 export interface NotificationSchedule {
   id: string;
@@ -76,45 +57,109 @@ const DAYS_OF_WEEK = [
 // Chaves para controle de estado
 const SCHEDULES_KEY = 'notification_schedules';
 const USED_VERSES_KEY = 'used_verses';
-const NOTIFICATION_STATE_KEY = 'notification_system_state';
-
-// Interface para controle de estado
-interface NotificationState {
-  isInitialized: boolean;
-  lastInitialization: string;
-  version: string;
-}
 
 // Verificar se o plugin Cordova está disponível
 const isCordovaAvailable = (): boolean => {
   const hasWindow = typeof window !== 'undefined';
-  const hasCordova = hasWindow && typeof window.cordova !== 'undefined';
-  const hasNotificationPlugin = hasCordova && window.cordova?.plugins?.notification?.local !== undefined;
+  const hasCordova = hasWindow && typeof (window as any).cordova !== 'undefined';
+  const hasNotificationPlugin = hasCordova && (window as any).cordova?.plugins?.notification?.local !== undefined;
   
-  // Verificação adicional para diferentes formas de acesso ao plugin
-  let alternativeCheck = false;
-  if (hasCordova) {
-    // Tentar diferentes formas de acessar o plugin
-    alternativeCheck = !!(
-      window.cordova?.plugins?.notification?.local ||
-      (window as any).cordova?.plugins?.notification?.local ||
-      (window as any).plugins?.notification?.local
-    );
+  return hasNotificationPlugin;
+};
+
+// Função para obter um versículo aleatório por tema
+const getRandomVerseByTheme = (verses: Verse[], theme: string, usedVerses: Record<string, string[]>): Verse | null => {
+  if (theme === 'auto') {
+    // Para tema automático, escolher qualquer versículo
+    const availableVerses = verses.filter(verse => {
+      const usedForTheme = usedVerses[verse.tema] || [];
+      return !usedForTheme.includes(verse.referencia);
+    });
+    
+    if (availableVerses.length === 0) {
+      // Se todos foram usados, resetar para este tema
+      return verses[Math.floor(Math.random() * verses.length)];
+    }
+    
+    return availableVerses[Math.floor(Math.random() * availableVerses.length)];
+  } else {
+    // Para tema específico
+    const themeVerses = verses.filter(verse => verse.tema === theme);
+    const availableVerses = themeVerses.filter(verse => {
+      const usedForTheme = usedVerses[theme] || [];
+      return !usedForTheme.includes(verse.referencia);
+    });
+    
+    if (availableVerses.length === 0) {
+      // Se todos foram usados para este tema, resetar
+      return themeVerses[Math.floor(Math.random() * themeVerses.length)];
+    }
+    
+    return availableVerses[Math.floor(Math.random() * availableVerses.length)];
+  }
+};
+
+// Função para marcar versículo como usado
+const markVerseAsUsed = (usedVerses: Record<string, string[]>, verse: Verse): Record<string, string[]> => {
+  const newUsedVerses = { ...usedVerses };
+  const theme = verse.tema;
+  
+  if (!newUsedVerses[theme]) {
+    newUsedVerses[theme] = [];
   }
   
-  console.log('[Notifications] Verificação Cordova:', {
-    hasWindow,
-    hasCordova,
-    hasNotificationPlugin,
-    alternativeCheck,
-    cordovaExists: hasWindow ? !!window.cordova : false,
-    pluginsExists: hasCordova ? !!window.cordova?.plugins : false,
-    notificationExists: hasCordova ? !!window.cordova?.plugins?.notification : false,
-    localExists: hasCordova ? !!window.cordova?.plugins?.notification?.local : false,
-    windowKeys: hasWindow ? Object.keys(window).filter(k => k.includes('cordova') || k.includes('plugin')) : []
+  if (!newUsedVerses[theme].includes(verse.referencia)) {
+    newUsedVerses[theme].push(verse.referencia);
+  }
+  
+  return newUsedVerses;
+};
+
+// Função para calcular próximo horário de notificação
+const calculateNextNotificationTime = (schedule: NotificationSchedule): Date => {
+  const now = new Date();
+  const [hours, minutes] = schedule.time.split(':').map(Number);
+  
+  // Criar data para hoje com o horário especificado
+  const today = new Date();
+  today.setHours(hours, minutes, 0, 0);
+  
+  // Se já passou do horário hoje, calcular para amanhã
+  if (now >= today) {
+    today.setDate(today.getDate() + 1);
+  }
+  
+  // Encontrar o próximo dia da semana que está no agendamento
+  let currentDay = today.getDay();
+  let daysToAdd = 0;
+  
+  // Procurar o próximo dia válido
+  while (daysToAdd < 7) {
+    if (schedule.days.includes(currentDay)) {
+      break;
+    }
+    currentDay = (currentDay + 1) % 7;
+    daysToAdd++;
+  }
+  
+  // Se não encontrou nenhum dia válido, usar o primeiro dia da lista
+  if (daysToAdd >= 7) {
+    daysToAdd = 0;
+    currentDay = schedule.days[0];
+  }
+  
+  const nextNotification = new Date(today);
+  nextNotification.setDate(today.getDate() + daysToAdd);
+  
+  console.log('[Notifications] Próxima notificação calculada:', {
+    horario: schedule.time,
+    dias: schedule.days,
+    proximaData: nextNotification.toISOString(),
+    agora: now.toISOString(),
+    diasAdicionados: daysToAdd
   });
   
-  return hasNotificationPlugin || alternativeCheck;
+  return nextNotification;
 };
 
 export const useNotifications = () => {
@@ -127,299 +172,105 @@ export const useNotifications = () => {
   const { toast } = useToast();
   const initializationRef = useRef(false);
 
-  // Verificar se está no mobile
+  // Inicializar diretamente para mobile
   useEffect(() => {
-    console.log('[DEBUG] useEffect checkPlatform chamado');
-    checkPlatform();
-  }, []);
-
-  const checkPlatform = async () => {
-    try {
-      console.log('[DEBUG] checkPlatform executando');
-      const info = await Device.getInfo();
-      setIsMobile(info.platform !== 'web');
-      console.log(`[Notifications] Plataforma detectada: ${info.platform}`);
-    } catch (error) {
-      console.error('[DEBUG] Erro em checkPlatform:', error);
-      setIsMobile(false);
-    }
-  };
-
-  // Carregar dados iniciais apenas uma vez
-  useEffect(() => {
-    console.log('[DEBUG] useEffect de inicialização chamado, isMobile:', isMobile, 'initRef:', initializationRef.current);
-    if (isMobile === true && !initializationRef.current) {
+    if (!initializationRef.current) {
       initializationRef.current = true;
-      console.log('[DEBUG] Entrou no bloco de inicialização do useEffect');
-      // Aguardar um pouco para garantir que o Cordova esteja carregado
+      setIsMobile(true); // Assumir que é mobile
       const timer = setTimeout(() => {
-        console.log('[DEBUG] Chamando initializeNotifications');
         initializeNotifications();
-      }, 1000);
-      
+      }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isMobile]);
-
-  // Verificar persistência das notificações quando o app é aberto
-  useEffect(() => {
-    if (isMobile) {
-      const checkOnAppOpen = async () => {
-        await checkNotificationPersistence();
-      };
-      const timer = setTimeout(checkOnAppOpen, 3000); // Aguardar 3 segundos para o Cordova carregar
-      return () => clearTimeout(timer);
-    }
-  }, [isMobile]);
-
-  // Função para obter estado atual do sistema
-  const getNotificationState = (): NotificationState => {
-    try {
-      console.log('[DEBUG] getNotificationState chamado');
-      const stored = localStorage.getItem(NOTIFICATION_STATE_KEY);
-      return stored ? JSON.parse(stored) : { isInitialized: false, lastInitialization: '', version: '2.0' };
-    } catch (error) {
-      console.error('[DEBUG] Erro em getNotificationState:', error);
-      return { isInitialized: false, lastInitialization: '', version: '2.0' };
-    }
-  };
-
-  // Função para salvar estado atual do sistema
-  const saveNotificationState = (state: Partial<NotificationState>) => {
-    try {
-      console.log('[DEBUG] saveNotificationState chamado');
-      const currentState = getNotificationState();
-      const newState = { ...currentState, ...state };
-      localStorage.setItem(NOTIFICATION_STATE_KEY, JSON.stringify(newState));
-    } catch (error) {
-      console.error('[DEBUG] Erro em saveNotificationState:', error);
-    }
-  };
-
-  // Função para aguardar o Cordova estar disponível
-  const waitForCordova = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (isCordovaAvailable()) {
-        resolve(true);
-        return;
-      }
-      
-      // Tentar por até 10 segundos
-      let attempts = 0;
-      const maxAttempts = 20; // 20 tentativas * 500ms = 10 segundos
-      
-      const checkCordova = () => {
-        attempts++;
-        console.log(`[Notifications] Tentativa ${attempts}/${maxAttempts} de detectar Cordova...`);
-        
-        if (isCordovaAvailable()) {
-          console.log('[Notifications] Cordova detectado com sucesso!');
-          resolve(true);
-          return;
-        }
-        
-        if (attempts >= maxAttempts) {
-          console.log('[Notifications] Timeout aguardando Cordova');
-          resolve(false);
-          return;
-        }
-        
-        setTimeout(checkCordova, 500);
-      };
-      
-      checkCordova();
-    });
-  };
+  }, []);
 
   const initializeNotifications = async () => {
     try {
-      console.log('[Notifications] Entrou initializeNotifications');
-      const currentState = getNotificationState();
+      console.log('[Notifications] Inicializando sistema de notificações...');
       
-      // Verificar se já foi inicializado recentemente (últimas 24h)
-      const lastInit = new Date(currentState.lastInitialization);
-      const now = new Date();
-      const hoursSinceLastInit = (now.getTime() - lastInit.getTime()) / (1000 * 60 * 60);
-      
-      if (currentState.isInitialized && hoursSinceLastInit < 24) {
-        console.log('[Notifications] Sistema já inicializado recentemente, apenas carregando dados...');
-        console.log('[Notifications] Antes de loadSchedules');
-        await loadSchedules();
-        console.log('[Notifications] Depois de loadSchedules');
-        console.log('[Notifications] Antes de loadUsedVerses');
-        await loadUsedVerses();
-        console.log('[Notifications] Depois de loadUsedVerses');
-        console.log('[Notifications] Antes de loadVerses');
-        await loadVerses();
-        console.log('[Notifications] Depois de loadVerses');
+      if (!isCordovaAvailable()) {
+        console.log('[Notifications] Cordova não disponível, pulando inicialização');
         setLoading(false);
         return;
       }
 
-      setLoading(true);
-      console.log('[Notifications] Inicializando sistema de notificações...');
-      
-      // Carregar dados primeiro
-      console.log('[Notifications] Antes de loadSchedules');
-      await loadSchedules();
-      console.log('[Notifications] Depois de loadSchedules');
-      console.log('[Notifications] Antes de loadUsedVerses');
-      await loadUsedVerses();
-      console.log('[Notifications] Depois de loadUsedVerses');
-      console.log('[Notifications] Antes de loadVerses');
-      const loadedVerses = await loadVerses();
-      console.log('[Notifications] Depois de loadVerses');
-      
-      if (isMobile) {
-        console.log('[Notifications] Executando em mobile - aguardando Cordova...');
-        const cordovaAvailable = await waitForCordova();
-        
-        if (cordovaAvailable) {
-          console.log('[Notifications] Cordova disponível - configurando notificações');
-          await requestPermissions();
-          await setupNotificationListeners();
-          
-          // Marcar como inicializado
-          saveNotificationState({
-            isInitialized: true,
-            lastInitialization: now.toISOString(),
-            version: '2.0'
-          });
-          
-          console.log('[Notifications] Sistema inicializado com sucesso');
-        } else {
-          console.log('[Notifications] Cordova não disponível após timeout - apenas carregando dados');
-        }
-      } else {
-        console.log('[Notifications] Executando em web - apenas carregando dados');
-      }
-    } catch (error) {
-      console.error('[DEBUG] Erro em initializeNotifications:', error);
-    } finally {
+      // Carregar dados salvos
+      loadSchedules();
+      await loadVerses();
+      loadUsedVerses();
+
+      // Verificar permissões
+      await requestPermissions();
+
+      // Agendar notificações existentes
+      await scheduleAllNotifications();
+
       setLoading(false);
-      console.log('[Notifications] Finalizou initializeNotifications');
-    }
-  };
-
-  const setupNotificationListeners = async () => {
-    try {
-      if (!isMobile || !isCordovaAvailable()) return;
-
-      console.log('[Notifications] Configurando listeners de notificação Cordova...');
-
-      // Listener para quando uma notificação é recebida
-      window.cordova!.plugins.notification.local.on('trigger', (notification) => {
-        console.log('[Notifications] Notificação recebida:', notification);
-        // IMPORTANTE: Não cancelar a notificação aqui - deixar o sistema manter
-        // A propriedade repeats: true deve manter a notificação agendada
-      });
-
-      // Listener para quando uma notificação é clicada
-      window.cordova!.plugins.notification.local.on('click', (notification) => {
-        console.log('[Notifications] Notificação clicada:', notification);
-        // IMPORTANTE: Não cancelar a notificação aqui - deixar o sistema manter
-        // A propriedade repeats: true deve manter a notificação agendada
-      });
-
-      // Listener para quando uma notificação é removida/cancelada
-      window.cordova!.plugins.notification.local.on('clear', (notification) => {
-        console.log('[Notifications] Notificação removida/cancelada:', notification);
-        
-        // Verificar se é uma notificação do nosso sistema
-        if (notification.data && notification.data.scheduleId) {
-          console.log(`[Notifications] Notificação do agendamento ${notification.data.scheduleId} foi fechada da barra de status`);
-          
-          // Verificar se o agendamento ainda está ativo após alguns segundos
-          setTimeout(() => {
-            verificarSeAgendamentoAindaAtivo(notification.data.scheduleId);
-          }, 3000);
-        }
-      });
-
-      console.log('[Notifications] Listeners Cordova configurados com sucesso');
+      console.log('[Notifications] Sistema inicializado com sucesso');
     } catch (error) {
-      console.error('Error setting up Cordova notification listeners:', error);
+      console.error('[Notifications] Erro na inicialização:', error);
+      setLoading(false);
     }
   };
 
   const requestPermissions = async () => {
     try {
-      if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Permissões não necessárias em web ou Cordova não disponível');
-        return;
-      }
+      if (!isCordovaAvailable()) return;
 
-      console.log('[Notifications] Solicitando permissões de notificação...');
-      
-      // Verificar permissões
-      window.cordova!.plugins.notification.local.hasPermission((granted) => {
-        if (granted) {
-          console.log('[Notifications] Permissões já concedidas');
-        } else {
-          console.log('[Notifications] Solicitando permissões...');
-          window.cordova!.plugins.notification.local.requestPermission((granted) => {
-            if (granted) {
-              console.log('[Notifications] Permissões concedidas com sucesso');
-            } else {
-              toast({
-                title: "Permissão necessária",
-                description: "Para receber notificações, é necessário permitir o acesso nas configurações do app.",
-                variant: "destructive"
-              });
-            }
-          });
-        }
-      });
+      const cordova = (window as any).cordova;
+      const notificationPlugin = cordova?.plugins?.notification?.local;
+
+      if (notificationPlugin) {
+        notificationPlugin.hasPermission((granted: boolean) => {
+          if (!granted) {
+            notificationPlugin.requestPermission((granted: boolean) => {
+              console.log('[Notifications] Permissão solicitada:', granted);
+            });
+          } else {
+            console.log('[Notifications] Permissão já concedida');
+          }
+        });
+      }
     } catch (error) {
-      console.error('Error requesting permissions:', error);
-      toast({
-        title: "Erro de permissão",
-        description: "Não foi possível solicitar permissões de notificação.",
-        variant: "destructive"
-      });
+      console.error('[Notifications] Erro ao solicitar permissões:', error);
     }
   };
 
   const loadSchedules = () => {
     try {
-      console.log('[Notifications] Iniciando loadSchedules');
-      const stored = localStorage.getItem(SCHEDULES_KEY);
-      if (stored) {
-        const parsedSchedules = JSON.parse(stored);
-        setSchedules(parsedSchedules);
-        console.log(`[Notifications] ${parsedSchedules.length} agendamentos carregados`);
+      const saved = localStorage.getItem(SCHEDULES_KEY);
+      if (saved) {
+        const schedules = JSON.parse(saved);
+        setSchedules(schedules);
+        console.log('[Notifications] Agendamentos carregados:', schedules.length);
       }
-      console.log('[Notifications] Finalizou loadSchedules');
     } catch (error) {
-      console.error('[DEBUG] Erro em loadSchedules:', error);
+      console.error('[Notifications] Erro ao carregar agendamentos:', error);
     }
   };
 
   const loadVerses = async (): Promise<Verse[]> => {
     try {
-      console.log('[Notifications] Iniciando loadVerses');
-      const response = await fetch('data/versiculos_por_tema_com_texto.json');
-      const data = await response.json();
-      setVerses(data);
-      console.log(`[Notifications] Versículos carregados: ${data.length}`);
-      console.log('[Notifications] Finalizou loadVerses');
-      return data;
+      const response = await fetch('/data/versiculos_por_tema_com_texto.json');
+      const verses = await response.json();
+      setVerses(verses);
+      console.log('[Notifications] Versículos carregados:', verses.length);
+      return verses;
     } catch (error) {
-      console.error('[DEBUG] Erro em loadVerses:', error);
+      console.error('[Notifications] Erro ao carregar versículos:', error);
       return [];
     }
   };
 
   const loadUsedVerses = () => {
     try {
-      console.log('[Notifications] Iniciando loadUsedVerses');
-      const stored = localStorage.getItem(USED_VERSES_KEY);
-      if (stored) {
-        setUsedVerses(JSON.parse(stored));
+      const saved = localStorage.getItem(USED_VERSES_KEY);
+      if (saved) {
+        const usedVerses = JSON.parse(saved);
+        setUsedVerses(usedVerses);
       }
-      console.log('[Notifications] Finalizou loadUsedVerses');
     } catch (error) {
-      console.error('[DEBUG] Erro em loadUsedVerses:', error);
+      console.error('[Notifications] Erro ao carregar versículos usados:', error);
     }
   };
 
@@ -428,7 +279,7 @@ export const useNotifications = () => {
       localStorage.setItem(SCHEDULES_KEY, JSON.stringify(newSchedules));
       setSchedules(newSchedules);
     } catch (error) {
-      console.error('Error saving schedules:', error);
+      console.error('[Notifications] Erro ao salvar agendamentos:', error);
     }
   };
 
@@ -437,257 +288,210 @@ export const useNotifications = () => {
       localStorage.setItem(USED_VERSES_KEY, JSON.stringify(newUsedVerses));
       setUsedVerses(newUsedVerses);
     } catch (error) {
-      console.error('Error saving used verses:', error);
+      console.error('[Notifications] Erro ao salvar versículos usados:', error);
     }
   };
 
-  function getRandomFromArray(verses: Verse[], theme: string): Verse | null {
-    if (verses.length === 0) return null;
-    
-    const themeVerses = verses.filter(v => v.tema === theme);
-    if (themeVerses.length === 0) return null;
-    
-    const randomIndex = Math.floor(Math.random() * themeVerses.length);
-    return themeVerses[randomIndex];
-  }
-
-  const getRandomVerse = (theme: string, versesArg: Verse[]): Verse | null => {
+  // Função para agendar uma notificação específica
+  const scheduleNotification = async (schedule: NotificationSchedule): Promise<boolean> => {
     try {
-      if (theme === "auto") {
-        if (versesArg.length === 0) return null;
-        const randomIndex = Math.floor(Math.random() * versesArg.length);
-        return versesArg[randomIndex];
-      } else {
-        return getRandomFromArray(versesArg, theme);
-      }
-    } catch (error) {
-      console.error('Error getting random verse:', error);
-      return null;
-    }
-  };
-// Função para criar uma única notificação usando Cordova
-const createSingleNotification = async (schedule: NotificationSchedule, day: number, versesArg: Verse[] = verses) => {
-  try {
-    if (!isMobile || !isCordovaAvailable()) {
-      console.log('[Notifications] Tentativa de criar notificação em web ou Cordova não disponível - ignorando');
-      return true;
-    }
-
-    const verse = getRandomVerse(schedule.theme, versesArg);
-    if (!verse) {
-      console.error(`[Notifications] Não foi possível encontrar versículo para tema: ${schedule.theme}`);
-      return false;
-    }
-
-    const [hours, minutes] = schedule.time.split(':').map(Number);
-    const notificationId = parseInt(schedule.id) + day;
-
-    // Ajuste correto do dia da semana para o plugin Cordova
-    const weekday = (day === 0) ? 7 : day;
-
-    console.log(`[Notifications] Criando notificação ${notificationId} para horário: ${schedule.time}, dia: ${day}, tema: ${schedule.theme}`);
-
-    // Configuração da notificação usando Cordova
-    const notificationConfig = {
-      id: notificationId,
-      title: "Versículo do Dia",
-      text: `${verse.referencia}: ${verse.texto}`,
-      trigger: {
-        every: { weekday: weekday, hour: hours, minute: minutes }
-      },
-      repeats: true, // ESSENCIAL: Mantém a notificação recorrente
-      foreground: true,
-      silent: false,
-      sound: null,
-      vibrate: true,
-      // Configurações específicas do Android para garantir persistência
-      androidAutoCancel: false, // Não cancela automaticamente
-      androidOngoing: false, // Não é uma notificação persistente
-      androidOnlyAlertOnce: false, // Permite múltiplas execuções
-      data: {
-        scheduleId: schedule.id,
-        theme: schedule.theme,
-        day: day
-      }
-    };
-
-    // Criar notificação usando Cordova
-    window.cordova!.plugins.notification.local.schedule(notificationConfig, (scheduled) => {
-      if (scheduled) {
-        console.log(`[Notifications] Notificação ${notificationId} agendada com sucesso via Cordova`);
-      } else {
-        console.error(`[Notifications] Falha ao agendar notificação ${notificationId} via Cordova`);
-      }
-    });
-
-    return true;
-  } catch (error) {
-    console.error('Error creating single notification with Cordova:', error);
-    return false;
-  }
-};
-
-  const createNotification = async (schedule: NotificationSchedule, versesArg: Verse[] = verses) => {
-    try {
-      if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Tentativa de criar notificação em web ou Cordova não disponível - ignorando');
-        return true;
-      }
-
-      const verse = getRandomVerse(schedule.theme, versesArg);
-      if (!verse) {
-        console.error(`[Notifications] Não foi possível encontrar versículo para tema: ${schedule.theme}`);
-        toast({
-          title: "Erro",
-          description: "Não foi possível encontrar um versículo para este tema.",
-          variant: "destructive"
-        });
+      if (!isCordovaAvailable() || !schedule.enabled) {
         return false;
       }
 
-      console.log(`[Notifications] Criando notificação para horário: ${schedule.time}, dias: ${schedule.days}, tema: ${schedule.theme}`);
-      
-      // Primeiro, cancelar notificações existentes para este agendamento
-      for (const day of schedule.days) {
-        try {
-          const notificationId = parseInt(schedule.id) + day;
-          window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-            console.log(`[Notifications] Notificação existente ${notificationId} cancelada via Cordova`);
-          });
-        } catch (error) {
-          // Ignorar erro se a notificação não existia
-        }
-      }
-      
-      // Criar novas notificações
-      for (const day of schedule.days) {
-        const success = await createSingleNotification(schedule, day, versesArg);
-        if (!success) {
-          console.error(`[Notifications] Falha ao criar notificação para dia ${day}`);
-        }
+      const cordova = (window as any).cordova;
+      const notificationPlugin = cordova?.plugins?.notification?.local;
+
+      if (!notificationPlugin) {
+        return false;
       }
 
-      return true;
-    } catch (error) {
-      console.error('Error creating notification with Cordova:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar a notificação. Verifique as permissões do app.",
-        variant: "destructive"
+      // Obter versículo para esta notificação
+      const verse = getRandomVerseByTheme(verses, schedule.theme, usedVerses);
+      if (!verse) {
+        console.error('[Notifications] Nenhum versículo encontrado para o tema:', schedule.theme);
+        return false;
+      }
+
+      // Marcar versículo como usado
+      const newUsedVerses = markVerseAsUsed(usedVerses, verse);
+      saveUsedVerses(newUsedVerses);
+
+      // Calcular próximo horário
+      const nextTime = calculateNextNotificationTime(schedule);
+
+      // Criar notificação
+      const notification = {
+        id: parseInt(schedule.id), // Usar ID numérico para o plugin
+        title: "Versículo do Dia",
+        text: `${verse.referencia}: ${verse.texto}`,
+        sound: "default",
+        trigger: {
+          type: 'calendar',
+          at: nextTime
+        },
+        every: 'week', // Repetir semanalmente
+        data: {
+          scheduleId: schedule.id,
+          theme: schedule.theme,
+          verseReference: verse.referencia
+        }
+      };
+
+      console.log('[Notifications] Configurando notificação:', {
+        id: schedule.id,
+        horario: schedule.time,
+        dias: schedule.days,
+        proximaExecucao: nextTime,
+        repeticaoSemanal: true
       });
+
+      return new Promise((resolve) => {
+        notificationPlugin.schedule(notification, (scheduled: boolean) => {
+          if (scheduled) {
+            console.log('[Notifications] Notificação agendada para:', schedule.id, 'em', nextTime, 'com repetição semanal');
+            resolve(true);
+          } else {
+            console.error('[Notifications] Falha ao agendar notificação:', schedule.id);
+            resolve(false);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('[Notifications] Erro ao agendar notificação:', error);
       return false;
     }
   };
 
-  const addSchedule = async (scheduleData: Omit<NotificationSchedule, 'id' | 'enabled' | 'createdAt'>) => {
+  // Função para agendar todas as notificações
+  const scheduleAllNotifications = async () => {
+    try {
+      if (!isCordovaAvailable()) return;
+
+      console.log('[Notifications] Agendando todas as notificações...');
+      
+      // Cancelar todas as notificações existentes
+      const cordova = (window as any).cordova;
+      const notificationPlugin = cordova?.plugins?.notification?.local;
+      
+      if (notificationPlugin) {
+        notificationPlugin.cancelAll(() => {
+          console.log('[Notifications] Todas as notificações canceladas');
+        });
+      }
+
+      // Agendar apenas as notificações ativas
+      const activeSchedules = schedules.filter(s => s.enabled);
+      
+      for (const schedule of activeSchedules) {
+        await scheduleNotification(schedule);
+      }
+
+      console.log('[Notifications] Agendamento concluído');
+    } catch (error) {
+      console.error('[Notifications] Erro ao agendar notificações:', error);
+    }
+  };
+
+  const addSchedule = async (scheduleData: Omit<NotificationSchedule, 'id' | 'enabled' | 'createdAt'>): Promise<NotificationSchedule> => {
     try {
       const newSchedule: NotificationSchedule = {
-        id: Math.floor(Math.random() * 1000000).toString(),
         ...scheduleData,
+        id: Date.now().toString(),
         enabled: true,
         createdAt: new Date().toISOString(),
       };
 
-      const newSchedules = [...schedules, newSchedule];
-      saveSchedules(newSchedules);
-      
-      console.log(`[Notifications] Novo agendamento criado: ${newSchedule.id}`);
-      
-      const success = await createNotification(newSchedule, verses);
-      
-      if (success) {
-        toast({
-          title: "Agendamento criado",
-          description: `Notificação agendada para ${newSchedule.days.length} dia(s) da semana.`,
-        });
+      const updatedSchedules = [...schedules, newSchedule];
+      saveSchedules(updatedSchedules);
+
+      // Agendar a nova notificação
+      if (isCordovaAvailable()) {
+        await scheduleNotification(newSchedule);
       }
 
-      return success;
+      toast({
+        title: "Agendamento criado",
+        description: "Notificação agendada com sucesso!",
+      });
+
+      return Promise.resolve(newSchedule);
     } catch (error) {
-      console.error('Error adding schedule:', error);
-      return false;
+      console.error('[Notifications] Erro ao adicionar agendamento:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o agendamento.",
+        variant: "destructive",
+      });
+      return Promise.reject(error);
     }
   };
 
-  const toggleSchedule = async (schedule: NotificationSchedule) => {
+  const toggleSchedule = async (schedule: NotificationSchedule): Promise<void> => {
     try {
-      const newSchedules = schedules.map(s => 
+      const updatedSchedules = schedules.map(s =>
         s.id === schedule.id ? { ...s, enabled: !s.enabled } : s
       );
-      saveSchedules(newSchedules);
+      saveSchedules(updatedSchedules);
 
-      if (!schedule.enabled) {
-        // Ativando - criar notificações
-        console.log(`[Notifications] Ativando agendamento: ${schedule.id}`);
-        const success = await createNotification(schedule, verses);
-        if (!success) {
-          // Reverter se falhou
-          saveSchedules(schedules);
-          return false;
-        }
-      } else {
-        // Desativando - cancelar notificações
-        console.log(`[Notifications] Desativando agendamento: ${schedule.id}`);
-        try {
-          for (const day of schedule.days) {
-            const notificationId = parseInt(schedule.id) + day;
-            window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-              console.log(`[Notifications] Notificação ${notificationId} cancelada via Cordova`);
-            });
-          }
-        } catch (error) {
-          console.error('Error canceling notifications:', error);
-        }
+      // Reagendar todas as notificações
+      if (isCordovaAvailable()) {
+        await scheduleAllNotifications();
       }
+
+      toast({
+        title: schedule.enabled ? "Notificação desativada" : "Notificação ativada",
+        description: schedule.enabled ? "A notificação foi desativada." : "A notificação foi ativada.",
+      });
       
-      return true;
+      return Promise.resolve();
     } catch (error) {
-      console.error('Error toggling schedule:', error);
-      return false;
+      console.error('[Notifications] Erro ao alternar agendamento:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível alterar o agendamento.",
+        variant: "destructive",
+      });
+      return Promise.reject(error);
     }
   };
 
-  const deleteSchedule = async (schedule: NotificationSchedule) => {
+  const deleteSchedule = async (schedule: NotificationSchedule): Promise<void> => {
     try {
-      console.log(`[Notifications] Deletando agendamento: ${schedule.id}`);
-      
-      // Cancelar notificações
-      for (const day of schedule.days) {
-        try {
-          const notificationId = parseInt(schedule.id) + day;
-          window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-            console.log(`[Notifications] Notificação ${notificationId} cancelada via Cordova`);
+      const updatedSchedules = schedules.filter(s => s.id !== schedule.id);
+      saveSchedules(updatedSchedules);
+
+      // Cancelar notificação específica
+      if (isCordovaAvailable()) {
+        const cordova = (window as any).cordova;
+        const notificationPlugin = cordova?.plugins?.notification?.local;
+        
+        if (notificationPlugin) {
+          notificationPlugin.cancel(parseInt(schedule.id), () => {
+            console.log('[Notifications] Notificação cancelada:', schedule.id);
           });
-        } catch (error) {
-          console.error(`[Notifications] Erro ao cancelar notificação ${parseInt(schedule.id) + day}:`, error);
         }
       }
-
-      const newSchedules = schedules.filter(s => s.id !== schedule.id);
-      saveSchedules(newSchedules);
 
       toast({
         title: "Agendamento removido",
         description: "O agendamento foi removido com sucesso.",
       });
-
-      return true;
+      
+      return Promise.resolve();
     } catch (error) {
-      console.error('Error deleting schedule:', error);
+      console.error('[Notifications] Erro ao deletar agendamento:', error);
       toast({
         title: "Erro",
         description: "Não foi possível remover o agendamento.",
-        variant: "destructive"
+        variant: "destructive",
       });
-      return false;
+      return Promise.reject(error);
     }
   };
 
   const formatDays = (days: number[]) => {
-    return days
-      .sort()
-      .map(day => DAYS_OF_WEEK.find(d => d.value === day)?.label)
-      .join(', ');
+    return days.map(day => DAYS_OF_WEEK.find(d => d.value === day)?.label).join(', ');
   };
 
   const getThemeLabel = (theme: string) => {
@@ -699,181 +503,73 @@ const createSingleNotification = async (schedule: NotificationSchedule, day: num
   };
 
   const getAvailableThemesCount = () => {
-    return THEMES.length - 1; // Excluir "auto"
+    return THEMES.length;
   };
 
-  const resetAllNotifications = async () => {
+  const testNotification = async (): Promise<void> => {
     try {
-      console.log('[Notifications] Iniciando reset de todas as notificações...');
-      
-      // Cancelar todas as notificações (só no mobile com Cordova)
-      if (isMobile && isCordovaAvailable()) {
-        window.cordova!.plugins.notification.local.cancelAll(() => {
-          console.log('[Notifications] Todas as notificações canceladas via Cordova');
+      if (!isCordovaAvailable()) {
+        toast({
+          title: "Erro",
+          description: "Notificações não estão disponíveis nesta plataforma.",
+          variant: "destructive",
+        });
+        return Promise.resolve();
+      }
+
+      const cordova = (window as any).cordova;
+      const notificationPlugin = cordova?.plugins?.notification?.local;
+
+      if (notificationPlugin) {
+        const testNotification = {
+          id: Date.now(),
+          title: "Teste de Notificação",
+          text: "Esta é uma notificação de teste do app Conexão com Deus",
+          sound: "default",
+          at: new Date(Date.now() + 5000), // 5 segundos
+        };
+
+        return new Promise((resolve, reject) => {
+          notificationPlugin.schedule(testNotification, (scheduled: boolean) => {
+            if (scheduled) {
+              toast({
+                title: "Notificação de teste agendada",
+                description: "Você receberá uma notificação em 5 segundos.",
+              });
+              resolve();
+            } else {
+              toast({
+                title: "Erro",
+                description: "Não foi possível agendar a notificação de teste.",
+                variant: "destructive",
+              });
+              reject(new Error('Falha ao agendar notificação de teste'));
+            }
+          });
         });
       }
       
-      // Limpar localStorage
-      localStorage.removeItem(SCHEDULES_KEY);
-      localStorage.removeItem(USED_VERSES_KEY);
-      localStorage.removeItem(NOTIFICATION_STATE_KEY);
-      
-      // Resetar estado
-      setSchedules([]);
-      setUsedVerses({});
-      
-      // Resetar flag de inicialização
-      initializationRef.current = false;
-      
-      console.log('[Notifications] Todas as notificações foram resetadas');
-      
-      toast({
-        title: "Notificações resetadas",
-        description: "Todas as notificações foram removidas. Você pode criar novos agendamentos.",
-      });
-      
-      return true;
+      return Promise.resolve();
     } catch (error) {
-      console.error('Error resetting notifications:', error);
+      console.error('[Notifications] Erro no teste de notificação:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível resetar as notificações.",
-        variant: "destructive"
+        description: "Erro ao testar notificação.",
+        variant: "destructive",
       });
-      return false;
-    }
-  };
-
-  const getNotificationStatus = async () => {
-    try {
-      if (!isMobile || !isCordovaAvailable()) {
-        return { enabled: false, message: 'Notificações não disponíveis em web ou Cordova não disponível' };
-      }
-
-      return new Promise((resolve) => {
-        window.cordova!.plugins.notification.local.hasPermission((granted) => {
-          resolve({
-            enabled: granted,
-            message: granted ? 'Notificações habilitadas' : 'Permissão necessária'
-          });
-        });
-      });
-    } catch (error) {
-      console.error('Error checking notification status:', error);
-      return { enabled: false, message: 'Erro ao verificar permissões' };
-    }
-  };
-
-  const testNotification = async () => {
-    try {
-      if (!isMobile || !isCordovaAvailable()) {
-        toast({
-          title: "Teste não disponível",
-          description: "Teste de notificação só funciona no app móvel com Cordova.",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      console.log('[Notifications] Criando notificação de teste via Cordova...');
-      
-      // Agendar para 1 minuto no futuro
-      const testTime = new Date();
-      testTime.setMinutes(testTime.getMinutes() + 1);
-      
-      const testConfig = {
-        id: 999999, // ID único para teste
-        title: "Teste de Notificação",
-        text: "Esta é uma notificação de teste. Se você vê isso, o sistema está funcionando!",
-        trigger: {
-          at: testTime
-        },
-        repeats: true, // Testar se a repetição funciona
-        foreground: true
-      };
-
-      console.log(`[Notifications] Agendando teste para: ${testTime.toLocaleString()}`);
-
-      window.cordova!.plugins.notification.local.schedule(testConfig, (scheduled) => {
-        if (scheduled) {
-          toast({
-            title: "Teste agendado",
-            description: "Uma notificação de teste aparecerá em 1 minuto.",
-          });
-        } else {
-          toast({
-            title: "Erro no teste",
-            description: "Não foi possível criar a notificação de teste.",
-            variant: "destructive"
-          });
-        }
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error creating test notification:', error);
-      toast({
-        title: "Erro no teste",
-        description: "Não foi possível criar a notificação de teste.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
-  // Função para verificar se as notificações estão sendo mantidas
-  const checkNotificationPersistence = async () => {
-    try {
-      if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Verificação de persistência não disponível em web');
-        return;
-      }
-
-      console.log('[Notifications] Verificando persistência das notificações...');
-      
-      // Verificar notificações pendentes
-      window.cordova!.plugins.notification.local.getPending((notifications) => {
-        console.log(`[Notifications] Notificações pendentes encontradas: ${notifications.length}`);
-        notifications.forEach((notification: any) => {
-          console.log(`[Notifications] Notificação pendente: ID ${notification.id}, próxima execução: ${notification.trigger?.at || 'repetitiva'}`);
-        });
-      });
-    } catch (error) {
-      console.error('Error checking notification persistence:', error);
-    }
-  };
-
-  // Função para verificar se um agendamento específico ainda está ativo
-  const verificarSeAgendamentoAindaAtivo = async (scheduleId: string) => {
-    try {
-      if (!isMobile || !isCordovaAvailable()) {
-        return;
-      }
-
-      console.log(`[Notifications] Verificando se agendamento ${scheduleId} ainda está ativo...`);
-      
-      // Verificar notificações pendentes
-      window.cordova!.plugins.notification.local.getPending((notifications) => {
-        const agendamentoAtivo = notifications.some((notification: any) => 
-          notification.data && notification.data.scheduleId === scheduleId
-        );
-        
-        if (agendamentoAtivo) {
-          console.log(`[Notifications] ✅ Agendamento ${scheduleId} ainda está ativo - notificação vai tocar na próxima semana`);
-        } else {
-          console.log(`[Notifications] ❌ Agendamento ${scheduleId} foi cancelado - precisa ser reativado`);
-        }
-      });
-    } catch (error) {
-      console.error('Error checking specific schedule:', error);
+      return Promise.reject(error);
     }
   };
 
   return {
     schedules,
     verses,
+    usedVerses,
     loading,
     isMobile,
+    isCordovaAvailable: isCordovaAvailable(),
+    THEMES,
+    DAYS_OF_WEEK,
     addSchedule,
     toggleSchedule,
     deleteSchedule,
@@ -881,12 +577,7 @@ const createSingleNotification = async (schedule: NotificationSchedule, day: num
     getThemeLabel,
     getActiveSchedulesCount,
     getAvailableThemesCount,
-    getNotificationStatus,
-    resetAllNotifications,
     testNotification,
-    checkNotificationPersistence,
-    verificarSeAgendamentoAindaAtivo,
-    THEMES,
-    DAYS_OF_WEEK,
+    scheduleAllNotifications, // Exportar para uso externo se necessário
   };
 }; 

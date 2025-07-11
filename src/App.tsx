@@ -3,9 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import { useSystemNavigation } from "@/hooks/useSystemNavigation";
+import { LoadingProvider } from "@/components/LoadingProvider";
 import Index from "./pages/Index";
 import Bible from "./pages/Bible";
 import Chat from "./pages/Chat";
@@ -21,10 +22,12 @@ import CategoryStudies from "./pages/CategoryStudies";
 import NotFound from "./pages/NotFound";
 import { AdMob, BannerAdSize, BannerAdPosition, BannerAdPluginEvents } from "@capacitor-community/admob";
 import { StatusBar } from '@capacitor/status-bar';
+import { App as CapacitorApp } from '@capacitor/app';
 import { useSubscription } from "@/hooks/useSubscription";
 import BuyCredits from "./pages/BuyCredits";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import VersiculoDoDia from "./pages/VersiculoDoDia";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +45,7 @@ const ADMOB_TEST_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
 const AppContent = () => {
   const { isNative, hideSystemUI } = useSystemNavigation();
   const location = useLocation();
+  const navigate = useNavigate();
   const initializedRef = React.useRef(false);
   const { subscription, loading: subscriptionLoading } = useSubscription();
 
@@ -50,7 +54,7 @@ const AppContent = () => {
 
   // Tratamento de erro para rotas inválidas
   React.useEffect(() => {
-    const validRoutes = ['/', '/biblia', '/estudos', '/favoritos', '/chat', '/perfil', '/assinatura', '/success', '/cancel', '/notificacoes'];
+    const validRoutes = ['/', '/biblia', '/versiculo-do-dia', '/estudos', '/favoritos', '/chat', '/perfil', '/assinatura', '/success', '/cancel', '/notificacoes'];
     const isValidRoute = validRoutes.some(route => 
       location.pathname === route || 
       location.pathname.startsWith('/estudo/') || 
@@ -131,12 +135,63 @@ const AppContent = () => {
       });
     })();
     return () => {
-      loadedHandle?.then((h) => h.remove());
-      closedHandle?.then((h) => h.remove());
-      failedHandle?.then((h) => h.remove());
-      impressionHandle?.then((h) => h.remove());
+      const removeHandle = (handle) => {
+        if (handle && typeof handle.then === 'function') {
+          handle.then((h) => h.remove && h.remove());
+        } else if (handle && typeof handle.remove === 'function') {
+          handle.remove();
+        }
+      };
+      removeHandle(loadedHandle);
+      removeHandle(closedHandle);
+      removeHandle(failedHandle);
+      removeHandle(impressionHandle);
     };
   }, []);
+
+  // Listener para deeplinks
+  React.useEffect(() => {
+    let urlOpenHandle;
+    (async () => {
+      urlOpenHandle = await CapacitorApp.addListener('appUrlOpen', (data) => {
+        console.log('[Deeplink] URL recebido:', data.url);
+        try {
+          const url = new URL(data.url);
+          const path = url.pathname;
+          const params = new URLSearchParams(url.search);
+          console.log('[Deeplink] Path:', path);
+          console.log('[Deeplink] Params:', params.toString());
+          // Processar diferentes tipos de deeplinks
+          if (path === '/versiculo-do-dia') {
+            const verse = params.get('verse');
+            if (verse) {
+              console.log('[Deeplink] Redirecionando para versículo:', verse);
+              navigate(`/versiculo-do-dia?verse=${verse}`);
+            } else {
+              navigate('/versiculo-do-dia');
+            }
+          } else if (path === '/notificacoes') {
+            console.log('[Deeplink] Redirecionando para notificações');
+            navigate('/notificacoes');
+          } else if (path === '/biblia') {
+            console.log('[Deeplink] Redirecionando para bíblia');
+            navigate('/biblia');
+          } else {
+            console.log('[Deeplink] Rota não reconhecida:', path);
+          }
+        } catch (error) {
+          console.error('[Deeplink] Erro ao processar URL:', error);
+        }
+      });
+    })();
+    return () => {
+      if (urlOpenHandle && typeof urlOpenHandle.then === 'function') {
+        urlOpenHandle.then((h) => h.remove && h.remove());
+      } else if (urlOpenHandle && typeof urlOpenHandle.remove === 'function') {
+        urlOpenHandle.remove();
+      }
+    };
+  }, [navigate]);
 
   // Adiciona paddingBottom global exceto na página de perfil
   const isProfile = location.pathname === '/perfil';
@@ -151,6 +206,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/biblia" element={<Bible />} />
+        <Route path="/versiculo-do-dia" element={<VersiculoDoDia />} />
         <Route path="/conversa" element={<Chat />} />
         <Route path="/estudos" element={<Studies />} />
         <Route path="/estudo/:studyId" element={<Study />} />

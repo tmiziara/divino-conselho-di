@@ -37,21 +37,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (error) {
-        console.log("[useAuth] Session error:", error);
-        // Only clear auth on very specific errors
-        if (error.message.includes("User from sub claim in JWT does not exist")) {
-          await clearInvalidAuth();
-          return;
+    console.log("[useAuth] Iniciando verificação de sessão...");
+    
+    // Verificar sessão imediatamente
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.log("[useAuth] Session error:", error);
+          // Only clear auth on very specific errors
+          if (error.message.includes("User from sub claim in JWT does not exist")) {
+            await clearInvalidAuth();
+            return;
+          }
         }
-      }
 
-      // Set user from session without extensive validation
-      setUser(session?.user || null);
-      setLoading(false);
-    });
+        console.log("[useAuth] Sessão verificada:", session ? "Usuário logado" : "Usuário não logado");
+        setUser(session?.user || null);
+        setLoading(false);
+      } catch (error) {
+        console.error("[useAuth] Erro ao verificar sessão:", error);
+        setUser(null);
+        setLoading(false);
+      }
+    };
+
+    // Executar verificação imediatamente
+    checkSession();
 
     // Listen for auth changes
     const {
@@ -65,6 +78,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Handle redirect after login
       if (event === 'SIGNED_IN' && session?.user) {
+        // Inicializar dados locais para o usuário
+        console.log('[useAuth] Usuário logado, inicializando dados locais...');
+        
+        // Disparar evento para inicializar dados locais
+        window.dispatchEvent(new CustomEvent('userLoggedIn', {
+          detail: { userId: session.user.id }
+        }));
+
         const redirectPath = localStorage.getItem('redirectAfterLogin');
         if (redirectPath && redirectPath !== '/') {
           localStorage.removeItem('redirectAfterLogin');
@@ -73,6 +94,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             window.location.href = redirectPath;
           }, 100);
         }
+      }
+
+      // Handle logout
+      if (event === 'SIGNED_OUT') {
+        console.log('[useAuth] Usuário deslogado, limpando dados locais...');
+        
+        // Disparar evento para limpar dados locais
+        window.dispatchEvent(new CustomEvent('userLoggedOut'));
       }
     });
 

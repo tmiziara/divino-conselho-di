@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useLocalData } from "./useLocalData";
 
 export interface SubscriptionData {
   subscribed: boolean;
@@ -10,12 +11,44 @@ export interface SubscriptionData {
 
 export const useSubscription = () => {
   const { user } = useAuth();
+  const { localData, syncData, forceSync } = useLocalData();
   const [subscription, setSubscription] = useState<SubscriptionData>({
     subscribed: false,
     subscription_tier: "free",
     subscription_end: null,
   });
   const [loading, setLoading] = useState(true);
+
+  // Converter dados locais para formato de subscription
+  const convertLocalDataToSubscription = (localData: any): SubscriptionData => {
+    return {
+      subscribed: localData.subscription_status === 'active',
+      subscription_tier: localData.subscription_tier || 'free',
+      subscription_end: localData.subscription_expires_at,
+    };
+  };
+
+  // Carregar dados locais primeiro (rápido)
+  const loadLocalSubscription = () => {
+    if (localData) {
+      console.log('[useSubscription] Carregando dados locais:', localData);
+      const subscriptionData = convertLocalDataToSubscription(localData);
+      setSubscription(subscriptionData);
+      setLoading(false);
+    }
+  };
+
+  // Sincronizar com Supabase em background
+  const syncWithSupabase = async () => {
+    if (!user?.id) return;
+
+    try {
+      console.log('[useSubscription] Iniciando sincronização com Supabase...');
+      await syncData(user.id);
+    } catch (error) {
+      console.error('[useSubscription] Erro na sincronização:', error);
+    }
+  };
 
   const checkSubscription = async () => {
     if (!user) {
@@ -28,48 +61,11 @@ export const useSubscription = () => {
       return;
     }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) {
-        console.log('[useSubscription] Error checking subscription:', error);
-        
-        // Check if it's an authentication error (invalid JWT)
-        if (error.message?.includes('Edge Function returned a non-2xx status code')) {
-          console.log('[useSubscription] Detected invalid authentication, will be handled by useAuth');
-          // Don't set subscription state here, let useAuth handle the invalid token
-          setLoading(false);
-          return;
-        }
-        
-        // For other errors, set default state
-        setSubscription({
-          subscribed: false,
-          subscription_tier: "free",
-          subscription_end: null,
-        });
-        setLoading(false);
-        return;
-      }
+    // Carregar dados locais primeiro (rápido)
+    loadLocalSubscription();
 
-      if (data) {
-        console.log('[useSubscription] Subscription data received:', data);
-        setSubscription({
-          subscribed: data.subscribed || false,
-          subscription_tier: data.subscription_tier || "free",
-          subscription_end: data.subscription_end || null,
-        });
-      }
-    } catch (error) {
-      console.log('[useSubscription] Error invoking subscription check:', error);
-      setSubscription({
-        subscribed: false,
-        subscription_tier: "free",
-        subscription_end: null,
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Sincronizar em background (lento)
+    syncWithSupabase();
   };
 
   const createCheckoutSession = async (plan: "premium") => {
@@ -91,6 +87,28 @@ export const useSubscription = () => {
     if (error) throw error;
     return data;
   };
+
+  // Para mobile - simplificar listeners
+  useEffect(() => {
+    const handleUserDataUpdate = (event: CustomEvent) => {
+      console.log('[useSubscription] Dados locais atualizados:', event.detail);
+      const subscriptionData = convertLocalDataToSubscription(event.detail);
+      setSubscription(subscriptionData);
+    };
+
+    window.addEventListener('userDataUpdated', handleUserDataUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('userDataUpdated', handleUserDataUpdate as EventListener);
+    };
+  }, []);
+
+  // Para mobile - carregar dados quando localData mudar
+  useEffect(() => {
+    if (localData) {
+      loadLocalSubscription();
+    }
+  }, [localData]);
 
   useEffect(() => {
     checkSubscription();

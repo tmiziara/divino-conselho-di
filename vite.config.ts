@@ -71,7 +71,10 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      external: ['@capacitor/share']
-    }
+      external: [
+        '@capacitor/filesystem',
+        '@awesome-cordova-plugins/social-sharing'
+      ],
+    },
   },
 }));

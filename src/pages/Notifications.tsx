@@ -30,46 +30,35 @@ const Notifications = () => {
     getThemeLabel,
     getActiveSchedulesCount,
     getAvailableThemesCount,
-    getNotificationStatus,
-    resetAllNotifications,
     testNotification,
     THEMES,
     DAYS_OF_WEEK,
   } = useNotifications();
 
-  const [notificationStatus, setNotificationStatus] = useState<{ enabled: boolean; message: string } | null>(null);
+  const [notificationStatus, setNotificationStatus] = useState<{ enabled: boolean; message: string } | null>({
+    enabled: true,
+    message: 'Notificações disponíveis'
+  });
 
-  // Verificar status das notificações
-  useEffect(() => {
-    if (isMobile !== null) {
-      checkNotificationStatus();
-    }
-  }, [isMobile]);
-
-  const checkNotificationStatus = async () => {
-    const status = await getNotificationStatus();
-    if (status && typeof status === 'object' && 'enabled' in status && 'message' in status) {
-      setNotificationStatus(status as { enabled: boolean; message: string });
-    }
-  };
-
-  const handleAddSchedule = async () => {
+  const handleAddSchedule = async (): Promise<boolean> => {
     if (formData.days.length === 0) {
-      return false;
+      return Promise.resolve(false);
     }
 
-    const success = await addSchedule({
-      time: formData.time,
-      days: formData.days,
-      theme: formData.theme,
-    });
+    try {
+      await addSchedule({
+        time: formData.time,
+        days: formData.days,
+        theme: formData.theme,
+      });
 
-    if (success) {
       setFormData({ time: "08:00", days: [], theme: "auto" });
       setShowForm(false);
+      return Promise.resolve(true);
+    } catch (error) {
+      console.error('Erro ao adicionar agendamento:', error);
+      return Promise.resolve(false);
     }
-
-    return success;
   };
 
   if (loading) {
@@ -102,8 +91,8 @@ const Notifications = () => {
           </div>
         </div>
 
-        {/* Status das Notificações (Mobile) */}
-        {isMobile && notificationStatus && (
+        {/* Status das Notificações */}
+        {notificationStatus && (
           <Card className="mb-6 bg-card border border-border dark:bg-zinc-900 dark:border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
@@ -112,25 +101,6 @@ const Notifications = () => {
                   <p className="text-sm text-muted-foreground">Status das Notificações</p>
                   <p className={`font-medium ${notificationStatus.enabled ? 'text-green-600' : 'text-red-600'}`}>
                     {notificationStatus.message}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Aviso para Web */}
-        {!isMobile && (
-          <Card className="mb-6 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    Notificações disponíveis apenas no app móvel
-                  </p>
-                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                    Para receber notificações, use o app no seu dispositivo móvel.
                   </p>
                 </div>
               </div>
@@ -184,6 +154,8 @@ const Notifications = () => {
             <Plus className="w-4 h-4 mr-2" />
             Novo Agendamento
           </Button>
+          
+
         </div>
 
         {/* Formulário */}

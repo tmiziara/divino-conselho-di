@@ -11,4 +11,19 @@ const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+    flowType: 'pkce',
+    // Configurações otimizadas para mobile
+    storage: isMobile ? window.localStorage : window.localStorage,
+    storageKey: 'sb-ssylplbgacuwkqkkhric-auth-token',
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'divino-conselho-di',
+    },
+  },
+});

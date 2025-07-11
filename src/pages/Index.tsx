@@ -24,6 +24,11 @@ const features = [
     description: "Navegue por todos os livros, capítulos e versículos com busca avançada"
   },
   {
+    icon: Star,
+    title: "Versículo do Dia",
+    description: "Versículos inspiradores com imagens personalizadas para compartilhar"
+  },
+  {
     icon: Heart,
     title: "Estudos Bíblicos",
     description: `Aprofunde-se em ${studiesCount} estudos bíblicos exclusivos`
