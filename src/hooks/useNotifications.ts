@@ -534,6 +534,11 @@ export const useNotifications = () => {
     }
   };
 
+  // Converte de 0 (domingo em JavaScript) para 7 (domingo em Cordova)
+  const convertToCordovaWeekday = (day: number): number => {
+    return day === 0 ? 7 : day;
+  };
+
   const createSingleNotification = async (schedule: NotificationSchedule, day: number, versesArg: Verse[] = verses) => {
     try {
       if (!isMobile || !isCordovaAvailable()) {
@@ -549,15 +554,9 @@ export const useNotifications = () => {
 
       const [hours, minutes] = schedule.time.split(':').map(Number);
       const notificationId = parseInt(schedule.id) + day;
+      const weekday = convertToCordovaWeekday(day);
 
-      // Calcular próxima execução
-      const nextExecution = calculateNextExecution(schedule.time, day);
-      if (!nextExecution) {
-        console.error(`[Notifications] Não foi possível calcular próxima execução para dia ${day}`);
-        return false;
-      }
-
-      console.log(`[Notifications] Criando notificação ${notificationId} para horário: ${schedule.time}, dia: ${day}, tema: ${schedule.theme}`);
+      console.log(`[Notifications] Criando notificação ${notificationId} para horário: ${schedule.time}, dia: ${day} (Cordova: ${weekday}), tema: ${schedule.theme}`);
 
       // Configuração da notificação usando Cordova Local Notifications
       const notificationConfig = {
@@ -565,7 +564,11 @@ export const useNotifications = () => {
         title: "Versículo do Dia",
         text: `${verse.referencia}: ${verse.texto}`,
         trigger: {
-          at: nextExecution
+          every: {
+            weekday,
+            hour: hours,
+            minute: minutes
+          }
         },
         repeats: true, // ESSENCIAL: Mantém a notificação recorrente
         foreground: true,
@@ -614,30 +617,7 @@ export const useNotifications = () => {
     }
   };
 
-  const calculateNextExecution = (time: string, day: number): Date | null => {
-    try {
-      const [hours, minutes] = time.split(':').map(Number);
-      const now = new Date();
-      const targetDay = new Date();
-      
-      // Ajustar para o próximo dia da semana
-      const currentDay = now.getDay();
-      const daysUntilTarget = (day - currentDay + 7) % 7;
-      
-      targetDay.setDate(now.getDate() + daysUntilTarget);
-      targetDay.setHours(hours, minutes, 0, 0);
-      
-      // Se já passou do horário hoje, agendar para próxima semana
-      if (targetDay <= now) {
-        targetDay.setDate(targetDay.getDate() + 7);
-      }
-      
-      return targetDay;
-    } catch (error) {
-      console.error('[Notifications] Erro ao calcular próxima execução:', error);
-      return null;
-    }
-  };
+
 
   const createNotification = async (schedule: NotificationSchedule, versesArg: Verse[] = verses) => {
     try {
