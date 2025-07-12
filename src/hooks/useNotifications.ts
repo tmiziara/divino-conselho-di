@@ -6,39 +6,45 @@ console.log('[DEBUG] Início do arquivo useNotifications.ts');
 
 // Declarações de tipo para Cordova Local Notifications
 declare global {
+  // Extender a interface CordovaPlugins para incluir notification
+  interface CordovaPlugins {
+    notification?: {
+      local?: {
+        schedule: (notification: any, callback: (scheduled: boolean) => void) => void;
+        cancel: (id: number, callback: () => void) => void;
+        cancelAll: (callback: () => void) => void;
+        hasPermission: (callback: (granted: boolean) => void) => void;
+        requestPermission: (callback: (granted: boolean) => void) => void;
+        on: (event: string, callback: (notification: any) => void) => void;
+        getPending: (callback: (notifications: any[]) => void) => void;
+        getScheduled: (callback: (notifications: any[]) => void) => void;
+        isScheduled: (id: number, callback: (scheduled: boolean) => void) => void;
+        isTriggered: (id: number, callback: (triggered: boolean) => void) => void;
+        getAll: (callback: (notifications: any[]) => void) => void;
+        getIds: (callback: (ids: number[]) => void) => void;
+        getTypes: (callback: (types: any) => void) => void;
+        getDefaults: (callback: (defaults: any) => void) => void;
+        setDefaults: (defaults: any, callback: () => void) => void;
+        update: (notification: any, callback: (updated: boolean) => void) => void;
+        clear: (id: number, callback: (cleared: boolean) => void) => void;
+        clearAll: (callback: (cleared: boolean) => void) => void;
+        isPresent: (id: number, callback: (present: boolean) => void) => void;
+        add: (notification: any, callback: (added: boolean) => void) => void;
+        remove: (id: number, callback: (removed: boolean) => void) => void;
+        removeAll: (callback: (removed: boolean) => void) => void;
+        registerPermission: (callback: (granted: boolean) => void) => void;
+        off: (event: string, callback: (notification: any) => void) => void;
+        fireEvent: (event: string, notification: any) => void;
+        fireQueuedEvents: () => void;
+      };
+    };
+  }
+
+  // Extender Window para incluir Capacitor
   interface Window {
-    cordova?: {
-      plugins?: {
-        notification?: {
-          local?: {
-            schedule: (notification: any, callback: (scheduled: boolean) => void) => void;
-            cancel: (id: number, callback: () => void) => void;
-            cancelAll: (callback: () => void) => void;
-            hasPermission: (callback: (granted: boolean) => void) => void;
-            requestPermission: (callback: (granted: boolean) => void) => void;
-            on: (event: string, callback: (notification: any) => void) => void;
-            getPending: (callback: (notifications: any[]) => void) => void;
-            getScheduled: (callback: (notifications: any[]) => void) => void;
-            isScheduled: (id: number, callback: (scheduled: boolean) => void) => void;
-            isTriggered: (id: number, callback: (triggered: boolean) => void) => void;
-            getAll: (callback: (notifications: any[]) => void) => void;
-            getIds: (callback: (ids: number[]) => void) => void;
-            getTypes: (callback: (types: any) => void) => void;
-            getDefaults: (callback: (defaults: any) => void) => void;
-            setDefaults: (defaults: any, callback: () => void) => void;
-            update: (notification: any, callback: (updated: boolean) => void) => void;
-            clear: (id: number, callback: (cleared: boolean) => void) => void;
-            clearAll: (callback: (cleared: boolean) => void) => void;
-            isPresent: (id: number, callback: (present: boolean) => void) => void;
-            add: (notification: any, callback: (added: boolean) => void) => void;
-            remove: (id: number, callback: (removed: boolean) => void) => void;
-            removeAll: (callback: (removed: boolean) => void) => void;
-            registerPermission: (callback: (granted: boolean) => void) => void;
-            off: (event: string, callback: (notification: any) => void) => void;
-            fireEvent: (event: string, notification: any) => void;
-            fireQueuedEvents: () => void;
-          };
-        };
+    Capacitor?: {
+      App?: {
+        openUrl: (options: { url: string }) => void;
       };
     };
   }
@@ -164,6 +170,21 @@ export const useNotifications = () => {
     if (isMobile) {
       const checkOnAppOpen = async () => {
         await checkNotificationPersistence();
+        
+        // Garantir que os listeners estejam configurados quando o app é aberto
+        if (isCordovaAvailable()) {
+          console.log('[Notifications] Cordova disponível, configurando listeners...');
+          await setupNotificationListeners();
+        } else {
+          console.log('[Notifications] Cordova não disponível ainda, aguardando...');
+          // Tentar novamente em 2 segundos
+          setTimeout(async () => {
+            if (isCordovaAvailable()) {
+              console.log('[Notifications] Cordova agora disponível, configurando listeners...');
+              await setupNotificationListeners();
+            }
+          }, 2000);
+        }
       };
       const timer = setTimeout(checkOnAppOpen, 3000); // Aguardar 3 segundos para o Cordova carregar
       return () => clearTimeout(timer);
@@ -306,12 +327,50 @@ export const useNotifications = () => {
       // Listener para quando uma notificação é clicada
       (window.cordova?.plugins as any)?.notification?.local?.on('click', (notification: any) => {
         console.log('[Notifications] Notificação clicada:', notification);
-        // Aqui você pode adicionar lógica para abrir o app ou navegar para uma tela específica
+        
+        // Verificar se há dados de deep link na notificação
+        if (notification.data && notification.data.deeplink) {
+          console.log('[Notifications] Deep link encontrado:', notification.data.deeplink);
+          
+          // Remover o deeplink salvo do localStorage (já foi usado)
+          const deeplinkKey = `pendingDeeplink_${notification.id}`;
+          localStorage.removeItem(deeplinkKey);
+          console.log('[Notifications] Deeplink removido do localStorage:', deeplinkKey);
+          
+          // Tentar abrir o deep link usando Capacitor App
+          if (window.Capacitor?.App) {
+            try {
+              window.Capacitor.App.openUrl({ url: notification.data.deeplink });
+              console.log('[Notifications] Deep link aberto via Capacitor App');
+            } catch (error) {
+              console.error('[Notifications] Erro ao abrir deep link via Capacitor:', error);
+              // Fallback: disparar evento manualmente
+              window.dispatchEvent(new CustomEvent('appUrlOpen', { 
+                detail: { url: notification.data.deeplink } 
+              }));
+            }
+          } else {
+            // Fallback: disparar evento manualmente
+            console.log('[Notifications] Capacitor não disponível, disparando evento manual');
+            window.dispatchEvent(new CustomEvent('appUrlOpen', { 
+              detail: { url: notification.data.deeplink } 
+            }));
+          }
+        } else {
+          console.log('[Notifications] Nenhum deep link encontrado na notificação');
+        }
       });
 
       // Listener para quando uma notificação é removida/cancelada
       (window.cordova?.plugins as any)?.notification?.local?.on('clear', (notification: any) => {
         console.log('[Notifications] Notificação removida/cancelada:', notification);
+        
+        // Limpar o deeplink salvo do localStorage quando a notificação é cancelada
+        if (notification.id) {
+          const deeplinkKey = `pendingDeeplink_${notification.id}`;
+          localStorage.removeItem(deeplinkKey);
+          console.log('[Notifications] Deeplink removido do localStorage (notificação cancelada):', deeplinkKey);
+        }
       });
 
       console.log('[Notifications] Listeners Cordova configurados com sucesso');
@@ -556,7 +615,10 @@ export const useNotifications = () => {
       const notificationId = parseInt(schedule.id) + day;
       const weekday = convertToCordovaWeekday(day);
 
-      console.log(`[Notifications] Criando notificação ${notificationId} para horário: ${schedule.time}, dia: ${day} (Cordova: ${weekday}), tema: ${schedule.theme}`);
+      // Para tema "auto", usar o tema real do versículo selecionado
+      const actualTheme = schedule.theme === 'auto' ? verse.tema : schedule.theme;
+
+      console.log(`[Notifications] Criando notificação ${notificationId} para horário: ${schedule.time}, dia: ${day} (Cordova: ${weekday}), tema original: ${schedule.theme}, tema real: ${actualTheme}`);
 
       // Configuração da notificação usando Cordova Local Notifications
       const notificationConfig = {
@@ -595,9 +657,11 @@ export const useNotifications = () => {
         androidChannelVibrationPattern: [0, 1000, 500, 1000],
         data: {
           scheduleId: schedule.id,
-          theme: schedule.theme,
+          theme: actualTheme, // Usar o tema real do versículo
           day: day,
-          reference: verse.referencia
+          reference: verse.referencia,
+          versiculoId: verse.referencia.toLowerCase().replace(/\s+/g, '-').replace(/:/g, '-'),
+          deeplink: `conexaodeus://versiculo-do-dia?theme=${actualTheme}&versiculoId=${verse.referencia.toLowerCase().replace(/\s+/g, '-').replace(/:/g, '-')}`
         }
       };
 
@@ -605,6 +669,12 @@ export const useNotifications = () => {
       (window.cordova?.plugins as any)?.notification?.local?.schedule(notificationConfig, (scheduled: boolean) => {
         if (scheduled) {
           console.log(`[Notifications] Notificação ${notificationId} agendada com sucesso via Cordova`);
+          
+          // Salvar o deeplink no localStorage para caso o app esteja fechado quando a notificação for clicada
+          const deeplink = notificationConfig.data.deeplink;
+          const deeplinkKey = `pendingDeeplink_${notificationId}`;
+          localStorage.setItem(deeplinkKey, deeplink);
+          console.log(`[Notifications] Deeplink salvo no localStorage para notificação ${notificationId}:`, deeplink);
         } else {
           console.error(`[Notifications] Falha ao agendar notificação ${notificationId} via Cordova`);
         }

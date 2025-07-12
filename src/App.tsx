@@ -49,6 +49,86 @@ const AppContent = () => {
   const initializedRef = React.useRef(false);
   const { subscription, loading: subscriptionLoading } = useSubscription();
 
+  // Verificar se o app foi aberto por uma notificação
+  React.useEffect(() => {
+    // Verificar todos os deeplinks salvos no localStorage
+    const checkPendingDeeplinks = () => {
+      const keys = Object.keys(localStorage);
+      const pendingDeeplinkKeys = keys.filter(key => key.startsWith('pendingDeeplink_'));
+      
+      if (pendingDeeplinkKeys.length > 0) {
+        console.log('[App] Encontrados deeplinks pendentes:', pendingDeeplinkKeys);
+        
+        // Usar o primeiro deeplink encontrado (mais recente)
+        const firstKey = pendingDeeplinkKeys[0];
+        const pendingDeeplink = localStorage.getItem(firstKey);
+        
+        if (pendingDeeplink) {
+          console.log('[App] Redirecionando após abertura por notificação:', pendingDeeplink);
+          localStorage.removeItem(firstKey); // Remove imediatamente para evitar redirecionamentos indevidos
+          
+          try {
+            console.log('[App] Criando URL object com:', pendingDeeplink);
+            const url = new URL(pendingDeeplink);
+            const path = url.pathname;
+            const params = new URLSearchParams(url.search);
+            
+            console.log('[App] Processando deeplink salvo - Path:', path);
+            console.log('[App] Processando deeplink salvo - Params:', params.toString());
+            console.log('[App] Path length:', path.length);
+            console.log('[App] Path === "/versiculo-do-dia":', path === '/versiculo-do-dia');
+            
+            // Para deeplinks com formato conexaodeus://, extrair o path manualmente
+            let actualPath = path;
+            if (path === '' && pendingDeeplink.includes('conexaodeus://')) {
+              const pathMatch = pendingDeeplink.match(/conexaodeus:\/\/([^?]+)/);
+              if (pathMatch) {
+                actualPath = '/' + pathMatch[1];
+                console.log('[App] Path extraído manualmente:', actualPath);
+              }
+            }
+            
+            if (actualPath === '/versiculo-do-dia') {
+              const theme = params.get('theme');
+              const versiculoId = params.get('versiculoId');
+              
+              if (theme && versiculoId) {
+                // Decodificar caracteres especiais
+                const decodedTheme = decodeURIComponent(theme);
+                const decodedVersiculoId = decodeURIComponent(versiculoId);
+                
+                console.log('[App] Redirecionando para versículo específico:', { 
+                  originalTheme: theme, 
+                  decodedTheme, 
+                  originalVersiculoId: versiculoId, 
+                  decodedVersiculoId 
+                });
+                
+                const targetUrl = `/versiculo-do-dia?theme=${encodeURIComponent(decodedTheme)}&versiculoId=${encodeURIComponent(decodedVersiculoId)}`;
+                console.log('[App] URL de destino:', targetUrl);
+                navigate(targetUrl);
+                console.log('[App] Navegação executada para:', targetUrl);
+              } else {
+                console.log('[App] Redirecionando para versículo do dia (sem parâmetros)');
+                navigate('/versiculo-do-dia');
+                console.log('[App] Navegação executada para: /versiculo-do-dia');
+              }
+            }
+          } catch (error) {
+            console.error('[App] Erro ao processar deeplink salvo:', error);
+          }
+        }
+      }
+    };
+    
+    // Verificar imediatamente
+    checkPendingDeeplinks();
+    
+    // Verificar novamente após um pequeno delay para garantir que o app carregou completamente
+    const timer = setTimeout(checkPendingDeeplinks, 1000);
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
   // Debug: log da rota atual
   console.log("[App] Rota atual:", location.pathname);
 
@@ -149,7 +229,7 @@ const AppContent = () => {
     };
   }, []);
 
-  // Listener para deeplinks
+  // Listener para deeplinks (Capacitor)
   React.useEffect(() => {
     let urlOpenHandle;
     (async () => {
@@ -163,8 +243,14 @@ const AppContent = () => {
           console.log('[Deeplink] Params:', params.toString());
           // Processar diferentes tipos de deeplinks
           if (path === '/versiculo-do-dia') {
+            const theme = params.get('theme');
+            const versiculoId = params.get('versiculoId');
             const verse = params.get('verse');
-            if (verse) {
+            
+            if (theme && versiculoId) {
+              console.log('[Deeplink] Redirecionando para versículo específico:', { theme, versiculoId });
+              navigate(`/versiculo-do-dia?theme=${theme}&versiculoId=${versiculoId}`);
+            } else if (verse) {
               console.log('[Deeplink] Redirecionando para versículo:', verse);
               navigate(`/versiculo-do-dia?verse=${verse}`);
             } else {
@@ -190,6 +276,44 @@ const AppContent = () => {
       } else if (urlOpenHandle && typeof urlOpenHandle.remove === 'function') {
         urlOpenHandle.remove();
       }
+    };
+  }, [navigate]);
+
+  // Listener para deeplinks (Cordova - backup)
+  React.useEffect(() => {
+    const handleCordovaDeepLink = (event: any) => {
+      // Capturar tanto eventos normais quanto CustomEvents
+      const url = event.url || event.detail?.url;
+      if (!url) return;
+
+      console.log('[Cordova DeepLink] Recebido:', url);
+      
+      try {
+        const parsedUrl = new URL(url);
+        const path = parsedUrl.pathname;
+        const theme = parsedUrl.searchParams.get('theme');
+        const versiculoId = parsedUrl.searchParams.get('versiculoId');
+
+        console.log('[Cordova DeepLink] Path:', path);
+        console.log('[Cordova DeepLink] Theme:', theme);
+        console.log('[Cordova DeepLink] VersiculoId:', versiculoId);
+
+        if (path.includes('versiculo-do-dia') && theme && versiculoId) {
+          console.log('[Cordova DeepLink] Redirecionando para versículo:', { theme, versiculoId });
+          navigate(`/versiculo-do-dia?theme=${theme}&versiculoId=${versiculoId}`);
+        } else if (path.includes('versiculo-do-dia')) {
+          console.log('[Cordova DeepLink] Redirecionando para versículo do dia (sem parâmetros)');
+          navigate('/versiculo-do-dia');
+        }
+      } catch (error) {
+        console.error('[Cordova DeepLink] Erro ao processar URL:', error);
+      }
+    };
+
+    window.addEventListener('appUrlOpen', handleCordovaDeepLink);
+
+    return () => {
+      window.removeEventListener('appUrlOpen', handleCordovaDeepLink);
     };
   }, [navigate]);
 

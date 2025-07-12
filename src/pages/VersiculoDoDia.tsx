@@ -17,6 +17,7 @@ interface Verse {
 }
 
 const VersiculoDoDia = () => {
+  console.log('[VersiculoDoDia] Componente montado');
   const [showAuth, setShowAuth] = useState(false);
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -41,15 +42,56 @@ const VersiculoDoDia = () => {
 
   // Carregar versículos do arquivo
   useEffect(() => {
+    console.log('[VersiculoDoDia] useEffect executado, searchParams:', searchParams.toString());
     const loadVerses = async () => {
       try {
         const response = await fetch('/data/versiculos_por_tema_com_texto.json');
         const data = await response.json();
         setVerses(data);
         
-        // Verificar se há um versículo específico na URL
+        // Verificar se há parâmetros de notificação na URL
+        const theme = searchParams.get('theme');
+        const versiculoId = searchParams.get('versiculoId');
         const verseParam = searchParams.get('verse');
-        if (verseParam) {
+        
+        if (theme && versiculoId) {
+          // Decodificar caracteres especiais
+          const decodedTheme = decodeURIComponent(theme);
+          const decodedVersiculoId = decodeURIComponent(versiculoId);
+          
+          console.log('[VersiculoDoDia] Parâmetros de notificação recebidos:', { 
+            originalTheme: theme, 
+            decodedTheme, 
+            originalVersiculoId: versiculoId, 
+            decodedVersiculoId 
+          });
+          
+          // Buscar o versículo específico baseado no tema e ID
+          const targetVerse = data.find(verse => 
+            verse.tema === decodedTheme && 
+            verse.referencia.toLowerCase().replace(/\s+/g, '-').replace(/:/g, '-') === decodedVersiculoId
+          );
+          
+          if (targetVerse) {
+            console.log('[VersiculoDoDia] Versículo encontrado:', targetVerse);
+            
+            // Adicionar o versículo específico no início da lista
+            const updatedVerses = [targetVerse, ...data];
+            setVerses(updatedVerses);
+            setCurrentIndex(0); // Mostrar o versículo específico primeiro
+            setCurrentBackground(getRandomBackground());
+            
+            // Limpar os parâmetros da URL após processar
+            const url = new URL(window.location.href);
+            url.searchParams.delete('theme');
+            url.searchParams.delete('versiculoId');
+            window.history.replaceState({}, '', url.toString());
+          } else {
+            console.warn('[VersiculoDoDia] Versículo não encontrado:', { theme, versiculoId });
+            setCurrentIndex(getRandomIndex(data.length));
+            setCurrentBackground(getRandomBackground());
+          }
+        } else if (verseParam) {
           try {
             const specificVerse = JSON.parse(decodeURIComponent(verseParam));
             console.log('[VersiculoDoDia] Versículo específico recebido:', specificVerse);
