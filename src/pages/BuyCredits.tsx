@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { supabase } from '../integrations/supabase/client';
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import AuthDialog from '@/components/AuthDialog';
 
 const creditPackages = [
   { credits: 5, price: "R$ 5,00" },
@@ -13,6 +14,8 @@ const creditPackages = [
 
 export default function BuyCredits() {
   const [loading, setLoading] = React.useState<number | null>(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const handleAuthClick = () => setShowAuth(true);
   const navigate = useNavigate();
 
   const handleBuy = async (credits: number) => {
@@ -43,7 +46,7 @@ export default function BuyCredits() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
-      <Navigation onAuthClick={() => {}} />
+      <Navigation onAuthClick={handleAuthClick} />
       <div className="container mx-auto px-4 py-8 max-w-lg">
         <div className="mb-2">
           <Button variant="ghost" size="sm" onClick={() => navigate('/chat')}>
@@ -69,6 +72,7 @@ export default function BuyCredits() {
           ))}
         </div>
       </div>
+      <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
     </div>
   );
 } 

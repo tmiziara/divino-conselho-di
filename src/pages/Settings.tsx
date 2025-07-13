@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import Switch from '@mui/material/Switch';
 import { ChevronLeft, Moon, LogOut, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import AuthDialog from '@/components/AuthDialog';
 
 // Hook para modo noturno com Tailwind (darkMode: class)
 const useTheme = () => {
@@ -35,6 +36,8 @@ const useTheme = () => {
 export default function Settings() {
   const navigate = useNavigate();
   const { isDark, toggle } = useTheme();
+  const [showAuth, setShowAuth] = useState(false);
+  const handleAuthClick = () => setShowAuth(true);
 
   // Exemplo de logout (adapte para seu contexto de auth)
   const handleLogout = () => {
@@ -44,7 +47,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
-      <Navigation onAuthClick={() => {}} />
+      <Navigation onAuthClick={handleAuthClick} />
       <div className="container mx-auto px-4 py-8 max-w-lg">
         <div className="mb-2">
           <Button variant="ghost" size="sm" onClick={() => navigate('/chat')}>
@@ -82,6 +85,7 @@ export default function Settings() {
           </Button>
         </div>
       </div>
+      <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
     </div>
   );
 } 

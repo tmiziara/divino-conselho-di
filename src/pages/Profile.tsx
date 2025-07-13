@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Crown, CreditCard, Calendar, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import AuthDialog from '@/components/AuthDialog';
 
 const profileSchema = z.object({
   display_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -40,6 +41,8 @@ const Profile = () => {
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
+  const handleAuthClick = () => setShowAuth(true);
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -181,20 +184,35 @@ const Profile = () => {
     }
   };
 
-  if (loading || subscriptionLoading || subscription === undefined) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation onAuthClick={() => {}} />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Carregando...</div>
+      <div className="min-h-screen bg-background dark:bg-background">
+        <Navigation onAuthClick={handleAuthClick} />
+        <div className="container mx-auto px-6 py-20">
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-center bg-gradient-to-r from-blue-400 via-green-400 to-yellow-400 bg-clip-text text-transparent">
+                Perfil
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-muted-foreground mb-4">
+                Faça login para acessar e gerenciar seu perfil
+              </p>
+              <Button className="divine-button" onClick={handleAuthClick}>
+                Fazer Login
+              </Button>
+            </CardContent>
+          </Card>
         </div>
+        <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation onAuthClick={() => {}} />
+      <Navigation onAuthClick={handleAuthClick} />
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-4xl flex flex-col items-center">
         <div className="mb-6 w-full text-center">
           <h1 className="text-3xl font-bold mx-auto">Meu Perfil</h1>
@@ -409,6 +427,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
     </div>
   );
 };

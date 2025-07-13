@@ -59,6 +59,16 @@ export interface NotificationSchedule {
   createdAt: string;
 }
 
+// NOVA interface para agendamentos de oração
+export interface PrayerSchedule {
+  id: string;
+  time: string;
+  days: number[];
+  enabled: boolean;
+  createdAt: string;
+  type: 'prayer';
+}
+
 export interface Verse {
   tema: string;
   referencia: string;
@@ -91,6 +101,7 @@ const DAYS_OF_WEEK = [
 
 // Chaves para controle de estado
 const SCHEDULES_KEY = 'notification_schedules';
+const PRAYER_SCHEDULES_KEY = 'prayer_schedules'; // NOVA chave
 const USED_VERSES_KEY = 'used_verses';
 const NOTIFICATION_STATE_KEY = 'notification_system_state';
 
@@ -124,6 +135,7 @@ const isCordovaAvailable = (): boolean => {
 export const useNotifications = () => {
   console.log('[DEBUG] Início do hook useNotifications');
   const [schedules, setSchedules] = useState<NotificationSchedule[]>([]);
+  const [prayerSchedules, setPrayerSchedules] = useState<PrayerSchedule[]>([]); // NOVO estado
   const [verses, setVerses] = useState<Verse[]>([]);
   const [usedVerses, setUsedVerses] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
@@ -265,6 +277,9 @@ export const useNotifications = () => {
         console.log('[Notifications] Antes de loadSchedules');
         await loadSchedules();
         console.log('[Notifications] Depois de loadSchedules');
+        console.log('[Notifications] Antes de loadPrayerSchedules');
+        loadPrayerSchedules();
+        console.log('[Notifications] Depois de loadPrayerSchedules');
         console.log('[Notifications] Antes de loadUsedVerses');
         await loadUsedVerses();
         console.log('[Notifications] Depois de loadUsedVerses');
@@ -287,6 +302,7 @@ export const useNotifications = () => {
 
       // Carregar dados
       await loadSchedules();
+      loadPrayerSchedules(); // NOVA função
       await loadUsedVerses();
       await loadVerses();
 
@@ -328,7 +344,15 @@ export const useNotifications = () => {
       (window.cordova?.plugins as any)?.notification?.local?.on('click', (notification: any) => {
         console.log('[Notifications] Notificação clicada:', notification);
         
-        // Verificar se há dados de deep link na notificação
+        // Verificar se é notificação de oração
+        if (notification.data && notification.data.type === 'prayer') {
+          console.log('[Notifications] Notificação de oração clicada, redirecionando para home');
+          // Redirecionar para home (sem parâmetros especiais)
+          window.location.href = '/';
+          return;
+        }
+        
+        // Verificar se há dados de deep link na notificação (versículos)
         if (notification.data && notification.data.deeplink) {
           console.log('[Notifications] Deep link encontrado:', notification.data.deeplink);
           
@@ -452,6 +476,20 @@ export const useNotifications = () => {
     }
   };
 
+  // NOVA função para carregar agendamentos de oração
+  const loadPrayerSchedules = () => {
+    try {
+      const stored = localStorage.getItem(PRAYER_SCHEDULES_KEY);
+      if (stored) {
+        const loadedPrayerSchedules = JSON.parse(stored);
+        setPrayerSchedules(loadedPrayerSchedules);
+        console.log(`[Notifications] Carregados ${loadedPrayerSchedules.length} agendamentos de oração`);
+      }
+    } catch (error) {
+      console.error('[Notifications] Erro ao carregar agendamentos de oração:', error);
+    }
+  };
+
   const loadVerses = async (): Promise<Verse[]> => {
     try {
       console.log('[DEBUG] loadVerses: Iniciando carregamento de versículos...');
@@ -509,6 +547,16 @@ export const useNotifications = () => {
       setSchedules(newSchedules);
     } catch (error) {
       console.error('[Notifications] Erro ao salvar agendamentos:', error);
+    }
+  };
+
+  // NOVA função para salvar agendamentos de oração
+  const savePrayerSchedules = (newPrayerSchedules: PrayerSchedule[]) => {
+    try {
+      localStorage.setItem(PRAYER_SCHEDULES_KEY, JSON.stringify(newPrayerSchedules));
+      setPrayerSchedules(newPrayerSchedules);
+    } catch (error) {
+      console.error('[Notifications] Erro ao salvar agendamentos de oração:', error);
     }
   };
 
@@ -687,6 +735,84 @@ export const useNotifications = () => {
     }
   };
 
+  // NOVA função para criar notificação de oração
+  const createSinglePrayerNotification = async (schedule: PrayerSchedule, day: number) => {
+    try {
+      if (!isMobile || !isCordovaAvailable()) {
+        console.log('[Notifications] Tentativa de criar notificação de oração em web ou Cordova não disponível - ignorando');
+        return true;
+      }
+
+      const [hours, minutes] = schedule.time.split(':').map(Number);
+      const notificationId = parseInt(schedule.id) + day + 1000000; // Offset para evitar conflitos
+      const weekday = convertToCordovaWeekday(day);
+
+      console.log(`[Notifications] Criando notificação de oração ${notificationId} para horário: ${schedule.time}, dia: ${day} (Cordova: ${weekday})`);
+
+      // Configuração da notificação de oração usando Cordova Local Notifications
+      const notificationConfig = {
+        id: notificationId,
+        title: "Hora de Orar",
+        text: "É um bom momento para fazer uma oração e conectar-se com Deus.",
+        trigger: {
+          every: {
+            weekday,
+            hour: hours,
+            minute: minutes
+          }
+        },
+        repeats: true,
+        foreground: true,
+        silent: false,
+        sound: null,
+        vibrate: true,
+        // Configurações específicas do Android para garantir persistência
+        androidAutoCancel: false,
+        androidOngoing: false,
+        androidOnlyAlertOnce: false,
+        androidPriority: 1, // PRIORITY_HIGH
+        androidImportance: 4, // IMPORTANCE_HIGH
+        androidVisibility: 1, // VISIBILITY_PUBLIC
+        androidChannelId: 'oracoes',
+        androidChannelName: 'Lembretes de Oração',
+        androidChannelDescription: 'Notificações de lembretes de oração',
+        androidChannelImportance: 4, // IMPORTANCE_HIGH
+        androidChannelShowBadge: true,
+        androidChannelEnableVibration: true,
+        androidChannelEnableLights: true,
+        androidChannelLightColor: '#00FF00',
+        androidChannelSound: null,
+        androidChannelVibrationPattern: [0, 1000, 500, 1000],
+        data: {
+          scheduleId: schedule.id,
+          type: 'prayer',
+          day: day,
+          deeplink: 'conexaodeus://home' // Redireciona para home
+        }
+      };
+
+      // Criar notificação usando Cordova
+      (window.cordova?.plugins as any)?.notification?.local?.schedule(notificationConfig, (scheduled: boolean) => {
+        if (scheduled) {
+          console.log(`[Notifications] Notificação de oração ${notificationId} agendada com sucesso via Cordova`);
+          
+          // Salvar o deeplink no localStorage
+          const deeplink = notificationConfig.data.deeplink;
+          const deeplinkKey = `pendingDeeplink_${notificationId}`;
+          localStorage.setItem(deeplinkKey, deeplink);
+          console.log(`[Notifications] Deeplink salvo no localStorage para notificação de oração ${notificationId}:`, deeplink);
+        } else {
+          console.error(`[Notifications] Falha ao agendar notificação de oração ${notificationId} via Cordova`);
+        }
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error creating single prayer notification with Cordova:', error);
+      return false;
+    }
+  };
+
 
 
   const createNotification = async (schedule: NotificationSchedule, versesArg: Verse[] = verses) => {
@@ -785,6 +911,80 @@ export const useNotifications = () => {
     }
   };
 
+  // NOVA função para adicionar agendamento de oração
+  const addPrayerSchedule = async (scheduleData: Omit<PrayerSchedule, 'id' | 'enabled' | 'createdAt' | 'type'>) => {
+    try {
+      const newSchedule: PrayerSchedule = {
+        id: Math.floor(Math.random() * 1000000).toString(),
+        ...scheduleData,
+        enabled: true,
+        createdAt: new Date().toISOString(),
+        type: 'prayer',
+      };
+
+      const newPrayerSchedules = [...prayerSchedules, newSchedule];
+      savePrayerSchedules(newPrayerSchedules);
+      
+      console.log(`[Notifications] Novo agendamento de oração criado: ${newSchedule.id}`);
+      
+      const success = await createPrayerNotification(newSchedule);
+      
+      if (success) {
+        toast({
+          title: "Lembrete de oração criado",
+          description: `Lembrete agendado para ${newSchedule.days.length} dia(s) da semana.`,
+        });
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Error adding prayer schedule:', error);
+      return false;
+    }
+  };
+
+  // NOVA função para criar notificação de oração
+  const createPrayerNotification = async (schedule: PrayerSchedule) => {
+    try {
+      if (!isMobile || !isCordovaAvailable()) {
+        console.log('[Notifications] Tentativa de criar notificação de oração em web ou Cordova não disponível - ignorando');
+        return true;
+      }
+
+      console.log(`[Notifications] Criando notificação de oração para horário: ${schedule.time}, dias: ${schedule.days}`);
+      
+      // Primeiro, cancelar notificações existentes para este agendamento
+      for (const day of schedule.days) {
+        try {
+          const notificationId = parseInt(schedule.id) + day + 1000000; // Offset para evitar conflitos
+          window.cordova!.plugins.notification.local.cancel(notificationId, () => {
+            console.log(`[Notifications] Notificação de oração existente ${notificationId} cancelada via Cordova`);
+          });
+        } catch (error) {
+          // Ignorar erro se a notificação não existia
+        }
+      }
+      
+      // Criar novas notificações
+      for (const day of schedule.days) {
+        const success = await createSinglePrayerNotification(schedule, day);
+        if (!success) {
+          console.error(`[Notifications] Falha ao criar notificação de oração para dia ${day}`);
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error creating prayer notification with Cordova:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o lembrete de oração. Verifique as permissões do app.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   const toggleSchedule = async (schedule: NotificationSchedule) => {
     try {
       const newSchedules = schedules.map(s => 
@@ -854,6 +1054,77 @@ export const useNotifications = () => {
     }
   };
 
+  // NOVA função para alternar agendamento de oração
+  const togglePrayerSchedule = async (schedule: PrayerSchedule) => {
+    try {
+      const newPrayerSchedules = prayerSchedules.map(s => 
+        s.id === schedule.id ? { ...s, enabled: !s.enabled } : s
+      );
+      savePrayerSchedules(newPrayerSchedules);
+
+      if (!schedule.enabled) {
+        // Ativando - criar notificações
+        console.log(`[Notifications] Ativando agendamento de oração: ${schedule.id}`);
+        const success = await createPrayerNotification(schedule);
+        if (!success) {
+          // Reverter se falhou
+          savePrayerSchedules(prayerSchedules);
+          return false;
+        }
+      } else {
+        // Desativando - cancelar notificações
+        console.log(`[Notifications] Desativando agendamento de oração: ${schedule.id}`);
+        try {
+          for (const day of schedule.days) {
+            const notificationId = parseInt(schedule.id) + day + 1000000; // Offset para evitar conflitos
+            window.cordova!.plugins.notification.local.cancel(notificationId, () => {
+              console.log(`[Notifications] Notificação de oração ${notificationId} cancelada via Cordova`);
+            });
+          }
+        } catch (error) {
+          console.error('Error canceling prayer notifications:', error);
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error toggling prayer schedule:', error);
+      return false;
+    }
+  };
+
+  // NOVA função para deletar agendamento de oração
+  const deletePrayerSchedule = async (schedule: PrayerSchedule) => {
+    try {
+      console.log(`[Notifications] Deletando agendamento de oração: ${schedule.id}`);
+      
+      // Cancelar notificações
+      for (const day of schedule.days) {
+        try {
+          const notificationId = parseInt(schedule.id) + day + 1000000; // Offset para evitar conflitos
+          window.cordova!.plugins.notification.local.cancel(notificationId, () => {
+            console.log(`[Notifications] Notificação de oração ${notificationId} cancelada via Cordova`);
+          });
+        } catch (error) {
+          console.error(`[Notifications] Erro ao cancelar notificação de oração ${parseInt(schedule.id) + day + 1000000}:`, error);
+        }
+      }
+
+      const newPrayerSchedules = prayerSchedules.filter(s => s.id !== schedule.id);
+      savePrayerSchedules(newPrayerSchedules);
+
+      toast({
+        title: "Lembrete de oração removido",
+        description: "O lembrete de oração foi removido com sucesso.",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting prayer schedule:', error);
+      return false;
+    }
+  };
+
   const formatDays = (days: number[]) => {
     return days.map(day => DAYS_OF_WEEK.find(d => d.value === day)?.label).join(', ');
   };
@@ -864,6 +1135,11 @@ export const useNotifications = () => {
 
   const getActiveSchedulesCount = () => {
     return schedules.filter(s => s.enabled).length;
+  };
+
+  // NOVA função para contar agendamentos de oração ativos
+  const getActivePrayerSchedulesCount = () => {
+    return prayerSchedules.filter(s => s.enabled).length;
   };
 
   const getAvailableThemesCount = () => {
@@ -883,11 +1159,13 @@ export const useNotifications = () => {
       
       // Limpar localStorage
       localStorage.removeItem(SCHEDULES_KEY);
+      localStorage.removeItem(PRAYER_SCHEDULES_KEY); // NOVA chave
       localStorage.removeItem(USED_VERSES_KEY);
       localStorage.removeItem(NOTIFICATION_STATE_KEY);
       
       // Resetar estado
       setSchedules([]);
+      setPrayerSchedules([]); // NOVO estado
       setUsedVerses({});
       
       // Resetar flag de inicialização
@@ -1012,15 +1290,20 @@ export const useNotifications = () => {
 
   return {
     schedules,
+    prayerSchedules, // NOVO estado
     verses,
     loading,
     isMobile,
     addSchedule,
+    addPrayerSchedule, // NOVA função
     toggleSchedule,
     deleteSchedule,
+    togglePrayerSchedule, // NOVA função
+    deletePrayerSchedule, // NOVA função
     formatDays,
     getThemeLabel,
     getActiveSchedulesCount,
+    getActivePrayerSchedulesCount, // NOVA função
     getAvailableThemesCount,
     getNotificationStatus,
     resetAllNotifications,
