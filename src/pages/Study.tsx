@@ -53,7 +53,7 @@ const Study = () => {
     toggleFavorite
   } = useBibleStudies();
 
-  const { hasAccess, isLoading: accessLoading } = useContentAccess();
+  const { hasPremiumAccess, loading: accessLoading } = useContentAccess();
 
   useEffect(() => {
     if (studyId) {
@@ -172,9 +172,9 @@ const Study = () => {
                 Aguarde enquanto carregamos o conteúdo.
               </p>
               <div className="text-xs text-muted-foreground">
-                <p>Study Loading: {studyLoading.toString()}</p>
-                <p>Chapters Loading: {loading.toString()}</p>
-                <p>Access Loading: {accessLoading.toString()}</p>
+                <p>Study Loading: {studyLoading?.toString() || 'undefined'}</p>
+                <p>Chapters Loading: {loading?.toString() || 'undefined'}</p>
+                <p>Access Loading: {accessLoading?.toString() || 'undefined'}</p>
                 <p>Study ID: {studyId}</p>
               </div>
             </CardContent>

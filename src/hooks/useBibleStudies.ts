@@ -4,6 +4,7 @@ import { simpleLicense } from '@/lib/simpleLicense';
 import { useAuth } from './useAuth';
 import { useSubscription } from './useSubscription';
 import { useToast } from './use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface BibleStudy {
   id: string;
@@ -63,11 +64,64 @@ export const useBibleStudies = () => {
       return true;
     }
     
-    // Fallback para o sistema de licenças local
-    const localAccess = simpleLicense.hasAccess('premium_studies');
+    // Verificar se tem assinatura básica (que também dá acesso a estudos premium)
+    if (subscription.subscribed && subscription.subscription_tier === 'basic') {
+      return true;
+    }
     
-    return localAccess;
+    // Fallback para o sistema de licenças local (apenas se não há dados de subscription)
+    if (!subscription.subscribed && !subscription.subscription_tier) {
+      const localAccess = simpleLicense.hasAccess('premium_studies');
+      return localAccess;
+    }
+    
+    return false;
   }, [subscription.subscribed, subscription.subscription_tier]);
+
+  // Função para forçar verificação de acesso premium com Supabase
+  const checkPremiumAccessWithSupabase = useCallback(async () => {
+    if (!user?.id) return false;
+    
+    try {
+      console.log('[useBibleStudies] Verificando acesso premium com Supabase...');
+      
+      // Buscar dados diretamente do Supabase
+      const { data: subscriberData, error } = await supabase
+        .from('subscribers')
+        .select('subscribed, subscription_tier, subscription_end')
+        .eq('user_id', user.id)
+        .eq('subscribed', true)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('[useBibleStudies] Erro ao verificar assinatura:', error);
+        return false;
+      }
+
+      if (subscriberData) {
+        const hasAccess = subscriberData.subscription_tier === 'premium' || subscriberData.subscription_tier === 'basic';
+        console.log('[useBibleStudies] Acesso premium verificado:', hasAccess, subscriberData);
+        return hasAccess;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('[useBibleStudies] Erro ao verificar acesso premium:', error);
+      return false;
+    }
+  }, [user?.id]);
+
+  // Sincronizar licença local com dados de assinatura
+  useEffect(() => {
+    if (subscription && (subscription.subscribed || subscription.subscription_tier)) {
+      simpleLicense.syncWithSubscription({
+        user_id: user?.id,
+        subscribed: subscription.subscribed,
+        subscription_tier: subscription.subscription_tier,
+        subscription_end: subscription.subscription_end
+      });
+    }
+  }, [subscription, user?.id]);
 
   // Buscar todos os estudos (baseado na licença)
   const fetchStudies = useCallback(async () => {
@@ -113,8 +167,19 @@ export const useBibleStudies = () => {
       }
       // Verificar se é premium e se tem acesso
       if (study.is_premium && !hasPremiumAccess()) {
-        setChapters([]);
-        return [];
+        console.log('[useBibleStudies] Acesso negado localmente, verificando com Supabase...');
+        console.log('[useBibleStudies] Subscription status:', subscription);
+        console.log('[useBibleStudies] SimpleLicense stats:', simpleLicense.getStats());
+        
+        // Tentar verificar com Supabase como fallback
+        const hasSupabaseAccess = await checkPremiumAccessWithSupabase();
+        if (!hasSupabaseAccess) {
+          console.log('[useBibleStudies] Acesso negado também no Supabase');
+          setChapters([]);
+          return [];
+        } else {
+          console.log('[useBibleStudies] Acesso confirmado no Supabase, carregando capítulos...');
+        }
       }
       // Buscar capítulos sob demanda
       const rawChapters = await localContent.getChaptersByStudyId(study.id);
@@ -320,6 +385,7 @@ export const useBibleStudies = () => {
     toggleFavorite,
     isChapterCompleted,
     isChapterFavorite,
-    getStudyProgress
+    getStudyProgress,
+    checkPremiumAccessWithSupabase
   };
 }; 

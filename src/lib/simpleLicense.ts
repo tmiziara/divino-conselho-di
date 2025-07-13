@@ -78,6 +78,39 @@ export class SimpleLicenseManager {
     return license.features.includes(feature);
   }
 
+  // Sincronizar com dados de assinatura (nova função)
+  syncWithSubscription(subscriptionData: any): void {
+    if (!subscriptionData) {
+      this.clearLicense();
+      return;
+    }
+
+    const features = this.getFeaturesForTier(subscriptionData.subscription_tier);
+    
+    const license: SimpleLicense = {
+      userId: subscriptionData.user_id || 'unknown',
+      subscriptionStatus: subscriptionData.subscribed ? 'active' : 'expired',
+      expiresAt: subscriptionData.subscription_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias se não especificado
+      features: features,
+      lastValidated: new Date().toISOString()
+    };
+
+    this.setLicense(license);
+  }
+
+  // Obter funcionalidades baseadas no tier da assinatura
+  private getFeaturesForTier(tier: string): string[] {
+    switch (tier) {
+      case 'premium':
+        return ['premium_studies', 'premium_verses', 'spiritual_chat', 'offline_access'];
+      case 'basic':
+        return ['premium_studies', 'premium_verses'];
+      case 'free':
+      default:
+        return [];
+    }
+  }
+
   // Verificar se precisa validar com servidor
   needsServerValidation(): boolean {
     const license = this.getLicense();
