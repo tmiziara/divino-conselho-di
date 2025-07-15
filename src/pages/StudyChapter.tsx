@@ -24,6 +24,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBibleStudies, type BibleStudyChapter } from "@/hooks/useBibleStudies";
 import { useBibleFavorites } from "@/hooks/useBibleFavorites";
 import { useToast } from "@/hooks/use-toast";
+import { useAdManager } from "@/hooks/useAdManager";
 
 const StudyChapter = () => {
   const { studyId, chapterId } = useParams<{ studyId: string; chapterId: string }>();
@@ -43,6 +44,7 @@ const StudyChapter = () => {
   } = useBibleStudies();
   
   const { favorites, addToFavorites, removeFromFavorites, removeFavoriteByTitle, loadFavorites } = useBibleFavorites();
+  const { incrementStudyCount } = useAdManager({ versesPerAd: 5, studiesPerAd: 1 });
 
   useEffect(() => {
     if (studyId) {
@@ -101,6 +103,9 @@ const StudyChapter = () => {
     
     try {
       await markChapterAsCompleted(chapter.id, study.id);
+      
+      // Incrementar contador de ads quando capítulo é completado
+      incrementStudyCount();
       
       // Verificar se há próximo capítulo
       const nextChapter = getNextChapter();

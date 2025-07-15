@@ -9,6 +9,7 @@ import { useVerseImage } from "@/hooks/useVerseImage";
 import SwipeContainer from "@/components/SwipeContainer";
 import { shareVerseImage } from './shareVerseImage';
 import { useSearchParams } from "react-router-dom";
+import { useAdManager } from "@/hooks/useAdManager";
 
 interface Verse {
   tema: string;
@@ -25,6 +26,7 @@ const VersiculoDoDia = () => {
   const [verses, setVerses] = useState<Verse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
+  const { incrementVerseCount } = useAdManager({ versesPerAd: 5, studiesPerAd: 1 });
   
   const currentVerse = verses[currentIndex];
 
@@ -171,9 +173,11 @@ const VersiculoDoDia = () => {
     if (direction === 'prev' && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
       setCurrentBackground(getRandomBackground());
+      incrementVerseCount(); // Incrementar contador de ads
     } else if (direction === 'next' && currentIndex < verses.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setCurrentBackground(getRandomBackground());
+      incrementVerseCount(); // Incrementar contador de ads
     }
   };
 

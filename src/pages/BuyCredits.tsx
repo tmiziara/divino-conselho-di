@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { supabase } from '../integrations/supabase/client';
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ShoppingCart } from "lucide-react";
+import { ChevronLeft, ShoppingCart, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AuthDialog from '@/components/AuthDialog';
+import { useToast } from "@/hooks/use-toast";
 
 const creditPackages = [
   { credits: 5, price: "R$ 5,00" },
@@ -17,6 +18,7 @@ export default function BuyCredits() {
   const [showAuth, setShowAuth] = useState(false);
   const handleAuthClick = () => setShowAuth(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleBuy = async (credits: number) => {
     setLoading(credits);
@@ -34,11 +36,23 @@ export default function BuyCredits() {
       const result = await response.json();
       if (result.url) {
         window.open(result.url, '_blank');
+        toast({
+          title: "Checkout criado",
+          description: "Redirecionando para o pagamento...",
+        });
       } else {
-        alert(result.error || "Erro ao criar checkout");
+        toast({
+          title: "Erro",
+          description: result.error || "Erro ao criar checkout",
+          variant: "destructive"
+        });
       }
     } catch (err) {
-      alert("Erro ao criar checkout");
+      toast({
+        title: "Erro",
+        description: "Erro ao criar checkout. Tente novamente.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(null);
     }
@@ -55,9 +69,13 @@ export default function BuyCredits() {
           </Button>
         </div>
         <h2 className="text-2xl font-bold heavenly-text text-center mb-6">Pacotes de Créditos</h2>
+        <p className="text-center text-muted-foreground mb-6">
+          Compre créditos para usar no chat espiritual. Cada mensagem custa 1 crédito.
+        </p>
         <div className="flex flex-col gap-6 items-center">
           {creditPackages.map(pkg => (
             <div key={pkg.credits} className="border rounded-lg p-6 w-full max-w-xs flex flex-col items-center bg-card text-card-foreground dark:bg-zinc-900 dark:text-white shadow-md">
+              <Coins className="w-8 h-8 text-primary mb-2" />
               <span className="text-lg font-semibold heavenly-text mb-1">{pkg.credits} créditos</span>
               <span className="text-primary text-2xl font-bold mb-4">{pkg.price}</span>
               <Button

@@ -28,6 +28,8 @@ import BuyCredits from "./pages/BuyCredits";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import VersiculoDoDia from "./pages/VersiculoDoDia";
+import AdTest from "./pages/AdTest";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -344,7 +346,9 @@ const AppContent = () => {
         <Route path="/cancel" element={<Cancel />} />
         <Route path="/comprar-creditos" element={<BuyCredits />} />
         <Route path="/configuracoes" element={<Settings />} />
+        <Route path="/politica-privacidade" element={<PrivacyPolicy />} />
         <Route path="/notificacoes" element={<Notifications />} />
+        <Route path="/ad-test" element={<AdTest />} />
         {/* Rotas alternativas/antigas para compatibilidade */}
         <Route path="/estudos" element={<Studies />} />
         <Route path="/estudos/categoria/:categoryId" element={<CategoryStudies />} />

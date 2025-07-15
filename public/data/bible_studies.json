@@ -310,5 +310,83 @@
     "category": "financas",
     "created_at": "2025-07-12T12:30:53.286463+00:00",
     "updated_at": "2025-07-12T12:30:53.286463+00:00"
+  },
+  {
+    "id": "e4m5p6r7-e8e9-n0d1-e2d3-o4r5i6s7m8o9",
+    "title": "Empreendedorismo Cristão",
+    "description": "Um estudo bíblico transformador de 8 capítulos que explora os princípios bíblicos para empreendedorismo, abordando chamado vocacional, ética nos negócios, liderança servidora, gestão de recursos e como usar empreendimentos para glorificar a Deus e servir ao próximo com excelência e integridade.",
+    "cover_image": "",
+    "total_chapters": 8,
+    "is_active": true,
+    "is_premium": true,
+    "slug": "empreendedorismo-cristao",
+    "category": "financas",
+    "created_at": "2025-07-12T13:30:53.286463+00:00",
+    "updated_at": "2025-07-12T13:30:53.286463+00:00"
+  },
+  {
+    "id": "l9i0d1e2-r3a4-n5c6-a7t8-r9a0b1a2l3h4",
+    "title": "Liderança Cristã no Ambiente de Trabalho",
+    "description": "Um estudo bíblico transformador de 8 capítulos que explora princípios bíblicos de liderança aplicados ao ambiente profissional, abordando liderança servidora, integridade, comunicação eficaz, tomada de decisões sábias e como liderar equipes com excelência cristã e impacto transformador.",
+    "cover_image": "",
+    "total_chapters": 8,
+    "is_active": true,
+    "is_premium": true,
+    "slug": "lideranca-crista-ambiente-trabalho",
+    "category": "proposito-carreira",
+    "created_at": "2025-07-12T14:30:53.286463+00:00",
+    "updated_at": "2025-07-12T14:30:53.286463+00:00"
+  },
+  {
+    "id": "e8q9u0i1-l2i3-b4r5-i6o7-t8r9a0b1v2i3",
+    "title": "Equilibrando Trabalho e Vida Pessoal",
+    "description": "Um estudo bíblico prático de 6 capítulos que oferece sabedoria divina para encontrar equilíbrio saudável entre responsabilidades profissionais e vida pessoal, abordando prioridades bíblicas, gestão do tempo, descanso, relacionamentos familiares e como viver de forma integrada que honra a Deus em todas as esferas da vida.",
+    "cover_image": "",
+    "total_chapters": 6,
+    "is_active": true,
+    "is_premium": true,
+    "slug": "equilibrando-trabalho-vida-pessoal",
+    "category": "proposito-carreira",
+    "created_at": "2025-07-12T15:30:53.286463+00:00",
+    "updated_at": "2025-07-12T15:30:53.286463+00:00"
+  },
+  {
+    "id": "m7u8d9a0-n1c2-a3c4-a5r6-r7e8i9r0a1p2",
+    "title": "Mudança de Carreira com Propósito",
+    "description": "Um estudo bíblico transformador de 6 capítulos que oferece orientação divina para navegar transições de carreira, descobrindo chamado vocacional, discernindo direção de Deus, superando medos, e fazendo mudanças profissionais que alinhem com propósitos eternos e honrem ao Senhor.",
+    "cover_image": "",
+    "total_chapters": 6,
+    "is_active": true,
+    "is_premium": true,
+    "slug": "mudanca-carreira-proposito",
+    "category": "proposito-carreira",
+    "created_at": "2025-07-12T16:30:53.286463+00:00",
+    "updated_at": "2025-07-12T16:30:53.286463+00:00"
+  },
+  {
+    "id": "d6e7s8e9-n0v1-o2l3-v4e5-n6d7o8t9a0l1",
+    "title": "Desenvolvendo Talentos e Habilidades",
+    "description": "Um estudo bíblico transformador de 8 capítulos que explora o desenvolvimento intencional dos dons que Deus nos deu, abordando descoberta de talentos, mordomia fiel, disciplina no aprendizado, superação de limitações e como usar habilidades para glorificar a Deus e servir ao próximo com excelência.",
+    "cover_image": "",
+    "total_chapters": 8,
+    "is_active": true,
+    "is_premium": true,
+    "slug": "desenvolvendo-talentos-habilidades",
+    "category": "proposito-carreira",
+    "created_at": "2025-07-12T17:30:53.286463+00:00",
+    "updated_at": "2025-07-12T17:30:53.286463+00:00"
+  },
+  {
+    "id": "c5o6n7s8-t9r0-u1i2-n3d4-o5l6e7g8a9d0",
+    "title": "Construindo um Legado Profissional",
+    "description": "Um estudo bíblico inspirador de 6 capítulos que orienta na construção de um legado profissional duradouro e significativo, abordando perspectiva eterna sobre carreira, impacto transformador, desenvolvimento de sucessores, integridade e como deixar marca positiva que honra a Deus e beneficia gerações futuras.",
+    "cover_image": "",
+    "total_chapters": 6,
+    "is_active": true,
+    "is_premium": true,
+    "slug": "construindo-legado-profissional",
+    "category": "proposito-carreira",
+    "created_at": "2025-07-12T18:30:53.286463+00:00",
+    "updated_at": "2025-07-12T18:30:53.286463+00:00"
   }
 ] 
