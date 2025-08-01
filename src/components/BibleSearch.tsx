@@ -82,14 +82,12 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
       return;
     }
 
-    const isFavorite = favorites.some(fav => 
-      fav.book === verse.livro && 
-      fav.chapter === verse.capitulo && 
-      fav.verse === verse.versiculo
-    );
+    // Usar a versão do versículo específico ou 'nvi' como fallback
+    const version = verse.versao?.toLowerCase() || 'nvi';
+    const isFavorite = isVerseFavorite(verse, version);
 
     if (isFavorite) {
-      await removeFromFavorites(verse.livro, verse.capitulo, verse.versiculo);
+      await removeFromFavorites(verse.livro, verse.capitulo, verse.versiculo, version);
       toast({
         title: "Removido dos favoritos",
         description: `${BOOK_NAMES[verse.livro as keyof typeof BOOK_NAMES]} ${verse.capitulo}:${verse.versiculo}`
@@ -101,7 +99,8 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
         verse: verse.versiculo,
         title: `${BOOK_NAMES[verse.livro as keyof typeof BOOK_NAMES]} ${verse.capitulo}:${verse.versiculo}`,
         content: verse.texto,
-        reference: `${BOOK_NAMES[verse.livro as keyof typeof BOOK_NAMES]} ${verse.capitulo}:${verse.versiculo}`
+        reference: `${BOOK_NAMES[verse.livro as keyof typeof BOOK_NAMES]} ${verse.capitulo}:${verse.versiculo}`,
+        version: version
       });
       toast({
         title: "Adicionado aos favoritos",
@@ -111,10 +110,13 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
   };
 
   const isVerseFavorite = (verse: any) => {
+    // Usar a versão do versículo específico ou 'nvi' como fallback
+    const version = verse.versao?.toLowerCase() || 'nvi';
     return favorites.some(fav => 
       fav.book === verse.livro && 
       fav.chapter === verse.capitulo && 
-      fav.verse === verse.versiculo
+      fav.verse === verse.versiculo &&
+      fav.version === version
     );
   };
 

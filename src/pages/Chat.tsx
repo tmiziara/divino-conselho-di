@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, Heart, ShoppingCart, AlertCircle, Coins } from "lucide-react";
+import { MessageCircle, Send, Heart, ShoppingCart, AlertCircle, Coins, RefreshCw } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,26 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useAdManager } from "@/hooks/useAdManager";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { spiritualChatService } from "@/services/spiritualChatService";
+
+// Função para gerenciar contexto local
+const getLocalContext = (userId: string) => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const key = `chat_context_${userId}`;
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : [];
+  }
+  return [];
+};
+
+const saveLocalContext = (userId: string, context: any[]) => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const key = `chat_context_${userId}`;
+    // Manter apenas as últimas 10 mensagens para contexto
+    const limitedContext = context.slice(-10);
+    localStorage.setItem(key, JSON.stringify(limitedContext));
+  }
+};
 
 const Chat = () => {
   const { user } = useAuth();
@@ -61,51 +81,56 @@ const Chat = () => {
     setIsLoading(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
+      console.log('Iniciando envio de mensagem...');
       
-      const response = await fetch('https://ssylplbgacuwkqkkhric.supabase.co/functions/v1/spiritual-chat-with-credits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          message: currentMessage,
-          user_id: user.id
-        })
-      });
+      // Obter contexto local
+      const conversationHistory = getLocalContext(user.id);
+      console.log('Contexto local:', conversationHistory);
       
-      const data = await response.json();
+      // Enviar mensagem usando o serviço local
+      console.log('Chamando spiritualChatService...');
+      const response = await spiritualChatService.sendMessage(currentMessage, conversationHistory);
+      console.log('Resposta do serviço:', response);
       
-      if (!response.ok) {
-        // Verificar se é erro de créditos insuficientes
-        if (data.error?.includes('Créditos insuficientes') || response.status === 402) {
-          toast({
-            title: "Sem créditos",
-            description: "Você precisa de pelo menos 1 crédito para enviar mensagens. Compre créditos ou assista um anúncio.",
-            variant: "destructive"
-          });
-          return;
-        }
-        throw new Error(data.error || 'Erro ao enviar mensagem');
+      if (response.error) {
+        console.error('Erro na resposta:', response.error);
+        toast({
+          title: "Erro",
+          description: response.error,
+          variant: "destructive"
+        });
+        return;
       }
-      
-      setCurrentResponse(data?.response || "Mensagem enviada com sucesso.");
-      
-      // Atualizar créditos com o valor retornado pela função
-      if (typeof data?.credits === 'number') {
-        setCredits(data.credits);
+
+      // Atualizar resposta
+      if (response.response) {
+        setCurrentResponse(response.response);
+        
+        // Salvar contexto local (mensagem do usuário + resposta da IA)
+        const newContext = [
+          ...conversationHistory,
+          { role: 'user', content: currentMessage },
+          { role: 'assistant', content: response.response }
+        ];
+        saveLocalContext(user.id, newContext);
+      }
+
+      // Atualizar créditos
+      if (typeof response.credits === 'number') {
+        setCredits(response.credits);
+        toast({
+          title: "Mensagem enviada",
+          description: `Resposta recebida! Créditos restantes: ${response.credits}`,
+        });
       }
       
     } catch (error: any) {
-      console.error('Error sending message:', error);
+      console.error('Erro completo:', error);
       toast({
         title: "Erro na conversa",
-        description: error.message || "Não foi possível receber uma resposta. Tente novamente.",
+        description: "Não foi possível receber uma resposta. Tente novamente. Seu crédito não foi consumido.",
         variant: "destructive"
       });
-      setCurrentResponse("Peço perdão, meu filho/filha. Estou enfrentando dificuldades técnicas no momento. Que tal voltarmos a conversar em alguns instantes? Que Deus te abençoe!");
     } finally {
       setIsLoading(false);
     }
@@ -132,85 +157,133 @@ const Chat = () => {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
-        }
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          credits: 10,
+          amount: 1000 // R$ 10,00
+        })
       });
-      const result = await response.json();
-      if (result.url) {
-        window.open(result.url, '_blank');
-      } else {
-        toast({ title: 'Erro', description: result.error || 'Erro ao criar checkout', variant: 'destructive' });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao criar checkout');
       }
-    } catch (err) {
-      toast({ title: 'Erro', description: 'Erro ao criar checkout', variant: 'destructive' });
+
+      // Redirecionar para o checkout
+      window.location.href = data.url;
+
+    } catch (error: any) {
+      console.error('Erro ao criar checkout:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível processar a compra. Tente novamente.",
+        variant: "destructive"
+      });
     } finally {
       setLoadingCheckout(false);
     }
   };
 
-  // Função para assistir anúncio e ganhar créditos
   const handleWatchAd = async () => {
     try {
+      console.log('[Chat] Iniciando handleWatchAd');
+      
+      let creditsAdded = false;
+      
       await showRewardedAd(async () => {
-        // Callback executado quando o usuário recebe a recompensa
+        // Este callback é executado quando o usuário assiste o anúncio completo
+        console.log('[Chat] Anúncio assistido, adicionando créditos...');
         try {
-          const { error } = await supabase
-            .from('profiles')
-            .update({ credits: (credits ?? 0) + 3 })
-            .eq('user_id', user.id);
-
-          if (error) {
-            console.error('[AdMob] Erro ao atualizar créditos:', error);
+          const result = await spiritualChatService.watchAdForCredits();
+          console.log('[Chat] Resultado do watchAdForCredits:', result);
+          if (result.success) {
+            creditsAdded = true;
             toast({
-              title: 'Erro ao salvar créditos',
-              description: error.message || 'Tente novamente mais tarde.',
-              variant: 'destructive',
+              title: "Créditos ganhos!",
+              description: "Você ganhou 3 créditos por assistir o anúncio.",
             });
+            // Atualizar créditos
+            setCredits(result.credits);
+            console.log('[Chat] Créditos atualizados:', result.credits);
           } else {
-            console.log('[AdMob] Créditos atualizados com sucesso!');
-            setCredits((c) => (c ?? 0) + 3);
+            console.error('[Chat] Erro ao adicionar créditos:', result.error);
             toast({
-              title: 'Parabéns!',
-              description: 'Você ganhou 3 créditos!',
+              title: "Erro",
+              description: result.error || "Erro ao adicionar créditos.",
+              variant: "destructive"
             });
           }
         } catch (error) {
-          console.error('[AdMob] Erro inesperado:', error);
+          console.error('[Chat] Erro ao adicionar créditos:', error);
           toast({
-            title: 'Erro inesperado',
-            description: 'Tente novamente mais tarde.',
-            variant: 'destructive',
+            title: "Erro",
+            description: "Erro ao processar créditos. Tente novamente.",
+            variant: "destructive"
           });
         }
       });
-    } catch (err) {
-      console.error('[AdMob] Erro ao exibir anúncio:', err);
+      
+      // Fallback: se após 5 segundos os créditos não foram adicionados, adicionar manualmente
+      setTimeout(async () => {
+        if (!creditsAdded) {
+          console.log('[Chat] Fallback: adicionando créditos manualmente');
+          try {
+            const result = await spiritualChatService.watchAdForCredits();
+            if (result.success) {
+              toast({
+                title: "Créditos ganhos!",
+                description: "Você ganhou 3 créditos por assistir o anúncio.",
+              });
+              setCredits(result.credits);
+              console.log('[Chat] Créditos adicionados via fallback:', result.credits);
+            }
+          } catch (error) {
+            console.error('[Chat] Erro no fallback:', error);
+          }
+        }
+      }, 5000);
+      
+    } catch (error) {
+      console.error('[Chat] Erro ao assistir anúncio:', error);
       toast({
-        title: 'Erro ao exibir anúncio',
-        description: 'Tente novamente mais tarde.',
-        variant: 'destructive',
+        title: "Erro no anúncio",
+        description: "Não foi possível carregar o anúncio. Tente novamente.",
+        variant: "destructive"
       });
     }
   };
 
+  const reloadCredits = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('user_id', user.id)
+      .single();
+    if (!error && data) setCredits(data.credits);
+  };
+
   if (!user) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <Navigation onAuthClick={handleAuthClick} />
-        <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto">
+        <div className="container mx-auto px-4 py-8">
+          <Card className="max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle className="text-center heavenly-text">
-                <MessageCircle className="w-8 h-8 mx-auto mb-2" />
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="w-6 h-6 text-blue-600" />
                 Conversa Espiritual
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-muted-foreground mb-4">
-                Faça login para conversar sobre fé e receber orientação espiritual
-              </p>
-              <Button className="divine-button" onClick={handleAuthClick}>
-                Fazer Login
-              </Button>
+            <CardContent>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Faça login para acessar a conversa espiritual e receber orientações baseadas na Bíblia.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </div>
@@ -220,114 +293,107 @@ const Chat = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navigation onAuthClick={handleAuthClick} />
-      
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between text-center md:text-left mb-8">
-          <div>
-            <h1 className="flex justify-center md:justify-start items-center text-2xl md:text-4xl font-bold heavenly-text mb-2 md:mb-0">
-              <MessageCircle className="w-8 h-8 md:w-10 md:h-10 mr-3 text-primary" />
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="w-6 h-6 text-blue-600" />
               Conversa Espiritual
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground">
-              Um espaço sagrado para compartilhar sua fé e receber orientação
-            </p>
-          </div>
-          <div className="mt-4 md:mt-0 flex flex-col md:flex-row items-center gap-2 justify-center md:justify-end">
-            <Button
-              className="divine-button text-lg px-8 py-3 w-60 h-14 flex items-center justify-center"
-              onClick={() => navigate("/comprar-creditos")}
-            >
-              <ShoppingCart className="w-5 h-5" /> Comprar Créditos
-            </Button>
-            {credits !== null && credits < 1 && (
-              <Button
-                className="divine-button text-lg px-8 py-3 w-60 h-14 flex items-center justify-center"
-                onClick={handleWatchAd}
-              >
-                Ver anúncio e ganhar +3
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto">
-          {/* Alerta para usuários sem créditos */}
-          {credits !== null && credits < 1 && (
-            <Alert className="mb-4 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
-              <AlertCircle className="h-4 w-4 text-orange-600" />
-              <AlertDescription className="text-orange-800 dark:text-orange-200">
-                Você precisa de pelo menos 1 crédito para enviar mensagens. Compre créditos ou assista um anúncio para ganhar +3 créditos.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <Card className="spiritual-card min-h-[600px] flex flex-col bg-card dark:bg-zinc-900">
-            <CardHeader className="relative">
-              <CardTitle className="flex items-center gap-2 text-left text-lg md:text-xl">
-                <Heart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-                Conversa Espiritual
-              </CardTitle>
-              <Badge className="absolute top-0 right-0 mt-2 mr-2 bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
-                <Coins className="w-3 h-3 mr-1" />
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
                 Créditos: {credits !== null ? credits : '...'}
               </Badge>
-            </CardHeader>
-            
-            <CardContent className="flex-1 flex flex-col p-0">
-              <div className="flex-1 bg-muted/20 min-h-[400px] relative">
-                <ScrollArea className="h-full w-full absolute inset-0">
-                  <div className="p-6">
-                    {isLoading ? (
-                      <div className="flex justify-start">
-                        <div className="bg-muted text-muted-foreground p-4 rounded-lg">
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
-                            <div className="w-2 h-2 bg-current rounded-full animate-pulse delay-75"></div>
-                            <div className="w-2 h-2 bg-current rounded-full animate-pulse delay-150"></div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-muted/50 text-foreground p-6 rounded-lg text-left leading-relaxed">
-                        <p className="whitespace-pre-wrap">{currentResponse}</p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </div>
-              
-              <div className="p-6 border-t border-border bg-card dark:bg-[#21232b]">
-                <div className="flex gap-2 w-full items-center">
-                  <Textarea
-                    placeholder={credits !== null && credits < 1 ? "Você precisa de pelo menos 1 crédito para enviar mensagens..." : "Compartilhe o que está em seu coração... (1 crédito por mensagem)"}
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="flex-1 text-left h-14 text-base resize-none"
-                    disabled={credits !== null && credits < 1}
-                  />
-                  <Button 
-                    onClick={handleSendMessage} 
-                    disabled={!newMessage.trim() || isLoading || (credits !== null && credits < 1)}
-                    className="divine-button"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={reloadCredits}
+                disabled={isLoading}
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Área de resposta */}
+            <div className="bg-white rounded-lg p-4 border">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-4 h-4 text-blue-600" />
                 </div>
-                
-                {/* Informação sobre custo */}
-                {credits !== null && (
-                  <div className="mt-2 text-xs text-muted-foreground text-center">
-                    Cada mensagem custa 1 crédito
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-1">Pastor Virtual</p>
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-gray-800 leading-relaxed">
+                      {currentResponse}
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+
+            {/* Área de entrada */}
+            <div className="flex gap-2">
+              <Textarea
+                placeholder="Digite sua mensagem..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="flex-1 min-h-[60px] resize-none"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={isLoading || !newMessage.trim()}
+                className="px-4"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+
+            {/* Ações */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleWatchAd}
+                disabled={isLoading}
+                className="flex items-center gap-2"
+              >
+                <Coins className="w-4 h-4" />
+                Assistir Anúncio
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBuyCredits}
+                disabled={loadingCheckout}
+                className="flex items-center gap-2"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Comprar Créditos
+              </Button>
+            </div>
+
+            {/* Alertas */}
+            {credits !== null && credits < 3 && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Você tem poucos créditos. Assista um anúncio ou compre mais créditos para continuar conversando.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
       </div>
+      <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
     </div>
   );
 };

@@ -9,6 +9,7 @@ CREATE TABLE public.favorites (
   book TEXT,
   chapter INTEGER,
   verse INTEGER,
+  version TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -31,4 +32,5 @@ FOR DELETE USING (user_id = auth.uid());
 -- Create indexes for better performance
 CREATE INDEX idx_favorites_user_id ON public.favorites(user_id);
 CREATE INDEX idx_favorites_type ON public.favorites(type);
-CREATE INDEX idx_favorites_created_at ON public.favorites(created_at); 
+CREATE INDEX idx_favorites_created_at ON public.favorites(created_at);
+CREATE INDEX idx_favorites_version ON public.favorites(version); 

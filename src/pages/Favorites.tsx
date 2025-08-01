@@ -21,6 +21,7 @@ interface Favorite {
   book?: string;
   chapter?: number;
   verse?: number;
+  version?: string;
 }
 
 const Favorites = () => {
@@ -137,6 +138,19 @@ const Favorites = () => {
     }
   };
 
+  const getVersionLabel = (version?: string) => {
+    switch (version) {
+      case "nvi":
+        return "NVI";
+      case "pt_aa":
+        return "AA";
+      case "pt_acf":
+        return "ACF";
+      default:
+        return version?.toUpperCase() || "NVI";
+    }
+  };
+
   const handleAuthClick = () => {
     setShowAuth(true);
   };
@@ -248,6 +262,18 @@ const Favorites = () => {
                           return fav.reference;
                         }
                       }
+                      // Para versículos, adicionar a versão ao título
+                      if (fav.type === "verse" && fav.version) {
+                        return `${fav.title} (${getVersionLabel(fav.version)})`;
+                      }
+                      return fav.title;
+                    };
+
+                    // Função para obter a referência completa com versão
+                    const getFullReference = (fav: Favorite) => {
+                      if (fav.type === "verse" && fav.version) {
+                        return `${fav.title} - ${getVersionLabel(fav.version)}`;
+                      }
                       return fav.title;
                     };
                     console.log('Renderizando favorito:', fav.id, fav.reference);
@@ -257,12 +283,17 @@ const Favorites = () => {
                           <Badge className={getTypeColor(fav.type)}>
                             {getTypeLabel(fav.type)}
                           </Badge>
+                          {fav.type === "verse" && fav.version && (
+                            <Badge variant="outline" className="text-xs">
+                              {getVersionLabel(fav.version)}
+                            </Badge>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-blue-500 hover:text-blue-700"
                             onClick={() => shareContent(
-                              getDisplayTitle(fav),
+                              getFullReference(fav),
                               `${fav.content}\n\nEnviado do app Conexão com Deus!`
                             )}
                             aria-label="Compartilhar favorito"

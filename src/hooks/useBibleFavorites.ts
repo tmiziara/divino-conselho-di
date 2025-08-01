@@ -12,6 +12,7 @@ interface Favorite {
   book: string | null;
   chapter: number | null;
   verse: number | null;
+  version: string | null;
   created_at: string;
 }
 
@@ -22,6 +23,7 @@ interface AddFavoriteData {
   title: string;
   content: string;
   reference: string;
+  version?: string;
 }
 
 export const useBibleFavorites = () => {
@@ -65,7 +67,8 @@ export const useBibleFavorites = () => {
           reference: favoriteData.reference,
           book: favoriteData.book,
           chapter: favoriteData.chapter,
-          verse: favoriteData.verse
+          verse: favoriteData.verse,
+          version: favoriteData.version || 'nvi'
         })
         .select()
         .single();
@@ -79,11 +82,11 @@ export const useBibleFavorites = () => {
     }
   };
 
-  const removeFromFavorites = async (book: string, chapter: number, verse: number) => {
+  const removeFromFavorites = async (book: string, chapter: number, verse: number, version?: string) => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      let query = supabase
         .from("favorites")
         .delete()
         .eq("user_id", user.id)
@@ -91,10 +94,17 @@ export const useBibleFavorites = () => {
         .eq("chapter", chapter)
         .eq("verse", verse);
 
+      // Se a versão foi especificada, filtrar por ela também
+      if (version) {
+        query = query.eq("version", version);
+      }
+
+      const { error } = await query;
+
       if (error) throw error;
 
       setFavorites(prev => prev.filter(fav => 
-        !(fav.book === book && fav.chapter === chapter && fav.verse === verse)
+        !(fav.book === book && fav.chapter === chapter && fav.verse === verse && (!version || fav.version === version))
       ));
     } catch (error) {
       console.error("Error removing favorite:", error);
@@ -121,12 +131,22 @@ export const useBibleFavorites = () => {
     }
   };
 
+  const isVerseFavorite = (verse: any, version?: string) => {
+    return favorites.some(fav => 
+      fav.book === verse.livro && 
+      fav.chapter === verse.capitulo && 
+      fav.verse === verse.versiculo &&
+      fav.version === (version || 'nvi')
+    );
+  };
+
   return {
     favorites,
     loading,
     loadFavorites,
     addToFavorites,
     removeFromFavorites,
-    removeFavoriteByTitle
+    removeFavoriteByTitle,
+    isVerseFavorite
   };
 };

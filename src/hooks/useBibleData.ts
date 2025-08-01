@@ -1,6 +1,6 @@
 // useBibleData.ts
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface Verse {
   id?: number;
@@ -36,12 +36,53 @@ export const useBibleData = (bibleVersion: string = 'nvi') => {
     }
   }, [bibleVersion, currentVersion]);
 
+  // Melhorar cache com localStorage
+  const getCachedBook = useCallback((bookAbbrev: string, version: string) => {
+    const cacheKey = `bible_${version}_${bookAbbrev}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+    return null;
+  }, []);
+
+  const setCachedBook = useCallback((bookAbbrev: string, version: string, data: any) => {
+    const cacheKey = `bible_${version}_${bookAbbrev}`;
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+    } catch (e) {
+      // Se localStorage estiver cheio, limpar cache antigo
+      const keys = Object.keys(localStorage).filter(key => key.startsWith('bible_'));
+      if (keys.length > 50) {
+        keys.slice(0, 10).forEach(key => localStorage.removeItem(key));
+      }
+    }
+  }, []);
+
   const loadBook = async (bookAbbrev: string, version: string) => {
     setLoading(true);
     try {
+      // Tentar cache primeiro
+      const cached = getCachedBook(bookAbbrev, version);
+      if (cached) {
+        setBookData(cached);
+        setChapters(cached.chapters.map((_, idx: number) => idx + 1));
+        setLoading(false);
+        return cached;
+      }
+
+      // Se não estiver em cache, carregar da rede
       const res = await fetch(`/data/bible/${version}/${bookAbbrev}.json`);
       if (!res.ok) throw new Error(`Livro não encontrado: ${bookAbbrev}`);
       const data = await res.json();
+      
+      // Salvar no cache
+      setCachedBook(bookAbbrev, version, data);
+      
       setBookData(data);
       setChapters(data.chapters.map((_, idx: number) => idx + 1));
       return data;

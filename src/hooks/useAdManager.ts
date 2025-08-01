@@ -163,6 +163,8 @@ export const useAdManager = (config: AdManagerConfig = { versesPerAd: 5, studies
     }
 
     try {
+      console.log('[AdManager] Iniciando showRewardedAd');
+      
       // Adicionar listeners antes de mostrar o ad
       if (rewardListenerRef.current) {
         rewardListenerRef.current.remove();
@@ -176,8 +178,14 @@ export const useAdManager = (config: AdManagerConfig = { versesPerAd: 5, studies
         'rewarded',
         async (reward: any) => {
           console.log('[AdManager] Recompensa recebida:', reward);
+          console.log('[AdManager] Executando callback onReward');
           if (onReward) {
-            onReward();
+            try {
+              await onReward();
+              console.log('[AdManager] Callback onReward executado com sucesso');
+            } catch (error) {
+              console.error('[AdManager] Erro no callback onReward:', error);
+            }
           }
           rewardListenerRef.current?.remove();
           loadedListenerRef.current?.remove();
@@ -192,6 +200,23 @@ export const useAdManager = (config: AdManagerConfig = { versesPerAd: 5, studies
         }
       );
 
+      // Listener para quando o ad é fechado
+      const closedListener = await (AdMob as any).addListener(
+        'onRewardedVideoAdClosed',
+        () => {
+          console.log('[AdManager] Ad recompensado fechado');
+        }
+      );
+
+      // Listener para quando o ad falha
+      const failedListener = await (AdMob as any).addListener(
+        'onRewardedVideoAdFailedToLoad',
+        (error: any) => {
+          console.log('[AdManager] Ad recompensado falhou:', error);
+        }
+      );
+
+      console.log('[AdManager] Mostrando ad recompensado...');
       await AdMob.showRewardVideoAd();
       adLoadedRef.current = false;
       console.log('[AdManager] Ad recompensado exibido');

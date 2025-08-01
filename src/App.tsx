@@ -10,6 +10,7 @@ import { LoadingProvider } from "@/components/LoadingProvider";
 import Index from "./pages/Index";
 import Bible from "./pages/Bible";
 import Chat from "./pages/Chat";
+
 import Favorites from "./pages/Favorites";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
@@ -30,6 +31,7 @@ import Notifications from "./pages/Notifications";
 import VersiculoDoDia from "./pages/VersiculoDoDia";
 import AdTest from "./pages/AdTest";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -322,6 +324,9 @@ const AppContent = () => {
   // Adiciona paddingBottom global exceto na página de perfil
   const isProfile = location.pathname === '/perfil';
 
+  // Adicionar otimização mobile
+  useMobileOptimization();
+
   return (
     <div
       style={{
@@ -333,7 +338,8 @@ const AppContent = () => {
         <Route path="/" element={<Index />} />
         <Route path="/biblia" element={<Bible />} />
         <Route path="/versiculo-do-dia" element={<VersiculoDoDia />} />
-        <Route path="/conversa" element={<Chat />} />
+
+
         <Route path="/estudos" element={<Studies />} />
         <Route path="/estudo/:studyId" element={<Study />} />
         <Route path="/estudo/:studyId/capitulo/:chapterId" element={<StudyChapter />} />

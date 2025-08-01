@@ -121,14 +121,12 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       return;
     }
 
-    const isFavorite = favorites.some(fav => 
-      fav.book === verse.livro && 
-      fav.chapter === verse.capitulo && 
-      fav.verse === verse.versiculo
-    );
+    // Usar a versão do versículo específico ou a versão global como fallback
+    const version = verse.versao?.toLowerCase() || bibleVersion;
+    const isFavorite = isVerseFavorite(verse, version);
 
     if (isFavorite) {
-      await removeFromFavorites(verse.livro, verse.capitulo, verse.versiculo);
+      await removeFromFavorites(verse.livro, verse.capitulo, verse.versiculo, version);
       toast({ title: "Removido dos favoritos" });
     } else {
       await addToFavorites({
@@ -137,17 +135,21 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
         verse: verse.versiculo,
         title: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
         content: verse.texto,
-        reference: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`
+        reference: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
+        version: version
       });
       toast({ title: "Adicionado aos favoritos" });
     }
   };
 
   const isVerseFavorite = (verse: any) => {
+    // Usar a versão do versículo específico ou a versão global como fallback
+    const version = verse.versao?.toLowerCase() || bibleVersion;
     return favorites.some(fav =>
       fav.book === verse.livro &&
       fav.chapter === verse.capitulo &&
-      fav.verse === verse.versiculo
+      fav.verse === verse.versiculo &&
+      fav.version === version
     );
   };
 
