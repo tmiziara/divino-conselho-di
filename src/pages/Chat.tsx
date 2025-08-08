@@ -45,7 +45,7 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
-  const [loadingCheckout, setLoadingCheckout] = useState(false);
+
   const [platform, setPlatform] = useState<string>('android');
   const navigate = useNavigate();
   const { showRewardedAd } = useAdManager({ versesPerAd: 5, studiesPerAd: 1 });
@@ -148,42 +148,7 @@ const Chat = () => {
   };
 
   const handleBuyCredits = async () => {
-    setLoadingCheckout(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const accessToken = session?.access_token;
-      const response = await fetch('https://ssylplbgacuwkqkkhric.supabase.co/functions/v1/create-credits-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          user_id: user?.id,
-          credits: 10,
-          amount: 1000 // R$ 10,00
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao criar checkout');
-      }
-
-      // Redirecionar para o checkout
-      window.location.href = data.url;
-
-    } catch (error: any) {
-      console.error('Erro ao criar checkout:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível processar a compra. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoadingCheckout(false);
-    }
+    navigate('/comprar-creditos');
   };
 
   const handleWatchAd = async () => {
@@ -373,7 +338,6 @@ const Chat = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleBuyCredits}
-                disabled={loadingCheckout}
                 className="flex items-center gap-2"
               >
                 <ShoppingCart className="w-4 h-4" />
