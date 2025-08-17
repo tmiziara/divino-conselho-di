@@ -87,6 +87,7 @@ Evite respostas automáticas ou muito formais, e nunca julgue – apenas acolha 
         },
         body: JSON.stringify({
           message,
+
           user_id: session.user.id,
           skip_save: true,
           conversationHistory: conversationHistory
@@ -223,6 +224,9 @@ Evite respostas automáticas ou muito formais, e nunca julgue – apenas acolha 
         return { success: false, error: 'Erro ao atualizar créditos' };
       }
 
+      // Registrar que o anúncio foi assistido (APENAS AQUI)
+      this.recordAdWatched(session.user.id);
+
       console.log('[SpiritualChatService] Créditos atualizados com sucesso!');
       return { 
         success: true, 
@@ -235,6 +239,110 @@ Evite respostas automáticas ou muito formais, e nunca julgue – apenas acolha 
         success: false, 
         error: error.message || 'Erro ao processar anúncio' 
       };
+    }
+  }
+
+  // Verificar se o usuário pode assistir anúncio (timer de 15 minutos)
+  canWatchAd(userId: string): { canWatch: boolean; remainingMinutes: number } {
+    try {
+      const lastAdWatched = this.getLastAdWatchedFromStorage(userId);
+      console.log('[SpiritualChatService] Último anúncio assistido:', lastAdWatched);
+      
+      if (!lastAdWatched) {
+        // Primeira vez assistindo anúncio
+        console.log('[SpiritualChatService] Primeira vez assistindo anúncio');
+        return { canWatch: true, remainingMinutes: 0 };
+      }
+
+      const lastWatched = new Date(lastAdWatched);
+      const now = new Date();
+      const timeDiff = now.getTime() - lastWatched.getTime();
+      const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+      const requiredWait = 15; // 15 minutos
+
+      console.log('[SpiritualChatService] Tempo desde último anúncio:', minutesDiff, 'minutos');
+      console.log('[SpiritualChatService] Tempo necessário para espera:', requiredWait, 'minutos');
+
+      if (minutesDiff >= requiredWait) {
+        console.log('[SpiritualChatService] Usuário pode assistir anúncio');
+        return { canWatch: true, remainingMinutes: 0 };
+      } else {
+        const remaining = requiredWait - minutesDiff;
+        console.log('[SpiritualChatService] Usuário deve aguardar mais', remaining, 'minutos');
+        return { canWatch: false, remainingMinutes: remaining };
+      }
+
+    } catch (error) {
+      console.error('[SpiritualChatService] Erro ao verificar timer do anúncio:', error);
+      return { canWatch: true, remainingMinutes: 0 }; // Em caso de erro, permitir assistir
+    }
+  }
+
+  // Registrar que um anúncio foi assistido
+  private recordAdWatched(userId: string): void {
+    try {
+      console.log('[SpiritualChatService] Registrando anúncio assistido para usuário:', userId);
+      this.saveAdWatchedToStorage(userId);
+      console.log('[SpiritualChatService] Anúncio assistido registrado com sucesso');
+    } catch (error) {
+      console.error('[SpiritualChatService] Erro ao registrar anúncio assistido:', error);
+    }
+  }
+
+  // Obter tempo restante para assistir próximo anúncio
+  getAdTimerInfo(userId: string): { canWatch: boolean; remainingMinutes: number; remainingSeconds: number } {
+    try {
+      const { canWatch, remainingMinutes } = this.canWatchAd(userId);
+      
+      if (canWatch) {
+        return { canWatch: true, remainingMinutes: 0, remainingSeconds: 0 };
+      }
+
+      // Buscar o último anúncio assistido para calcular segundos restantes
+      const lastAdWatched = this.getLastAdWatchedFromStorage(userId);
+      
+      if (!lastAdWatched) {
+        return { canWatch: true, remainingMinutes: 0, remainingSeconds: 0 };
+      }
+
+      const lastWatched = new Date(lastAdWatched);
+      const now = new Date();
+      const timeDiff = now.getTime() - lastWatched.getTime();
+      const totalSecondsDiff = Math.floor(timeDiff / 1000);
+      const requiredWaitSeconds = 15 * 60; // 15 minutos em segundos
+      
+      if (totalSecondsDiff >= requiredWaitSeconds) {
+        return { canWatch: true, remainingMinutes: 0, remainingSeconds: 0 };
+      } else {
+        const remainingSeconds = requiredWaitSeconds - totalSecondsDiff;
+        const remainingMinutes = Math.floor(remainingSeconds / 60);
+        const finalRemainingSeconds = remainingSeconds % 60;
+        return { 
+          canWatch: false, 
+          remainingMinutes, 
+          remainingSeconds: finalRemainingSeconds 
+        };
+      }
+
+    } catch (error) {
+      console.error('[SpiritualChatService] Erro ao obter timer do anúncio:', error);
+      return { canWatch: true, remainingMinutes: 0, remainingSeconds: 0 };
+    }
+  }
+
+  // Métodos auxiliares para localStorage
+  private getLastAdWatchedFromStorage(userId: string): string | null {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const key = `ad_watched_${userId}`;
+      return localStorage.getItem(key);
+    }
+    return null;
+  }
+
+  private saveAdWatchedToStorage(userId: string): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const key = `ad_watched_${userId}`;
+      localStorage.setItem(key, new Date().toISOString());
     }
   }
 }

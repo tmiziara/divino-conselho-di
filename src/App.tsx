@@ -32,6 +32,7 @@ import VersiculoDoDia from "./pages/VersiculoDoDia";
 import AdTest from "./pages/AdTest";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -381,9 +382,11 @@ const App = () => {
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppContent />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AppContent />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

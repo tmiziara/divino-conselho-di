@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, Heart, ShoppingCart, AlertCircle, Coins, RefreshCw } from "lucide-react";
+import { MessageCircle, Send, Heart, ShoppingCart, AlertCircle, Coins, RefreshCw, User, Sun, Moon } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,15 @@ import { useNavigate } from "react-router-dom";
 import { useAdManager } from "@/hooks/useAdManager";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { spiritualChatService } from "@/services/spiritualChatService";
+import { useTheme } from "@/contexts/ThemeContext";
+
+// Interface para mensagens
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
 
 // Função para gerenciar contexto local
 const getLocalContext = (userId: string) => {
@@ -35,20 +44,139 @@ const saveLocalContext = (userId: string, context: any[]) => {
   }
 };
 
+// Função para carregar histórico de mensagens
+const loadChatHistory = (userId: string): ChatMessage[] => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const key = `chat_history_${userId}`;
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Converter timestamps de volta para Date objects
+      return parsed.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+    }
+  }
+  return [];
+};
+
+// Função para salvar histórico de mensagens
+const saveChatHistory = (userId: string, messages: ChatMessage[]) => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const key = `chat_history_${userId}`;
+    // Manter apenas as últimas 50 mensagens para não sobrecarregar o localStorage
+    const limitedMessages = messages.slice(-50);
+    localStorage.setItem(key, JSON.stringify(limitedMessages));
+  }
+};
+
 const Chat = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const [showAuth, setShowAuth] = useState(false);
-  const [currentResponse, setCurrentResponse] = useState<string>(
-    "Olá! Que a paz do Senhor esteja contigo. Como posso te ajudar em sua jornada espiritual hoje?"
-  );
-  const [newMessage, setNewMessage] = useState("");
+  const navigate = useNavigate();
+  const { showRewardedAd } = useAdManager();
+  const { isDark, toggle: toggleTheme } = useTheme();
+  
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const [adTimer, setAdTimer] = useState<{ canWatch: boolean; remainingMinutes: number; remainingSeconds: number } | null>(null);
+  const [adTimerInterval, setAdTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [platform, setPlatform] = useState<string>('android');
-  const navigate = useNavigate();
-  const { showRewardedAd } = useAdManager({ versesPerAd: 5, studiesPerAd: 1 });
+  // Carregar histórico ao montar o componente
+  useEffect(() => {
+    if (user) {
+      loadChatHistoryLocal(user.id);
+      loadLocalContext(user.id);
+      reloadCredits();
+      startAdTimer();
+    }
+  }, [user]);
+
+  // Cleanup do timer quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (adTimerInterval) {
+        clearInterval(adTimerInterval);
+      }
+    };
+  }, [adTimerInterval]);
+
+  // Função para iniciar o timer do anúncio
+  const startAdTimer = () => {
+    if (!user) return;
+
+    try {
+      const timerInfo = spiritualChatService.getAdTimerInfo(user.id);
+      setAdTimer(timerInfo);
+
+      // Se não puder assistir, iniciar contador regressivo
+      if (!timerInfo.canWatch) {
+        const interval = setInterval(() => {
+          const updatedTimerInfo = spiritualChatService.getAdTimerInfo(user.id);
+          setAdTimer(updatedTimerInfo);
+
+          // Se puder assistir, parar o timer
+          if (updatedTimerInfo.canWatch) {
+            clearInterval(interval);
+            setAdTimerInterval(null);
+          }
+        }, 1000); // Atualizar a cada segundo
+
+        setAdTimerInterval(interval);
+      }
+    } catch (error) {
+      console.error('[Chat] Erro ao iniciar timer do anúncio:', error);
+    }
+  };
+
+  // Função para formatar o tempo restante
+  const formatAdTimer = () => {
+    if (!adTimer || adTimer.canWatch) return null;
+    
+    const minutes = adTimer.remainingMinutes.toString().padStart(2, '0');
+    const seconds = adTimer.remainingSeconds.toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
+
+  // Função para carregar histórico de mensagens
+  const loadChatHistoryLocal = (userId: string) => {
+    const history = loadChatHistory(userId);
+    if (history && history.length === 0) {
+      // Mensagem de boas-vindas inicial
+      const welcomeMessage: ChatMessage = {
+        id: 'welcome',
+        role: 'assistant',
+        content: "Olá! Que a paz do Senhor esteja contigo. Como posso te ajudar em sua jornada espiritual hoje?",
+        timestamp: new Date()
+      };
+      setMessages([welcomeMessage]);
+      saveChatHistory(userId, [welcomeMessage]);
+    } else if (history) {
+      setMessages(history);
+    }
+  };
+
+  // Função para carregar contexto local
+  const loadLocalContext = (userId: string) => {
+    const context = getLocalContext(userId);
+    // O contexto será usado quando necessário
+  };
+
+  // Scroll automático para a última mensagem
+  useEffect(() => {
+    if (messagesEndRef.current && messages.length > 0) {
+      const scrollElement = messagesEndRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, [messages]);
 
   useEffect(() => {
     const fetchCredits = async () => {
@@ -80,6 +208,16 @@ const Chat = () => {
     setNewMessage("");
     setIsLoading(true);
     
+    // Adicionar mensagem do usuário imediatamente
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: currentMessage,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    
     try {
       console.log('Iniciando envio de mensagem...');
       
@@ -102,9 +240,16 @@ const Chat = () => {
         return;
       }
 
-      // Atualizar resposta
+      // Adicionar resposta da IA
       if (response.response) {
-        setCurrentResponse(response.response);
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: response.response,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, aiMessage]);
         
         // Salvar contexto local (mensagem do usuário + resposta da IA)
         const newContext = [
@@ -113,6 +258,10 @@ const Chat = () => {
           { role: 'assistant', content: response.response }
         ];
         saveLocalContext(user.id, newContext);
+        
+        // Salvar histórico completo
+        const updatedMessages = [...messages, userMessage, aiMessage];
+        saveChatHistory(user.id, updatedMessages);
       }
 
       // Atualizar créditos
@@ -172,6 +321,9 @@ const Chat = () => {
             // Atualizar créditos
             setCredits(result.credits);
             console.log('[Chat] Créditos atualizados:', result.credits);
+            
+            // APENAS AQUI: Reiniciar timer do anúncio após recompensa entregue
+            startAdTimer();
           } else {
             console.error('[Chat] Erro ao adicionar créditos:', result.error);
             toast({
@@ -203,6 +355,9 @@ const Chat = () => {
               });
               setCredits(result.credits);
               console.log('[Chat] Créditos adicionados via fallback:', result.credits);
+              
+              // APENAS AQUI: Reiniciar timer do anúncio após recompensa entregue
+              startAdTimer();
             }
           } catch (error) {
             console.error('[Chat] Erro no fallback:', error);
@@ -228,6 +383,13 @@ const Chat = () => {
       .eq('user_id', user.id)
       .single();
     if (!error && data) setCredits(data.credits);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
   if (!user) {
@@ -258,17 +420,17 @@ const Chat = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-background">
       <Navigation onAuthClick={handleAuthClick} />
       <div className="container mx-auto px-4 py-8">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="w-6 h-6 text-blue-600" />
+        <Card className="max-w-2xl mx-auto bg-card border-border">
+          <CardHeader className="bg-card border-b border-border">
+            <CardTitle className="flex items-center gap-2 text-card-foreground">
+              <MessageCircle className="w-6 h-6 text-primary" />
               Conversa Espiritual
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-secondary text-secondary-foreground border-border">
                 Créditos: {credits !== null ? credits : '...'}
               </Badge>
               <Button
@@ -276,27 +438,89 @@ const Chat = () => {
                 size="sm"
                 onClick={reloadCredits}
                 disabled={isLoading}
+                className="text-muted-foreground hover:bg-muted"
               >
                 <RefreshCw className="w-4 h-4" />
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme} // Usar toggle do useTheme
+                className="ml-2 text-muted-foreground hover:bg-muted"
+                title={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
+              >
+                {isDark ? (
+                  <Sun className="w-4 h-4 text-accent" />
+                ) : (
+                  <Moon className="w-4 h-4 text-muted-foreground" />
+                )}
+              </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Área de resposta */}
-            <div className="bg-white rounded-lg p-4 border">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4 text-blue-600" />
+          <CardContent className="space-y-4 bg-card">
+            {/* Área de chat com histórico */}
+            <div className="bg-muted rounded-lg border border-border h-[500px] overflow-hidden">
+              <ScrollArea ref={messagesEndRef} className="h-full">
+                <div className="p-4 space-y-4 bg-muted">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-lg p-3 ${
+                          message.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-card text-card-foreground border border-border'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {message.role === 'assistant' && (
+                            <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                              <MessageCircle className="w-3 h-3 text-primary" />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <div className="text-sm leading-relaxed">
+                              {message.content}
+                            </div>
+                            <div className={`text-xs mt-2 ${
+                              message.role === 'user' 
+                                ? 'text-primary-foreground/70' 
+                                : 'text-muted-foreground'
+                            }`}>
+                              {formatTime(message.timestamp)}
+                            </div>
+                          </div>
+                          {message.role === 'user' && (
+                            <div className="w-6 h-6 bg-primary/80 rounded-full flex items-center justify-center flex-shrink-0">
+                              <User className="w-3 h-3 text-primary-foreground" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Indicador de digitação */}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-card rounded-lg p-3 border border-border">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center">
+                            <MessageCircle className="w-3 h-3 text-primary" />
+                          </div>
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-1">Pastor Virtual</p>
-                  <div className="prose prose-sm max-w-none">
-                    <p className="text-gray-800 leading-relaxed">
-                      {currentResponse}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              </ScrollArea>
             </div>
 
             {/* Área de entrada */}
@@ -306,16 +530,16 @@ const Chat = () => {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 min-h-[60px] resize-none"
+                className="flex-1 min-h-[60px] resize-none bg-background text-foreground border-border placeholder-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 disabled={isLoading}
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={isLoading || !newMessage.trim()}
-                className="px-4"
+                className="px-4 bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
@@ -328,17 +552,23 @@ const Chat = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleWatchAd}
-                disabled={isLoading}
-                className="flex items-center gap-2"
+                disabled={isLoading || (adTimer && !adTimer.canWatch)}
+                className="flex items-center gap-2 border-border text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Coins className="w-4 h-4" />
-                Assistir Anúncio
+                {adTimer && !adTimer.canWatch ? (
+                  <span className="flex items-center gap-2">
+                    Aguarde {formatAdTimer()}
+                  </span>
+                ) : (
+                  "Assistir Anúncio"
+                )}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleBuyCredits}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 border-border text-foreground hover:bg-muted"
               >
                 <ShoppingCart className="w-4 h-4" />
                 Comprar Créditos
@@ -347,9 +577,9 @@ const Chat = () => {
 
             {/* Alertas */}
             {credits !== null && credits < 3 && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
+              <Alert className="bg-destructive/10 border-destructive/20">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                <AlertDescription className="text-destructive-foreground">
                   Você tem poucos créditos. Assista um anúncio ou compre mais créditos para continuar conversando.
                 </AlertDescription>
               </Alert>
