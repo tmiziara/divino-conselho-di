@@ -45,3 +45,55 @@
 body {
   padding-bottom: 80px !important;
 }
+
+/* Estilos específicos para o banner AdMob */
+.admob-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: transparent;
+}
+
+.admob-banner-error,
+.admob-banner-loading,
+.admob-banner-placeholder {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Garantir que o conteúdo não seja sobreposto pelo banner */
+.admob-banner + * {
+  margin-bottom: 80px;
+}
+
+/* Ajuste para dispositivos móveis */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 100px !important;
+  }
+  
+  .admob-banner + * {
+    margin-bottom: 100px;
+  }
+}
+
+/* Ajuste para dispositivos com notch */
+@media (max-width: 375px) {
+  body {
+    padding-bottom: 120px !important;
+  }
+  
+  .admob-banner + * {
+    margin-bottom: 120px;
+  }
+}

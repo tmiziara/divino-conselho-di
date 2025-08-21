@@ -39,20 +39,20 @@ export const useAdManager = (config: AdManagerConfig = { versesPerAd: 5, studies
     }
   }, []);
 
-  // IDs de teste do AdMob
+  // IDs de produção do AdMob
   const getInterstitialAdId = () => {
     return Device.getInfo().then(info => {
       return info.platform === 'ios' 
-        ? 'ca-app-pub-3940256099942544/4411468910' // iOS test
-        : 'ca-app-pub-3940256099942544/1033173712'; // Android test
+        ? 'ca-app-pub-7772749408418204/1479212901' // ← ID de produção iOS
+        : 'ca-app-pub-7772749408418204/1479212901'; // ← ID de produção Android
     });
   };
 
   const getRewardedAdId = () => {
     return Device.getInfo().then(info => {
       return info.platform === 'ios' 
-        ? 'ca-app-pub-3940256099942544/1712485313' // iOS test
-        : 'ca-app-pub-3940256099942544/5224354917'; // Android test
+        ? 'ca-app-pub-7772749408418204/5482037094' // ← ID de produção iOS
+        : 'ca-app-pub-7772749408418204/5482037094'; // ← ID de produção Android
     });
   };
 
@@ -67,7 +67,7 @@ export const useAdManager = (config: AdManagerConfig = { versesPerAd: 5, studies
       const adId = await getInterstitialAdId();
       await AdMob.prepareInterstitial({
         adId,
-        isTesting: true,
+        isTesting: false, // ← Mudado para false em produção
       });
       setIsAdReady(true);
       console.log('[AdManager] Ad intersticial preparado');
@@ -141,7 +141,7 @@ export const useAdManager = (config: AdManagerConfig = { versesPerAd: 5, studies
       const adId = await getRewardedAdId();
       await AdMob.prepareRewardVideoAd({
         adId,
-        isTesting: true,
+        isTesting: false, // ← Mudado para false em produção
       });
       adLoadedRef.current = true;
       console.log('[AdManager] Ad recompensado preparado');

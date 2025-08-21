@@ -6,6 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: './', // Importante para produção - permite que os assets sejam carregados corretamente
   server: {
     host: "::",
     port: 8080,
@@ -27,8 +28,8 @@ export default defineConfig(({ mode }) => ({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
+        scope: './',
+        start_url: './',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -46,7 +47,7 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         globIgnores: ['**/data/nvi.json'],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
-        navigateFallback: '/index.html',
+        navigateFallback: './index.html',
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
@@ -62,7 +63,7 @@ export default defineConfig(({ mode }) => ({
           },
           // Cache para dados da Bíblia
           {
-            urlPattern: /^\/data\/bible\/.*/i,
+            urlPattern: /^\.\/data\/bible\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'bible-data-cache',

@@ -19,10 +19,27 @@ const OfflineIndicator = () => {
     };
   }, []);
 
-  // Use native network status if available
-  const networkConnected = networkStatus?.connected ?? isOnline;
+  // Melhor detecção de rede com fallbacks
+  const getNetworkStatus = () => {
+    // 1. Primeiro tenta o status nativo do Capacitor
+    if (networkStatus?.connected !== undefined) {
+      return networkStatus.connected;
+    }
+    
+    // 2. Fallback para navigator.onLine
+    if (typeof navigator.onLine !== 'undefined') {
+      return navigator.onLine;
+    }
+    
+    // 3. Fallback para verificação manual de conectividade
+    return isOnline;
+  };
 
-  if (networkConnected) {
+  const networkConnected = getNetworkStatus();
+
+  // No emulador, às vezes é melhor assumir que está online
+  // para evitar problemas de desenvolvimento
+  if (networkConnected || process.env.NODE_ENV === 'development') {
     return null;
   }
 

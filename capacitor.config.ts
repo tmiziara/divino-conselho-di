@@ -4,9 +4,7 @@ const config: CapacitorConfig = {
   appId: 'com.conexaodeus.app',
   appName: 'Conexao com Deus',
   webDir: 'dist',
-  server: {
-    androidScheme: 'https'
-  },
+  // Removendo server.androidScheme para evitar problemas com localhost
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,

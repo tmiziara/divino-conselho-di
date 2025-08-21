@@ -118,7 +118,7 @@ const Subscription = () => {
   };
 
   return (
-    <div className="min-h-screen celestial-bg">
+    <div className="min-h-screen bg-background dark:bg-background">
       <Navigation onAuthClick={() => setShowAuth(true)} />
       
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-20">
@@ -139,7 +139,7 @@ const Subscription = () => {
                 <Button
                   onClick={handleManageSubscription}
                   variant="outline"
-                  className="border-primary/20"
+                  className="border-primary/20 hover:bg-primary/5"
                 >
                   Gerenciar Assinatura
                 </Button>
@@ -164,20 +164,22 @@ const Subscription = () => {
                 )}
                 {isCurrent && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10 flex items-center gap-1">
-                    <Badge className="bg-primary text-white">
+                    <Badge className="bg-primary text-primary-foreground">
                       <Check className="w-4 h-4 mr-1 inline-block" />
                       Plano Atual
                     </Badge>
                   </div>
                 )}
-                <Card className="bg-card dark:bg-zinc-900">
+                <Card className={`bg-card border border-border hover:border-primary/30 transition-all duration-300 ${
+                  isCurrent ? 'ring-2 ring-primary/20' : isSelected ? 'ring-2 ring-primary/20' : ''
+                }`}>
                   <CardHeader className="text-center pb-2 md:pb-3">
                     <div className={`w-10 h-10 md:w-12 md:h-12 mx-auto rounded-full flex items-center justify-center mb-2 md:mb-3 ${
                       isCurrent ? 'bg-primary/20' : isSelected ? 'bg-primary/20' : 'bg-primary/10'
                     }`}>
                       <IconComponent className={`w-5 h-5 md:w-6 md:h-6 text-primary`} />
                     </div>
-                    <CardTitle className="text-lg md:text-xl mb-1">{plan.name}</CardTitle>
+                    <CardTitle className="text-lg md:text-xl mb-1 text-card-foreground">{plan.name}</CardTitle>
                     <div className="mb-1 md:mb-2">
                       <div className="flex items-baseline justify-center gap-0">
                         <span className="text-xl md:text-2xl font-bold text-primary">
@@ -188,7 +190,7 @@ const Subscription = () => {
                         </span>
                       </div>
                     </div>
-                    <CardDescription className="text-xs md:text-sm leading-tight">{plan.description}</CardDescription>
+                    <CardDescription className="text-xs md:text-sm leading-tight text-muted-foreground">{plan.description}</CardDescription>
                   </CardHeader>
                   
                   <CardContent className="flex-1 flex flex-col justify-between">
@@ -202,7 +204,13 @@ const Subscription = () => {
                     <Button
                       onClick={() => handleSubscribe(plan.id)}
                       disabled={isCurrent}
-                      className={`w-full ${isCurrent ? 'bg-primary text-white cursor-not-allowed' : isSelected ? 'bg-primary/80 text-white' : ''}`}
+                      className={`w-full ${
+                        isCurrent 
+                          ? 'bg-primary/50 text-primary-foreground cursor-not-allowed' 
+                          : isSelected 
+                            ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
+                            : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                      }`}
                     >
                       {isCurrent ? 'Plano Atual' : plan.id === 'free' ? 'Gratuito' : 'Assinar Agora'}
                     </Button>

@@ -21,7 +21,7 @@ import Study from "./pages/Study";
 import StudyChapter from "./pages/StudyChapter";
 import CategoryStudies from "./pages/CategoryStudies";
 import NotFound from "./pages/NotFound";
-import { AdMob, BannerAdSize, BannerAdPosition, BannerAdPluginEvents } from "@capacitor-community/admob";
+import { AdMob } from "@capacitor-community/admob";
 import { StatusBar } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { useSubscription } from "@/hooks/useSubscription";
@@ -33,6 +33,7 @@ import AdTest from "./pages/AdTest";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import AdMobBanner from "@/components/AdMobBanner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,8 +45,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const ADMOB_TEST_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
 
 const AppContent = () => {
   const { isNative, hideSystemUI } = useSystemNavigation();
@@ -98,26 +97,19 @@ const AppContent = () => {
               const versiculoId = params.get('versiculoId');
               
               if (theme && versiculoId) {
-                // Decodificar caracteres especiais
-                const decodedTheme = decodeURIComponent(theme);
-                const decodedVersiculoId = decodeURIComponent(versiculoId);
-                
-                console.log('[App] Redirecionando para versículo específico:', { 
-                  originalTheme: theme, 
-                  decodedTheme, 
-                  originalVersiculoId: versiculoId, 
-                  decodedVersiculoId 
-                });
-                
-                const targetUrl = `/versiculo-do-dia?theme=${encodeURIComponent(decodedTheme)}&versiculoId=${encodeURIComponent(decodedVersiculoId)}`;
-                console.log('[App] URL de destino:', targetUrl);
-                navigate(targetUrl);
-                console.log('[App] Navegação executada para:', targetUrl);
+                console.log('[App] Redirecionando para versículo específico:', { theme, versiculoId });
+                navigate(`/versiculo-do-dia?theme=${theme}&versiculoId=${versiculoId}`);
               } else {
-                console.log('[App] Redirecionando para versículo do dia (sem parâmetros)');
                 navigate('/versiculo-do-dia');
-                console.log('[App] Navegação executada para: /versiculo-do-dia');
               }
+            } else if (actualPath === '/notificacoes') {
+              console.log('[App] Redirecionando para notificações');
+              navigate('/notificacoes');
+            } else if (actualPath === '/biblia') {
+              console.log('[App] Redirecionando para bíblia');
+              navigate('/biblia');
+            } else {
+              console.log('[App] Rota não reconhecida:', actualPath);
             }
           } catch (error) {
             console.error('[App] Erro ao processar deeplink salvo:', error);
@@ -125,30 +117,34 @@ const AppContent = () => {
         }
       }
     };
-    
-    // Verificar imediatamente
-    checkPendingDeeplinks();
-    
-    // Verificar novamente após um pequeno delay para garantir que o app carregou completamente
+
+    // Verificar deeplinks pendentes após um pequeno delay
     const timer = setTimeout(checkPendingDeeplinks, 1000);
     return () => clearTimeout(timer);
   }, [navigate]);
 
-  // Debug: log da rota atual
-  console.log("[App] Rota atual:", location.pathname);
-
-  // Tratamento de erro para rotas inválidas
+  // Verificar se há deeplinks pendentes na URL atual
   React.useEffect(() => {
-    const validRoutes = ['/', '/biblia', '/versiculo-do-dia', '/estudos', '/favoritos', '/chat', '/perfil', '/assinatura', '/success', '/cancel', '/notificacoes'];
-    const isValidRoute = validRoutes.some(route => 
-      location.pathname === route || 
-      location.pathname.startsWith('/estudo/') || 
-      location.pathname.startsWith('/categoria/')
-    );
-    
-    if (!isValidRoute) {
-      console.warn("[App] Rota não reconhecida:", location.pathname);
-    }
+    const checkCurrentDeeplink = () => {
+      if (location.pathname === '/versiculo-do-dia' && location.search) {
+        const params = new URLSearchParams(location.search);
+        const theme = params.get('theme');
+        const versiculoId = params.get('versiculoId');
+        
+        if (theme && versiculoId) {
+          console.log('[App] Processando deeplink da URL atual:', { theme, versiculoId });
+          // O componente VersiculoDoDia já deve processar esses parâmetros
+        }
+      } else if (location.pathname === '/notificacoes') {
+        console.log('[App] Navegando para notificações');
+      } else if (location.pathname === '/biblia') {
+        console.log('[App] Navegando para bíblia');
+      } else {
+        console.warn("[App] Rota não reconhecida:", location.pathname);
+      }
+    };
+
+    checkCurrentDeeplink();
   }, [location.pathname]);
 
   // Configurar navegação do sistema quando o app carregar
@@ -163,75 +159,20 @@ const AppContent = () => {
   // Inicializa o AdMob apenas uma vez
   React.useEffect(() => {
     if (!initializedRef.current) {
+      console.log("[AdMob] Iniciando inicialização...");
       try {
         AdMob.initialize({
           testingDevices: [],
-          initializeForTesting: true,
+          initializeForTesting: false, // ← Mudado para false em produção
         });
         initializedRef.current = true;
         console.log("[AdMob] Inicializado com sucesso");
       } catch (error) {
         console.error("[AdMob] Erro na inicialização:", error);
       }
-    }
-  }, []);
-
-  // Mostra o banner em todas as páginas, exceto para premium
-  React.useEffect(() => {
-    if (subscriptionLoading) return;
-    if (subscription.subscription_tier !== "premium") {
-      try {
-        AdMob.showBanner({
-          adId: "ca-app-pub-3940256099942544/6300978111",
-          adSize: BannerAdSize.ADAPTIVE_BANNER,
-          position: BannerAdPosition.BOTTOM_CENTER,
-          margin: 0,
-          isTesting: true,
-        });
-        console.log("[AdMob] Banner exibido em:", location.pathname);
-      } catch (error) {
-        console.error("[AdMob] Erro ao mostrar banner:", error);
-      }
     } else {
-      try {
-        AdMob.hideBanner();
-        console.log("[AdMob] Banner ocultado para usuário premium");
-      } catch (error) {
-        console.error("[AdMob] Erro ao esconder banner:", error);
-      }
+      console.log("[AdMob] Já foi inicializado anteriormente");
     }
-  }, [location.pathname, subscription.subscription_tier, subscriptionLoading]);
-
-  // Listeners para eventos do banner
-  React.useEffect(() => {
-    let loadedHandle, closedHandle, failedHandle, impressionHandle;
-    (async () => {
-      loadedHandle = await AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
-        console.log('[AdMob] bannerAdLoaded');
-      });
-      closedHandle = await AdMob.addListener(BannerAdPluginEvents.Closed, () => {
-        console.log('[AdMob] bannerAdClosed');
-      });
-      failedHandle = await AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (err) => {
-        console.log('[AdMob] bannerAdFailedToLoad', err);
-      });
-      impressionHandle = await AdMob.addListener(BannerAdPluginEvents.AdImpression, () => {
-        console.log('[AdMob] bannerAdImpression');
-      });
-    })();
-    return () => {
-      const removeHandle = (handle) => {
-        if (handle && typeof handle.then === 'function') {
-          handle.then((h) => h.remove && h.remove());
-        } else if (handle && typeof handle.remove === 'function') {
-          handle.remove();
-        }
-      };
-      removeHandle(loadedHandle);
-      removeHandle(closedHandle);
-      removeHandle(failedHandle);
-      removeHandle(impressionHandle);
-    };
   }, []);
 
   // Listener para deeplinks (Capacitor)
@@ -364,6 +305,10 @@ const AppContent = () => {
         {/* Fim das rotas alternativas */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      
+      {/* Banner AdMob - sempre visível para usuários gratuitos */}
+      <AdMobBanner />
+      
       <Toaster />
       <Sonner />
       <OfflineIndicator />
