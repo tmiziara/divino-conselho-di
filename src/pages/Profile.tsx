@@ -12,10 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Crown, CreditCard, Calendar, ExternalLink } from "lucide-react";
+import { Crown, CreditCard, Calendar, ExternalLink, Trash2, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AuthDialog from '@/components/AuthDialog';
+import { Label } from "@/components/ui/label";
 
 const profileSchema = z.object({
   display_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -36,13 +37,15 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { subscription, openCustomerPortal, loading: subscriptionLoading } = useSubscription();
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
   const handleAuthClick = () => setShowAuth(true);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -169,6 +172,98 @@ const Profile = () => {
         description: "Não foi possível abrir o portal de assinaturas.",
         variant: "destructive",
       });
+    }
+  };
+
+  // Função para excluir conta
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== "EXCLUIR MINHA CONTA") {
+      toast({
+        title: "Confirmação incorreta",
+        description: "Digite exatamente 'EXCLUIR MINHA CONTA' para confirmar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para excluir sua conta.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      // 1. Excluir dados do usuário
+      const { error: favoritesError } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (favoritesError) {
+        console.error('Erro ao excluir favoritos:', favoritesError);
+      }
+
+      // 2. Excluir dados de progresso (se existir)
+      const { error: progressError } = await supabase
+        .from('user_progress')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (progressError) {
+        console.error('Erro ao excluir progresso:', progressError);
+      }
+
+      // 3. Excluir dados de assinatura (se existir)
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (subscriptionError) {
+        console.error('Erro ao excluir assinatura:', subscriptionError);
+      }
+
+      // 4. Excluir dados de créditos (se existir)
+      const { error: creditsError } = await supabase
+        .from('user_credits')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (creditsError) {
+        console.error('Erro ao excluir créditos:', creditsError);
+      }
+
+      // 5. Excluir a conta do usuário
+      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
+
+      if (authError) {
+        console.error('Erro ao excluir conta:', authError);
+        throw authError;
+      }
+
+      toast({
+        title: "Conta excluída",
+        description: "Sua conta foi excluída com sucesso. Todos os dados foram removidos.",
+      });
+
+      // Fazer logout e redirecionar
+      await signOut();
+      window.location.href = "/";
+
+    } catch (error) {
+      console.error('Erro ao excluir conta:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir sua conta. Tente novamente ou entre em contato conosco.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -421,6 +516,68 @@ const Profile = () => {
                   </Button>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+
+          {/* Exclusão de Conta - NOVO CARD */}
+          <Card className="bg-card dark:bg-zinc-900 mb-2 border-red-200 dark:border-red-800">
+            <CardHeader>
+              <CardTitle className="text-lg text-red-600 dark:text-red-400 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Excluir Conta
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Exclua permanentemente sua conta e todos os dados associados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  <p className="mb-2"><strong>⚠️ Atenção:</strong> Esta ação é irreversível.</p>
+                  <p className="mb-2">Serão excluídos:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>Favoritos salvos</li>
+                    <li>Progresso de estudos</li>
+                    <li>Histórico de chat</li>
+                    <li>Dados de assinatura</li>
+                    <li>Créditos disponíveis</li>
+                  </ul>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="deleteConfirmation" className="text-sm">
+                      Digite "EXCLUIR MINHA CONTA" para confirmar
+                    </Label>
+                    <Input
+                      id="deleteConfirmation"
+                      type="text"
+                      value={deleteConfirmation}
+                      onChange={(e) => setDeleteConfirmation(e.target.value)}
+                      placeholder="EXCLUIR MINHA CONTA"
+                      className="h-9 py-2 text-sm font-mono"
+                    />
+                  </div>
+                  
+                  <Button 
+                    onClick={handleDeleteAccount}
+                    disabled={deleteConfirmation !== "EXCLUIR MINHA CONTA" || isDeleting}
+                    className="w-full h-9 text-sm bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Excluindo conta...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Excluir Conta Permanentemente
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
