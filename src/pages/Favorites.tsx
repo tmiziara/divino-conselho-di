@@ -3,13 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart, BookOpen, MessageCircle, Trash2, Share2 } from "lucide-react";
+import { Heart, BookOpen, MessageCircle, Trash2, Share2, Sparkles } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
 import SocialShare from "@/components/SocialShare";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface Favorite {
   id: string;
@@ -26,6 +27,7 @@ interface Favorite {
 
 const Favorites = () => {
   const { user } = useAuth();
+  const { subscription } = useSubscription(); // ← ADICIONAR ESTA LINHA
   const { toast } = useToast();
   const [showAuth, setShowAuth] = useState(false);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
@@ -93,6 +95,14 @@ const Favorites = () => {
   useEffect(() => {
     loadFavorites();
   }, [user]);
+
+  // VERIFICAR SE ATINGIU O LIMITE
+  const hasReachedLimit = () => {
+    if (!subscription.subscribed || subscription.subscription_tier === 'free') {
+      return favorites.length >= 10;
+    }
+    return false;
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -220,6 +230,47 @@ const Favorites = () => {
         </div>
 
         <div className="max-w-4xl mx-auto h-[calc(100vh-200px)]">
+          {/* Header com contador */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-center mb-2 heavenly-text">
+              <Heart className="w-8 h-8 inline mr-2" />
+              Seus Favoritos
+            </h1>
+            <div className="text-center text-muted-foreground">
+              {subscription.subscribed && subscription.subscription_tier === 'premium' ? (
+                <p>✨ Plano Premium - Favoritos ilimitados</p>
+              ) : (
+                <p>
+                   Plano Gratuito - {favorites.length}/10 favoritos
+                  {hasReachedLimit() && (
+                    <span className="text-red-500 font-semibold ml-2">
+                      (Limite atingido!)
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Aviso de limite atingido */}
+          {hasReachedLimit() && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
+              <p className="text-amber-800 font-medium">
+                🚫 Você atingiu o limite de 10 favoritos no plano gratuito!
+              </p>
+              <p className="text-amber-700 text-sm mt-1">
+                Faça upgrade para o plano Premium e salve quantos favoritos quiser.
+              </p>
+              <Button 
+                className="mt-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                onClick={() => window.location.href = '/subscription'}
+              >
+                <Sparkles className="w-4 h4 mr-2" />
+                Fazer Upgrade
+              </Button>
+            </div>
+          )}
+
           <ScrollArea className="h-full">
             <div className="pr-2 sm:pr-4">
               {loading ? (
@@ -333,6 +384,7 @@ const Favorites = () => {
           </ScrollArea>
         </div>
       </div>
+      <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
     </div>
   );
 };

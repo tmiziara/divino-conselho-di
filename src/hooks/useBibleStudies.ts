@@ -301,13 +301,28 @@ export const useBibleStudies = () => {
     if (!user) {
       toast({
         title: "Login necessário",
-        description: "Faça login para salvar favoritos.",
+        description: "Faça login para salvar favoritos",
         variant: "destructive"
       });
       return;
     }
 
     try {
+      // VERIFICAR LIMITE PARA USUÁRIOS GRATUITOS
+      if (!subscription.subscribed || subscription.subscription_tier === 'free') {
+        const stored = window.localStorage.getItem(`favorites_${user.id}`);
+        const currentFavorites = stored ? JSON.parse(stored) : [];
+        
+        if (currentFavorites.length >= 10) {
+          toast({
+            title: "Limite de favoritos atingido",
+            description: "Você atingiu o limite de 10 favoritos no plano gratuito. Faça upgrade para salvar mais!",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
       const stored = window.localStorage.getItem(`favorites_${user.id}`);
       const favorites = stored ? JSON.parse(stored) : [];
       

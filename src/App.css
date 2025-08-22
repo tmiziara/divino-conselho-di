@@ -97,3 +97,25 @@ body {
     margin-bottom: 120px;
   }
 }
+
+/* Alerta de créditos - Modo claro */
+.credits-warning-alert {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.credits-warning-alert svg {
+  color: #dc2626;
+}
+
+/* Alerta de créditos - Modo escuro */
+.dark .credits-warning-alert {
+  background-color: hsl(var(--destructive) / 0.1);
+  border-color: hsl(var(--destructive) / 0.2);
+  color: hsl(var(--destructive-foreground));
+}
+
+.dark .credits-warning-alert svg {
+  color: hsl(var(--destructive));
+}

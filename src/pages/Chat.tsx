@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, Heart, ShoppingCart, AlertCircle, Coins, RefreshCw, User, Sun, Moon } from "lucide-react";
+import { MessageCircle, Send, Heart, ShoppingCart, AlertCircle, Coins, RefreshCw, User, Sun, Moon, Infinity } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +74,7 @@ const saveChatHistory = (userId: string, messages: ChatMessage[]) => {
 
 const Chat = () => {
   const { user, signOut } = useAuth();
+  const { subscription } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { showRewardedAd } = useAdManager();
@@ -87,6 +89,17 @@ const Chat = () => {
   const [adTimerInterval, setAdTimerInterval] = useState<NodeJS.Timeout | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // VERIFICAR SE É USUÁRIO PREMIUM
+  const isPremium = subscription?.subscribed && subscription?.subscription_tier === 'premium';
+  
+  // DEBUG: Log do status premium
+  console.log('[Chat] Status da assinatura:', {
+    subscription: subscription,
+    subscribed: subscription?.subscribed,
+    tier: subscription?.subscription_tier,
+    isPremium: isPremium
+  });
 
   // Carregar histórico ao montar o componente
   useEffect(() => {
@@ -194,8 +207,8 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
     
-    // Verificar se o usuário tem créditos
-    if (credits !== null && credits < 1) {
+    // Verificar créditos apenas para usuários gratuitos
+    if (!isPremium && credits !== null && credits < 1) {
       toast({
         title: "Sem créditos",
         description: "Você precisa de pelo menos 1 crédito para enviar mensagens. Compre créditos ou assista um anúncio.",
@@ -431,7 +444,14 @@ const Chat = () => {
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs bg-secondary text-secondary-foreground border-border">
-                Créditos: {credits !== null ? credits : '...'}
+                Créditos: {isPremium ? (
+                  <span className="flex items-center gap-1">
+                    <Infinity className="w-3 h-3" />
+                    Ilimitados
+                  </span>
+                ) : (
+                  credits !== null ? credits : '...'
+                )}
               </Badge>
               <Button
                 variant="ghost"
@@ -546,41 +566,53 @@ const Chat = () => {
               </Button>
             </div>
 
-            {/* Ações */}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleWatchAd}
-                disabled={isLoading || (adTimer && !adTimer.canWatch)}
-                className="flex items-center gap-2 border-border text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Coins className="w-4 h-4" />
-                {adTimer && !adTimer.canWatch ? (
-                  <span className="flex items-center gap-2">
-                    Aguarde {formatAdTimer()}
-                  </span>
-                ) : (
-                  "Assistir Anúncio"
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBuyCredits}
-                className="flex items-center gap-2 border-border text-foreground hover:bg-muted"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                Comprar Créditos
-              </Button>
-            </div>
+            {/* Ações - OCULTAR PARA USUÁRIOS PREMIUM */}
+            {!isPremium && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleWatchAd}
+                  disabled={isLoading || (adTimer && !adTimer.canWatch)}
+                  className="flex items-center gap-2 border-border text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Coins className="w-4 h-4" />
+                  {adTimer && !adTimer.canWatch ? (
+                    <span className="flex items-center gap-2">
+                      Aguarde {formatAdTimer()}
+                    </span>
+                  ) : (
+                    "Assistir Anúncio"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBuyCredits}
+                  className="flex items-center gap-2 border-border text-foreground hover:bg-muted"
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  Comprar Créditos
+                </Button>
+              </div>
+            )}
 
-            {/* Alertas */}
-            {credits !== null && credits < 3 && (
-              <Alert className="bg-destructive/10 border-destructive/20">
-                <AlertCircle className="h-4 w-4 text-destructive" />
-                <AlertDescription className="text-destructive-foreground">
+            {/* Alertas - OCULTAR PARA USUÁRIOS PREMIUM */}
+            {!isPremium && credits !== null && credits < 3 && (
+              <Alert className="bg-red-50 border-red-200 dark:bg-destructive/10 dark:border-destructive/20">
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-destructive" />
+                <AlertDescription className="text-red-800 dark:text-destructive-foreground">
                   Você tem poucos créditos. Assista um anúncio ou compre mais créditos para continuar conversando.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* MENSAGEM ESPECIAL PARA USUÁRIOS PREMIUM */}
+            {isPremium && (
+              <Alert className="bg-green-50 border-green-200 dark:bg-emerald-900/20 dark:border-emerald-700/30">
+                <AlertCircle className="h-4 w-4 text-green-600 dark:text-emerald-400" />
+                <AlertDescription className="text-green-800 dark:text-emerald-200">
+                  🎉 Como usuário Premium, você tem chat ilimitado! Envie quantas mensagens quiser sem se preocupar com créditos.
                 </AlertDescription>
               </Alert>
             )}

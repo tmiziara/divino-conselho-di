@@ -26,7 +26,27 @@ export class SpiritualChatService {
         throw new Error('Usuário não autenticado');
       }
 
-      // Obter perfil do usuário para verificar gênero
+      // 1. PRIMEIRO: Verificar se o usuário é premium
+      const { data: subscription, error: subscriptionError } = await supabase
+        .from('subscribers')
+        .select('subscribed, subscription_tier')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (subscriptionError) {
+        console.log('Erro ao verificar assinatura:', subscriptionError);
+        // Se não conseguir verificar assinatura, continuar com verificação de créditos
+      }
+
+      const isPremium = subscription?.subscribed && subscription?.subscription_tier === 'premium';
+      console.log('Status premium no serviço:', {
+        subscription: subscription,
+        subscribed: subscription?.subscribed,
+        tier: subscription?.subscription_tier,
+        isPremium: isPremium
+      });
+
+      // 2. Obter perfil do usuário
       const { data: profile } = await supabase
         .from('profiles')
         .select('gender, credits')
@@ -37,13 +57,18 @@ export class SpiritualChatService {
         throw new Error('Perfil do usuário não encontrado');
       }
 
-      // Verificar créditos
-      if (profile.credits < 1) {
+      // 3. Verificar créditos APENAS para usuários gratuitos
+      if (!isPremium && profile.credits < 1) {
         return {
           response: '',
           error: 'Créditos insuficientes. Você precisa de pelo menos 1 crédito para enviar mensagens.',
           credits: profile.credits
         };
+      }
+
+      // 4. Se for premium, não verificar créditos
+      if (isPremium) {
+        console.log('Usuário premium - pulando verificação de créditos local');
       }
 
       const userGender = profile.gender || 'masculino';
@@ -53,19 +78,33 @@ export class SpiritualChatService {
       const messages = [
         {
           role: 'system',
-          content: `Você é um pastor cristão, mas seu jeito de conversar é acolhedor, leve, simpático e nada formal. Sua missão é ouvir, dar conselhos baseados na Bíblia e ajudar as pessoas a refletirem, sem julgar.
+          content: `Você é um pastor cristão com um jeito acolhedor, leve, simpático e nada formal. Sua missão é ouvir, dar conselhos baseados na Bíblia e ajudar as pessoas a refletirem, sem julgar.
 
-Sempre que alguém chegar, se for se referir a pessoa, chame de "${genderRef}" de forma carinhosa e, antes de aconselhar, faça perguntas para entender melhor o que a pessoa está sentindo ou passando. Suas perguntas podem ser simples, como:
+Sempre trate a pessoa com carinho, usando "${genderRef}".
 
-    "O que está no seu coração hoje?"
-    "Quer me contar um pouco mais sobre isso?"
-    "Como você tem se sentido com relação a isso?"
+Fluxo de conversa:
 
-Use exemplos e passagens bíblicas de maneira natural e próxima, como um amigo que entende do assunto, e sempre incentive a pessoa a conversar abertamente.
+    Quando a pessoa chega ou muda de assunto, faça apenas uma pergunta simples para entender melhor, como:
 
-Lembre-se de manter a conversa leve, como um bate-papo entre amigos, e só seja mais profundo quando sentir abertura. Se a pessoa preferir só desabafar, apenas ouça e incentive com palavras de fé e esperança.
+        "O que está no seu coração hoje?"
 
-Evite respostas automáticas ou muito formais, e nunca julgue – apenas acolha e ajude a pessoa a se sentir ouvida.`
+        "Quer me contar um pouco mais sobre isso?"
+
+    Depois de receber a resposta, evite repetir perguntas semelhantes imediatamente. Em vez disso, reaja ao que ela disse, trazendo:
+
+        Empatia e validação do sentimento.
+
+        Uma reflexão bíblica relevante, de forma natural.
+
+        Exemplos de vida ou histórias bíblicas que tragam esperança.
+
+    Só volte a fazer outra pergunta de entendimento depois de pelo menos duas interações sem perguntas semelhantes, para manter a conversa natural.
+
+Use a Bíblia de maneira próxima, como um amigo que conhece as Escrituras, e incentive a conversa aberta.
+
+Se a pessoa preferir apenas desabafar, ouça e responda com fé e esperança, sem tentar "investigar demais" o que ela sente.
+
+Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e ajude a pessoa a se sentir ouvida.`
         },
         ...conversationHistory,
         {
@@ -120,27 +159,36 @@ Evite respostas automáticas ou muito formais, e nunca julgue – apenas acolha 
         throw new Error(data.error || 'Erro ao enviar mensagem');
       }
 
-      // Se a resposta foi bem-sucedida, consumir crédito
+      // 5. Se a resposta foi bem-sucedida, consumir crédito APENAS para usuários gratuitos
       if (data.response) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ credits: profile.credits - 1 })
-          .eq('user_id', session.user.id);
+        if (!isPremium) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ credits: profile.credits - 1 })
+            .eq('user_id', session.user.id);
 
-        if (updateError) {
-          console.error('Erro ao atualizar créditos:', updateError);
+          if (updateError) {
+            console.error('Erro ao atualizar créditos:', updateError);
+          }
+
+          return {
+            response: data.response,
+            credits: profile.credits - 1
+          };
+        } else {
+          // Usuário premium - não consumir créditos
+          console.log('Usuário premium - não consumindo créditos localmente');
+          return {
+            response: data.response,
+            credits: null // null indica usuário premium
+          };
         }
-
-        return {
-          response: data.response,
-          credits: profile.credits - 1
-        };
       }
 
       return {
         response: '',
         error: 'Resposta vazia da IA',
-        credits: profile.credits
+        credits: isPremium ? null : profile.credits
       };
 
     } catch (error: any) {

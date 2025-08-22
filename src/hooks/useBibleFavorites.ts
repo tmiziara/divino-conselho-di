@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useSubscription } from "./useSubscription"; // ← ADICIONAR ESTA LINHA
 
 interface Favorite {
   id: string;
@@ -30,6 +31,7 @@ export const useBibleFavorites = () => {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { subscription } = useSubscription(); // ← ADICIONAR ESTA LINHA
 
   const loadFavorites = async () => {
     if (!user) return;
@@ -57,6 +59,18 @@ export const useBibleFavorites = () => {
     if (!user) return;
 
     try {
+      // VERIFICAR LIMITE PARA USUÁRIOS GRATUITOS
+      if (!subscription.subscribed || subscription.subscription_tier === 'free') {
+        const { count } = await supabase
+          .from("favorites")
+          .select("*", { count: 'exact', head: true })
+          .eq("user_id", user.id);
+        
+        if (count && count >= 10) {
+          throw new Error("Você atingiu o limite de 10 favoritos no plano gratuito. Faça upgrade para salvar mais!");
+        }
+      }
+
       const { data, error } = await supabase
         .from("favorites")
         .insert({

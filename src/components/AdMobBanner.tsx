@@ -15,11 +15,17 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const listenersRef = useRef<any[]>([]);
 
-  // ID do banner de produção (atualizado com o ID correto do painel)
+  // ID do banner de produção
   const BANNER_AD_ID = "ca-app-pub-7772749408418204/7297967059";
 
   // Função para mostrar o banner
   const showBanner = async () => {
+    // VERIFICAÇÃO DUPLA: nunca mostrar para premium
+    if (subscription?.subscription_tier === "premium") {
+      console.log('[AdMobBanner] Tentativa de mostrar banner para usuário premium - BLOQUEADO');
+      return;
+    }
+
     if (bannerShownRef.current || isLoading) {
       console.log('[AdMobBanner] Banner já está visível ou carregando');
       return;
@@ -52,13 +58,13 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       setIsLoading(false);
       
-      // Tentar novamente após 5 segundos
+      // Tentar novamente após 5 segundos (apenas para usuários gratuitos)
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
       }
       
       retryTimeoutRef.current = setTimeout(() => {
-        if (!bannerShownRef.current && subscription.subscription_tier !== "premium") {
+        if (!bannerShownRef.current && subscription?.subscription_tier !== "premium") {
           showBanner();
         }
       }, 5000);
@@ -105,13 +111,13 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
         setIsLoading(false);
         setError('Falha ao carregar banner');
         
-        // Tentar novamente após 10 segundos
+        // Tentar novamente após 10 segundos (apenas para usuários gratuitos)
         if (retryTimeoutRef.current) {
           clearTimeout(retryTimeoutRef.current);
         }
         
         retryTimeoutRef.current = setTimeout(() => {
-          if (!bannerShownRef.current && subscription.subscription_tier !== "premium") {
+          if (!bannerShownRef.current && subscription?.subscription_tier !== "premium") {
             showBanner();
           }
         }, 10000);
@@ -129,40 +135,51 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
     }
   };
 
-  // Gerenciar visibilidade do banner baseado no status da assinatura
+  // PRINCIPAL: Gerenciar visibilidade do banner baseado no status da assinatura
   useEffect(() => {
     if (subscriptionLoading) {
+      console.log('[AdMobBanner] Carregando assinatura...');
       return;
     }
 
+    console.log('[AdMobBanner] Status da assinatura atualizado:', {
+      tier: subscription?.subscription_tier,
+      subscribed: subscription?.subscribed,
+      isPremium: subscription?.subscription_tier === "premium"
+    });
+
     const manageBanner = async () => {
-      if (subscription.subscription_tier === "premium") {
-        // Usuário premium - ocultar banner se estiver visível
-        if (bannerShownRef.current) {
-          await hideBanner();
+      if (subscription?.subscription_tier === "premium") {
+        // USUÁRIO PREMIUM: SEMPRE ocultar banner e limpar tudo
+        console.log('[AdMobBanner] Usuário premium detectado - ocultando banner e limpando localStorage');
+        
+        // Limpar localStorage imediatamente
+        localStorage.removeItem('admob_banner_shown');
+        
+        // Resetar estado interno
+        bannerShownRef.current = false;
+        setIsVisible(false);
+        
+        // SEMPRE tentar ocultar o banner (mesmo que não esteja no estado interno)
+        try {
+          await AdMob.hideBanner();
+          console.log('[AdMobBanner] Banner nativo ocultado para usuário premium');
+        } catch (err) {
+          console.log('[AdMobBanner] Banner já estava oculto ou erro ao ocultar:', err);
         }
+        
+        console.log('[AdMobBanner] Banner ocultado e estado limpo para usuário premium');
       } else {
-        // Usuário gratuito - mostrar banner se não estiver visível
+        // USUÁRIO GRATUITO: mostrar banner se não estiver visível
         if (!bannerShownRef.current) {
+          console.log('[AdMobBanner] Usuário gratuito - mostrando banner');
           await showBanner();
         }
       }
     };
 
     manageBanner();
-  }, [subscription.subscription_tier, subscriptionLoading]);
-
-  // Restaurar estado do banner ao carregar o app
-  useEffect(() => {
-    if (subscriptionLoading) return;
-
-    const wasBannerShown = localStorage.getItem('admob_banner_shown') === 'true';
-    if (wasBannerShown && subscription.subscription_tier !== "premium") {
-      console.log('[AdMobBanner] Restaurando estado do banner...');
-      bannerShownRef.current = true;
-      setIsVisible(true);
-    }
-  }, [subscription.subscription_tier, subscriptionLoading]);
+  }, [subscription?.subscription_tier, subscriptionLoading]);
 
   // Configurar listeners quando o componente montar
   useEffect(() => {
@@ -183,10 +200,36 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
     };
   }, []);
 
-  // Se o usuário é premium ou está carregando, não renderizar nada
-  if (subscriptionLoading || subscription.subscription_tier === "premium") {
+  // VERIFICAÇÃO INMEDIATA: sempre ocultar banner para usuários premium
+  useEffect(() => {
+    if (!subscriptionLoading && subscription?.subscription_tier === "premium") {
+      console.log('[AdMobBanner] Verificação imediata: usuário premium - ocultando banner');
+      
+      // Limpar localStorage
+      localStorage.removeItem('admob_banner_shown');
+      
+      // Tentar ocultar banner nativo
+      AdMob.hideBanner().catch(err => {
+        console.log('[AdMobBanner] Banner já estava oculto na verificação imediata');
+      });
+    }
+  }, [subscriptionLoading, subscription?.subscription_tier]);
+
+  // VERIFICAÇÃO FINAL: NUNCA renderizar para usuários premium
+  if (subscriptionLoading) {
+    console.log('[AdMobBanner] Carregando assinatura - não renderizar');
     return null;
   }
+
+  if (subscription?.subscription_tier === "premium") {
+    console.log('[AdMobBanner] Usuário premium - NUNCA renderizar banner');
+    // Garantir que localStorage esteja limpo
+    localStorage.removeItem('admob_banner_shown');
+    return null;
+  }
+
+  // Se chegou até aqui, é usuário gratuito
+  console.log('[AdMobBanner] Usuário gratuito - renderizando banner');
 
   // Se há erro, mostrar indicador de erro
   if (error) {
