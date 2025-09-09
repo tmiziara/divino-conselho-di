@@ -135,6 +135,25 @@
     }
   }
 
+  /* Tablet-specific improvements */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    html {
+      font-size: 15px;
+    }
+    
+    body {
+      /* Ajustar padding para tablets - navegação bottom também */
+      padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Melhor espaçamento para tablets */
+    .container {
+      max-width: 90%;
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
   .divine-gradient {
     background: linear-gradient(135deg, hsl(213, 78%, 70%) 0%, hsl(45, 93%, 60%) 100%);
   }
@@ -393,6 +412,61 @@
       border-top: 1px solid rgba(0, 0, 0, 0.1);
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
       height: 4rem; /* Altura fixa menor */
+    }
+  }
+
+  /* Configurações específicas para tablets */
+  @media screen and (min-width: 768px) and (max-width: 1024px) {
+    .mobile-bottom-nav {
+      z-index: 9999;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      height: 4.5rem; /* Altura um pouco maior para tablets */
+    }
+
+    /* Centralizar botões da navegação em tablets */
+    .mobile-bottom-nav .flex {
+      height: 100%;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 1rem;
+    }
+
+    /* Melhorar botões em tablets */
+    .mobile-bottom-nav button,
+    .mobile-bottom-nav a {
+      position: relative;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 0.75rem 0.5rem;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s;
+    }
+
+    .mobile-bottom-nav button:hover,
+    .mobile-bottom-nav a:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Ícones maiores em tablets */
+    .mobile-bottom-nav .w-5,
+    .mobile-bottom-nav .w-6 {
+      margin-bottom: 0.25rem;
+    }
+
+    .mobile-bottom-nav .text-xs {
+      line-height: 1.2;
+      font-size: 0.75rem;
     }
 
     /* Centralizar botões da navegação */

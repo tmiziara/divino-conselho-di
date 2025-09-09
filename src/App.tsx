@@ -34,6 +34,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import AdMobBanner from "@/components/AdMobBanner";
+import MobileBottomNavigation from "@/components/MobileBottomNavigation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -308,6 +309,9 @@ const AppContent = () => {
       
       {/* Banner AdMob - sempre visível para usuários gratuitos */}
       <AdMobBanner />
+      
+      {/* Navegação bottom para mobile e tablet */}
+      <MobileBottomNavigation />
       
       <Toaster />
       <Sonner />

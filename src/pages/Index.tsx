@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, BookOpen, MessageCircle, Star, Shield, Sparkles, Book, FileText, Lightbulb } from "lucide-react";
+import { Heart, BookOpen, MessageCircle, Star, Shield, Sparkles, Book, FileText, Lightbulb, Bell } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
@@ -16,22 +16,38 @@ const features = [
   {
     icon: MessageCircle,
     title: "Conversa Espiritual",
-    description: "Converse sobre fé, receba conselhos espirituais e orações personalizadas"
+    description: "Converse sobre fé, receba conselhos espirituais e orações personalizadas",
+    path: "/chat"
   },
   {
     icon: BookOpen,
     title: "Leitura da Bíblia",
-    description: "Navegue por todos os livros, capítulos e versículos com busca avançada"
+    description: "Navegue por todos os livros, capítulos e versículos com busca avançada",
+    path: "/biblia"
   },
   {
     icon: Star,
     title: "Versículo do Dia",
-    description: "Versículos inspiradores com imagens personalizadas para compartilhar"
+    description: "Versículos inspiradores com imagens personalizadas para compartilhar",
+    path: "/versiculo-do-dia"
   },
   {
     icon: Heart,
     title: "Estudos Bíblicos",
-    description: `Aprofunde-se em ${studiesCount} estudos bíblicos exclusivos`
+    description: `Aprofunde-se em ${studiesCount} estudos bíblicos exclusivos`,
+    path: "/estudos"
+  },
+  {
+    icon: Heart,
+    title: "Favoritos",
+    description: "Acesse seus versículos e estudos favoritos salvos",
+    path: "/favoritos"
+  },
+  {
+    icon: Bell,
+    title: "Notificações",
+    description: "Configure e gerencie suas notificações espirituais",
+    path: "/notificacoes"
   },
 ];
 
@@ -149,21 +165,23 @@ const Index = () => {
                 Ferramentas poderosas para fortalecer sua fé e aprofundar seu relacionamento com Deus
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2 max-w-full mx-auto px-1">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-w-full mx-auto px-1">
               {features.map((feature, index) => (
-                <Card key={index} className="stats-card text-center group hover:scale-105 transition-all duration-300 p-3 bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
-                  <CardHeader className="pb-1 p-0">
-                    <div className="w-8 h-8 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-2 group-hover:bg-primary/20 transition-all duration-300">
-                      <feature.icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <CardTitle className="text-xs font-bold text-primary leading-tight whitespace-nowrap">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0 p-0">
-                    <CardDescription className="text-[10px] text-foreground mb-1 leading-tight">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
+                <Link key={index} to={feature.path}>
+                  <Card className="stats-card text-center group hover:scale-105 transition-all duration-300 p-3 bg-card dark:bg-zinc-900 text-card-foreground dark:text-white cursor-pointer">
+                    <CardHeader className="pb-1 p-0">
+                      <div className="w-8 h-8 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-2 group-hover:bg-primary/20 transition-all duration-300">
+                        <feature.icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <CardTitle className="text-xs font-bold text-primary leading-tight whitespace-nowrap">{feature.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 p-0">
+                      <CardDescription className="text-[10px] text-foreground mb-1 leading-tight">
+                        {feature.description}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>
