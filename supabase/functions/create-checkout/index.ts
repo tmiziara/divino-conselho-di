@@ -41,12 +41,8 @@ serve(async (req) => {
     }
 
     // Set price based on plan
-    const prices = {
-      premium: 4500, // R$ 45.00 in cents
-    };
-
-    const planNames = {
-      premium: "Plano Premium",
+    const priceIds = {
+      premium: "price_1S69qhHWNkWY5JC0oZxI9006", // R$ 15,00/mês
     };
 
     const session = await stripe.checkout.sessions.create({
@@ -54,15 +50,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price_data: {
-            currency: "brl",
-            product_data: { 
-              name: planNames[plan],
-              description: `Assinatura mensal do ${planNames[plan]}`
-            },
-            unit_amount: prices[plan],
-            recurring: { interval: "month" },
-          },
+          price: priceIds[plan],
           quantity: 1,
         },
       ],

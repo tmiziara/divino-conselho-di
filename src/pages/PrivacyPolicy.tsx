@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
           <Shield className="w-10 h-10 text-primary mb-2" />
           <h1 className="text-2xl font-bold heavenly-text mb-2">Política de Privacidade</h1>
           <p className="text-muted-foreground text-sm">
-            Última atualização: 15 de julho de 2025 | Versão: 1.1
+            Última atualização: 15 de julho de 2025 | Versão: 1.3
           </p>
         </div>
         <div className="prose prose-sm dark:prose-invert max-w-none">

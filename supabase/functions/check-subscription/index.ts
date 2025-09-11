@@ -85,7 +85,7 @@ serve(async (req) => {
       const priceId = subscription.items.data[0].price.id;
       const price = await stripe.prices.retrieve(priceId);
       const amount = price.unit_amount || 0;
-      if (amount === 4500) {
+      if (amount === 1500 || priceId === "price_1S69qhHWNkWY5JC0oZxI9006") {
         subscriptionTier = "premium";
       } else {
         subscriptionTier = "free"; // fallback

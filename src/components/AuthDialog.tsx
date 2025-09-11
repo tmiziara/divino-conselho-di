@@ -37,7 +37,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     {
       id: "premium",
       name: "Premium",
-      price: "R$ 45/mês",
+      price: "R$ 15/mês",
       description: "Para líderes espirituais",
       icon: Zap,
       features: ["Tudo do Básico", "Chat ilimitado", "Comentários avançados", "Grupos de estudo"]

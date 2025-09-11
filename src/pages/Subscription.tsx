@@ -40,7 +40,7 @@ const Subscription = () => {
     {
       id: "premium",
       name: "Premium",
-      price: "R$ 45",
+      price: "R$ 15",
       period: "/mês",
       description: "Para líderes espirituais e estudantes avançados",
       features: [

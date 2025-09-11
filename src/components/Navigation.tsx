@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Menu, User, Crown, LogOut, Home, BookOpen, MessageCircle, Heart, User as UserIcon, X, GraduationCap, Sparkles, Settings as SettingsIcon, Bell, Sun, Moon, Star } from "lucide-react";
+import { Shield, User, Crown, LogOut, Home, BookOpen, MessageCircle, Heart, User as UserIcon, X, GraduationCap, Sparkles, Settings as SettingsIcon, Bell, Sun, Moon, Star } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -111,7 +111,7 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
             <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
               <DrawerTrigger asChild>
                 <Button variant="ghost" size="sm" onClick={handleMenuClick}>
-                  <Menu className="w-5 h-5" />
+                  <span className="text-sm font-medium">Menu</span>
                 </Button>
               </DrawerTrigger>
               <DrawerContent>
