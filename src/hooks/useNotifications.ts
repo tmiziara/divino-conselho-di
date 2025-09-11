@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Device } from '@capacitor/device';
 import { useToast } from '@/hooks/use-toast';
 
-console.log('[DEBUG] Início do arquivo useNotifications.ts');
-
 // Declarações de tipo para Cordova Local Notifications
 declare global {
   // Extender a interface CordovaPlugins para incluir notification
@@ -118,22 +116,11 @@ const isCordovaAvailable = (): boolean => {
   const hasCordova = hasWindow && typeof window.cordova !== 'undefined';
   const hasNotificationPlugin = hasCordova && window.cordova?.plugins?.notification?.local !== undefined;
   
-  console.log('[Notifications] Verificação Cordova Local Notifications:', {
-    hasWindow,
-    hasCordova,
-    hasNotificationPlugin,
-    cordovaExists: hasWindow ? !!window.cordova : false,
-    pluginsExists: hasCordova ? !!window.cordova?.plugins : false,
-    notificationExists: hasCordova ? !!window.cordova?.plugins?.notification : false,
-    localExists: hasCordova ? !!window.cordova?.plugins?.notification?.local : false,
-    windowKeys: hasWindow ? Object.keys(window).filter(k => k.includes('cordova') || k.includes('plugin')) : []
-  });
   
   return hasNotificationPlugin;
 };
 
 export const useNotifications = () => {
-  console.log('[DEBUG] Início do hook useNotifications');
   const [schedules, setSchedules] = useState<NotificationSchedule[]>([]);
   const [prayerSchedules, setPrayerSchedules] = useState<PrayerSchedule[]>([]); // NOVO estado
   const [verses, setVerses] = useState<Verse[]>([]);
@@ -145,31 +132,24 @@ export const useNotifications = () => {
 
   // Verificar se está no mobile
   useEffect(() => {
-    console.log('[DEBUG] useEffect checkPlatform chamado');
     checkPlatform();
   }, []);
 
   const checkPlatform = async () => {
     try {
-      console.log('[DEBUG] checkPlatform executando');
       const info = await Device.getInfo();
       setIsMobile(info.platform !== 'web');
-      console.log(`[Notifications] Plataforma detectada: ${info.platform}`);
     } catch (error) {
-      console.error('[DEBUG] Erro em checkPlatform:', error);
       setIsMobile(false);
     }
   };
 
   // Carregar dados iniciais apenas uma vez
   useEffect(() => {
-    console.log('[DEBUG] useEffect de inicialização chamado, isMobile:', isMobile, 'initRef:', initializationRef.current);
     if (isMobile === true && !initializationRef.current) {
       initializationRef.current = true;
-      console.log('[DEBUG] Entrou no bloco de inicialização do useEffect');
       // Aguardar um pouco para garantir que o Cordova esteja carregado
       const timer = setTimeout(() => {
-        console.log('[DEBUG] Chamando initializeNotifications');
         initializeNotifications();
       }, 1000);
       
@@ -185,14 +165,11 @@ export const useNotifications = () => {
         
         // Garantir que os listeners estejam configurados quando o app é aberto
         if (isCordovaAvailable()) {
-          console.log('[Notifications] Cordova disponível, configurando listeners...');
           await setupNotificationListeners();
         } else {
-          console.log('[Notifications] Cordova não disponível ainda, aguardando...');
           // Tentar novamente em 2 segundos
           setTimeout(async () => {
             if (isCordovaAvailable()) {
-              console.log('[Notifications] Cordova agora disponível, configurando listeners...');
               await setupNotificationListeners();
             }
           }, 2000);
@@ -206,11 +183,9 @@ export const useNotifications = () => {
   // Função para obter estado atual do sistema
   const getNotificationState = (): NotificationState => {
     try {
-      console.log('[DEBUG] getNotificationState chamado');
       const stored = localStorage.getItem(NOTIFICATION_STATE_KEY);
       return stored ? JSON.parse(stored) : { isInitialized: false, lastInitialization: '', version: '4.0' };
     } catch (error) {
-      console.error('[DEBUG] Erro em getNotificationState:', error);
       return { isInitialized: false, lastInitialization: '', version: '4.0' };
     }
   };
@@ -218,12 +193,10 @@ export const useNotifications = () => {
   // Função para salvar estado atual do sistema
   const saveNotificationState = (state: Partial<NotificationState>) => {
     try {
-      console.log('[DEBUG] saveNotificationState chamado');
       const currentState = getNotificationState();
       const newState = { ...currentState, ...state };
       localStorage.setItem(NOTIFICATION_STATE_KEY, JSON.stringify(newState));
     } catch (error) {
-      console.error('[DEBUG] Erro em saveNotificationState:', error);
     }
   };
 
@@ -241,16 +214,13 @@ export const useNotifications = () => {
       
       const checkCordova = () => {
         attempts++;
-        console.log(`[Notifications] Tentativa ${attempts}/${maxAttempts} de detectar Cordova Local Notifications...`);
         
         if (isCordovaAvailable()) {
-          console.log('[Notifications] Cordova Local Notifications detectado com sucesso!');
           resolve(true);
           return;
         }
         
         if (attempts >= maxAttempts) {
-          console.log('[Notifications] Timeout aguardando Cordova Local Notifications');
           resolve(false);
           return;
         }
@@ -264,7 +234,6 @@ export const useNotifications = () => {
 
   const initializeNotifications = async () => {
     try {
-      console.log('[Notifications] Entrou initializeNotifications');
       const currentState = getNotificationState();
       
       // Verificar se já foi inicializado recentemente (últimas 24h)
@@ -273,29 +242,18 @@ export const useNotifications = () => {
       const hoursSinceLastInit = (now.getTime() - lastInit.getTime()) / (1000 * 60 * 60);
       
       if (currentState.isInitialized && hoursSinceLastInit < 24) {
-        console.log('[Notifications] Sistema já inicializado recentemente, apenas carregando dados...');
-        console.log('[Notifications] Antes de loadSchedules');
         await loadSchedules();
-        console.log('[Notifications] Depois de loadSchedules');
-        console.log('[Notifications] Antes de loadPrayerSchedules');
         loadPrayerSchedules();
-        console.log('[Notifications] Depois de loadPrayerSchedules');
-        console.log('[Notifications] Antes de loadUsedVerses');
         await loadUsedVerses();
-        console.log('[Notifications] Depois de loadUsedVerses');
-        console.log('[Notifications] Antes de loadVerses');
         await loadVerses();
-        console.log('[Notifications] Depois de loadVerses');
         setLoading(false);
         return;
       }
 
-      console.log('[Notifications] Inicializando sistema de notificações com Local Notifications...');
       
       // Aguardar Cordova estar disponível
       const cordovaAvailable = await waitForCordova();
       if (!cordovaAvailable) {
-        console.log('[Notifications] Cordova não disponível, usando modo web');
         setLoading(false);
         return;
       }
@@ -318,9 +276,7 @@ export const useNotifications = () => {
       });
 
       setLoading(false);
-      console.log('[Notifications] Sistema inicializado com sucesso usando Local Notifications');
     } catch (error) {
-      console.error('[Notifications] Erro na inicialização:', error);
       setLoading(false);
     }
   };
@@ -329,11 +285,9 @@ export const useNotifications = () => {
     try {
       if (!isMobile || !isCordovaAvailable()) return;
 
-      console.log('[Notifications] Configurando listeners de notificação Cordova...');
 
       // Listener para quando uma notificação é recebida
       (window.cordova?.plugins as any)?.notification?.local?.on('trigger', (notification: any) => {
-        console.log('[Notifications] Notificação recebida:', notification);
         // Marcar versículo como usado se necessário
         if (notification.data && notification.data.theme && notification.data.reference) {
           markVerseAsUsed(notification.data.theme, notification.data.reference);
@@ -342,11 +296,8 @@ export const useNotifications = () => {
 
       // Listener para quando uma notificação é clicada
       (window.cordova?.plugins as any)?.notification?.local?.on('click', (notification: any) => {
-        console.log('[Notifications] Notificação clicada:', notification);
-        
         // Verificar se é notificação de oração
         if (notification.data && notification.data.type === 'prayer') {
-          console.log('[Notifications] Notificação de oração clicada, redirecionando para home');
           // Redirecionar para home (sem parâmetros especiais)
           window.location.href = '/';
           return;
@@ -354,20 +305,15 @@ export const useNotifications = () => {
         
         // Verificar se há dados de deep link na notificação (versículos)
         if (notification.data && notification.data.deeplink) {
-          console.log('[Notifications] Deep link encontrado:', notification.data.deeplink);
-          
           // Remover o deeplink salvo do localStorage (já foi usado)
           const deeplinkKey = `pendingDeeplink_${notification.id}`;
           localStorage.removeItem(deeplinkKey);
-          console.log('[Notifications] Deeplink removido do localStorage:', deeplinkKey);
           
           // Tentar abrir o deep link usando Capacitor App
           if (window.Capacitor?.App) {
             try {
               window.Capacitor.App.openUrl({ url: notification.data.deeplink });
-              console.log('[Notifications] Deep link aberto via Capacitor App');
             } catch (error) {
-              console.error('[Notifications] Erro ao abrir deep link via Capacitor:', error);
               // Fallback: disparar evento manualmente
               window.dispatchEvent(new CustomEvent('appUrlOpen', { 
                 detail: { url: notification.data.deeplink } 
@@ -375,54 +321,39 @@ export const useNotifications = () => {
             }
           } else {
             // Fallback: disparar evento manualmente
-            console.log('[Notifications] Capacitor não disponível, disparando evento manual');
             window.dispatchEvent(new CustomEvent('appUrlOpen', { 
               detail: { url: notification.data.deeplink } 
             }));
           }
-        } else {
-          console.log('[Notifications] Nenhum deep link encontrado na notificação');
         }
       });
 
       // Listener para quando uma notificação é removida/cancelada
       (window.cordova?.plugins as any)?.notification?.local?.on('clear', (notification: any) => {
-        console.log('[Notifications] Notificação removida/cancelada:', notification);
-        
         // Limpar o deeplink salvo do localStorage quando a notificação é cancelada
         if (notification.id) {
           const deeplinkKey = `pendingDeeplink_${notification.id}`;
           localStorage.removeItem(deeplinkKey);
-          console.log('[Notifications] Deeplink removido do localStorage (notificação cancelada):', deeplinkKey);
         }
       });
-
-      console.log('[Notifications] Listeners Cordova configurados com sucesso');
     } catch (error) {
-      console.error('Error setting up Cordova notification listeners:', error);
     }
   };
 
   const requestPermissions = async () => {
     try {
       if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Permissões não necessárias em web ou Cordova não disponível');
         return;
       }
-
-      console.log('[Notifications] Solicitando permissões de notificação...');
       
       // Verificar permissões
       (window.cordova?.plugins as any)?.notification?.local?.hasPermission((granted: boolean) => {
         if (granted) {
-          console.log('[Notifications] Permissões já concedidas');
           // Solicitar permissão para ignorar otimização de bateria
           requestBatteryOptimizationPermission();
         } else {
-          console.log('[Notifications] Solicitando permissões...');
           (window.cordova?.plugins as any)?.notification?.local?.requestPermission((granted: boolean) => {
             if (granted) {
-              console.log('[Notifications] Permissões concedidas com sucesso');
               // Solicitar permissão para ignorar otimização de bateria
               requestBatteryOptimizationPermission();
             } else {
@@ -436,7 +367,6 @@ export const useNotifications = () => {
         }
       });
     } catch (error) {
-      console.error('Error requesting permissions:', error);
       toast({
         title: "Erro de permissão",
         description: "Não foi possível solicitar permissões de notificação.",
@@ -449,7 +379,6 @@ export const useNotifications = () => {
     try {
       // Verificar se o dispositivo tem Android 6+ (API 23+)
       if (window.cordova?.platformId === 'android') {
-        console.log('[Notifications] Verificando permissões de otimização de bateria...');
         
         // Mostrar instruções para o usuário
         toast({
@@ -459,7 +388,6 @@ export const useNotifications = () => {
         });
       }
     } catch (error) {
-      console.error('[Notifications] Erro ao verificar permissões de bateria:', error);
     }
   };
 
@@ -469,10 +397,8 @@ export const useNotifications = () => {
       if (stored) {
         const loadedSchedules = JSON.parse(stored);
         setSchedules(loadedSchedules);
-        console.log(`[Notifications] Carregados ${loadedSchedules.length} agendamentos`);
       }
     } catch (error) {
-      console.error('[Notifications] Erro ao carregar agendamentos:', error);
     }
   };
 
@@ -483,47 +409,32 @@ export const useNotifications = () => {
       if (stored) {
         const loadedPrayerSchedules = JSON.parse(stored);
         setPrayerSchedules(loadedPrayerSchedules);
-        console.log(`[Notifications] Carregados ${loadedPrayerSchedules.length} agendamentos de oração`);
       }
     } catch (error) {
-      console.error('[Notifications] Erro ao carregar agendamentos de oração:', error);
     }
   };
 
   const loadVerses = async (): Promise<Verse[]> => {
     try {
-      console.log('[DEBUG] loadVerses: Iniciando carregamento de versículos...');
       const response = await fetch('/data/versiculos_por_tema_com_texto.json');
       
       if (!response.ok) {
-        console.error(`[DEBUG] loadVerses: Erro na resposta HTTP: ${response.status} ${response.statusText}`);
         return [];
       }
       
       const data = await response.json();
-      console.log('[DEBUG] loadVerses: Dados brutos carregados:', typeof data, Array.isArray(data) ? `Array com ${data.length} itens` : 'Não é array');
       
       // Verificar se data é um array direto ou tem propriedade versiculos
       const loadedVerses = Array.isArray(data) ? data : (data.versiculos || []);
-      console.log(`[DEBUG] loadVerses: Versículos processados: ${loadedVerses.length} itens`);
       
       // Verificar estrutura dos primeiros itens
       if (loadedVerses.length > 0) {
         const firstVerse = loadedVerses[0];
-        console.log('[DEBUG] loadVerses: Estrutura do primeiro versículo:', {
-          hasTema: 'tema' in firstVerse,
-          hasReferencia: 'referencia' in firstVerse,
-          hasTexto: 'texto' in firstVerse,
-          tema: firstVerse.tema,
-          referencia: firstVerse.referencia
-        });
       }
       
       setVerses(loadedVerses);
-      console.log(`[Notifications] Carregados ${loadedVerses.length} versículos`);
       return loadedVerses;
     } catch (error) {
-      console.error('[Notifications] Erro ao carregar versículos:', error);
       return [];
     }
   };
@@ -534,10 +445,8 @@ export const useNotifications = () => {
       if (stored) {
         const loadedUsedVerses = JSON.parse(stored);
         setUsedVerses(loadedUsedVerses);
-        console.log('[Notifications] Versículos usados carregados');
       }
     } catch (error) {
-      console.error('[Notifications] Erro ao carregar versículos usados:', error);
     }
   };
 
@@ -546,7 +455,6 @@ export const useNotifications = () => {
       localStorage.setItem(SCHEDULES_KEY, JSON.stringify(newSchedules));
       setSchedules(newSchedules);
     } catch (error) {
-      console.error('[Notifications] Erro ao salvar agendamentos:', error);
     }
   };
 
@@ -556,7 +464,6 @@ export const useNotifications = () => {
       localStorage.setItem(PRAYER_SCHEDULES_KEY, JSON.stringify(newPrayerSchedules));
       setPrayerSchedules(newPrayerSchedules);
     } catch (error) {
-      console.error('[Notifications] Erro ao salvar agendamentos de oração:', error);
     }
   };
 
@@ -565,78 +472,57 @@ export const useNotifications = () => {
       localStorage.setItem(USED_VERSES_KEY, JSON.stringify(newUsedVerses));
       setUsedVerses(newUsedVerses);
     } catch (error) {
-      console.error('[Notifications] Erro ao salvar versículos usados:', error);
     }
   };
 
   function getRandomFromArray(verses: Verse[], theme: string): Verse | null {
     try {
-      console.log(`[DEBUG] getRandomFromArray: Buscando versículos para tema: ${theme}`);
-      console.log(`[DEBUG] getRandomFromArray: Total de versículos disponíveis: ${verses.length}`);
-      
       const themeVerses = verses.filter(v => v.tema === theme);
-      console.log(`[DEBUG] getRandomFromArray: Versículos encontrados para tema ${theme}: ${themeVerses.length}`);
       
       if (themeVerses.length === 0) {
-        console.error(`[DEBUG] getRandomFromArray: Nenhum versículo encontrado para tema: ${theme}`);
         return null;
       }
       
       const usedVersesForTheme = usedVerses[theme] || [];
-      console.log(`[DEBUG] getRandomFromArray: Versículos já usados para tema ${theme}: ${usedVersesForTheme.length}`);
       
       const availableVerses = themeVerses.filter(v => !usedVersesForTheme.includes(v.referencia));
-      console.log(`[DEBUG] getRandomFromArray: Versículos disponíveis para tema ${theme}: ${availableVerses.length}`);
       
       if (availableVerses.length === 0) {
         // Reset se todos foram usados
-        console.log(`[DEBUG] getRandomFromArray: Todos os versículos do tema ${theme} foram usados, resetando...`);
         const randomVerse = themeVerses[Math.floor(Math.random() * themeVerses.length)];
-        console.log(`[DEBUG] getRandomFromArray: Versículo selecionado após reset:`, randomVerse?.referencia);
         return randomVerse;
       }
-      
+
       const selectedVerse = availableVerses[Math.floor(Math.random() * availableVerses.length)];
-      console.log(`[DEBUG] getRandomFromArray: Versículo selecionado:`, selectedVerse?.referencia);
       return selectedVerse;
     } catch (error) {
-      console.error('[DEBUG] getRandomFromArray: Erro ao obter versículo do array:', error);
       return null;
     }
   }
 
   const getRandomVerse = (theme: string, versesArg: Verse[]): Verse | null => {
     try {
-      console.log(`[DEBUG] getRandomVerse chamado com tema: ${theme}, total de versículos: ${versesArg.length}`);
       
       if (theme === 'auto') {
         if (versesArg.length === 0) {
-          console.error('[DEBUG] getRandomVerse: Array de versículos vazio para tema auto');
           return null;
         }
         
         const allThemes = [...new Set(versesArg.map(v => v.tema))];
-        console.log(`[DEBUG] getRandomVerse: Temas disponíveis para auto: ${allThemes.join(', ')}`);
         
         if (allThemes.length === 0) {
-          console.error('[DEBUG] getRandomVerse: Nenhum tema encontrado para auto');
           return null;
         }
         
         const randomTheme = allThemes[Math.floor(Math.random() * allThemes.length)];
-        console.log(`[DEBUG] getRandomVerse: Tema aleatório selecionado: ${randomTheme}`);
         
         const result = getRandomFromArray(versesArg, randomTheme);
-        console.log(`[DEBUG] getRandomVerse: Resultado para tema ${randomTheme}:`, result ? 'encontrado' : 'não encontrado');
         return result;
       } else {
-        console.log(`[DEBUG] getRandomVerse: Buscando versículo para tema específico: ${theme}`);
         const result = getRandomFromArray(versesArg, theme);
-        console.log(`[DEBUG] getRandomVerse: Resultado para tema ${theme}:`, result ? 'encontrado' : 'não encontrado');
         return result;
       }
     } catch (error) {
-      console.error('[DEBUG] getRandomVerse: Erro ao obter versículo aleatório:', error);
       return null;
     }
   };
@@ -649,13 +535,11 @@ export const useNotifications = () => {
   const createSingleNotification = async (schedule: NotificationSchedule, day: number, versesArg: Verse[] = verses) => {
     try {
       if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Tentativa de criar notificação em web ou Cordova não disponível - ignorando');
         return true;
       }
 
       const verse = getRandomVerse(schedule.theme, versesArg);
       if (!verse) {
-        console.error(`[Notifications] Não foi possível encontrar versículo para tema: ${schedule.theme}`);
         return false;
       }
 
@@ -666,7 +550,6 @@ export const useNotifications = () => {
       // Para tema "auto", usar o tema real do versículo selecionado
       const actualTheme = schedule.theme === 'auto' ? verse.tema : schedule.theme;
 
-      console.log(`[Notifications] Criando notificação ${notificationId} para horário: ${schedule.time}, dia: ${day} (Cordova: ${weekday}), tema original: ${schedule.theme}, tema real: ${actualTheme}`);
 
       // Configuração da notificação usando Cordova Local Notifications
       const notificationConfig = {
@@ -716,21 +599,16 @@ export const useNotifications = () => {
       // Criar notificação usando Cordova
       (window.cordova?.plugins as any)?.notification?.local?.schedule(notificationConfig, (scheduled: boolean) => {
         if (scheduled) {
-          console.log(`[Notifications] Notificação ${notificationId} agendada com sucesso via Cordova`);
-          
           // Salvar o deeplink no localStorage para caso o app esteja fechado quando a notificação for clicada
           const deeplink = notificationConfig.data.deeplink;
           const deeplinkKey = `pendingDeeplink_${notificationId}`;
           localStorage.setItem(deeplinkKey, deeplink);
-          console.log(`[Notifications] Deeplink salvo no localStorage para notificação ${notificationId}:`, deeplink);
         } else {
-          console.error(`[Notifications] Falha ao agendar notificação ${notificationId} via Cordova`);
         }
       });
 
       return true;
     } catch (error) {
-      console.error('Error creating single notification with Cordova:', error);
       return false;
     }
   };
@@ -739,7 +617,6 @@ export const useNotifications = () => {
   const createSinglePrayerNotification = async (schedule: PrayerSchedule, day: number) => {
     try {
       if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Tentativa de criar notificação de oração em web ou Cordova não disponível - ignorando');
         return true;
       }
 
@@ -747,7 +624,6 @@ export const useNotifications = () => {
       const notificationId = parseInt(schedule.id) + day + 1000000; // Offset para evitar conflitos
       const weekday = convertToCordovaWeekday(day);
 
-      console.log(`[Notifications] Criando notificação de oração ${notificationId} para horário: ${schedule.time}, dia: ${day} (Cordova: ${weekday})`);
 
       // Configuração da notificação de oração usando Cordova Local Notifications
       const notificationConfig = {
@@ -794,21 +670,17 @@ export const useNotifications = () => {
       // Criar notificação usando Cordova
       (window.cordova?.plugins as any)?.notification?.local?.schedule(notificationConfig, (scheduled: boolean) => {
         if (scheduled) {
-          console.log(`[Notifications] Notificação de oração ${notificationId} agendada com sucesso via Cordova`);
           
           // Salvar o deeplink no localStorage
           const deeplink = notificationConfig.data.deeplink;
           const deeplinkKey = `pendingDeeplink_${notificationId}`;
           localStorage.setItem(deeplinkKey, deeplink);
-          console.log(`[Notifications] Deeplink salvo no localStorage para notificação de oração ${notificationId}:`, deeplink);
         } else {
-          console.error(`[Notifications] Falha ao agendar notificação de oração ${notificationId} via Cordova`);
         }
       });
 
       return true;
     } catch (error) {
-      console.error('Error creating single prayer notification with Cordova:', error);
       return false;
     }
   };
@@ -818,13 +690,11 @@ export const useNotifications = () => {
   const createNotification = async (schedule: NotificationSchedule, versesArg: Verse[] = verses) => {
     try {
       if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Tentativa de criar notificação em web ou Cordova não disponível - ignorando');
         return true;
       }
 
       const verse = getRandomVerse(schedule.theme, versesArg);
       if (!verse) {
-        console.error(`[Notifications] Não foi possível encontrar versículo para tema: ${schedule.theme}`);
         toast({
           title: "Erro",
           description: "Não foi possível encontrar um versículo para este tema.",
@@ -833,14 +703,12 @@ export const useNotifications = () => {
         return false;
       }
 
-      console.log(`[Notifications] Criando notificação para horário: ${schedule.time}, dias: ${schedule.days}, tema: ${schedule.theme}`);
       
       // Primeiro, cancelar notificações existentes para este agendamento
       for (const day of schedule.days) {
         try {
           const notificationId = parseInt(schedule.id) + day;
           window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-            console.log(`[Notifications] Notificação existente ${notificationId} cancelada via Cordova`);
           });
         } catch (error) {
           // Ignorar erro se a notificação não existia
@@ -851,13 +719,11 @@ export const useNotifications = () => {
       for (const day of schedule.days) {
         const success = await createSingleNotification(schedule, day, versesArg);
         if (!success) {
-          console.error(`[Notifications] Falha ao criar notificação para dia ${day}`);
         }
       }
 
       return true;
     } catch (error) {
-      console.error('Error creating notification with Cordova:', error);
       toast({
         title: "Erro",
         description: "Não foi possível criar a notificação. Verifique as permissões do app.",
@@ -877,7 +743,6 @@ export const useNotifications = () => {
       setUsedVerses(currentUsed);
       saveUsedVerses(currentUsed);
     } catch (error) {
-      console.error('[Notifications] Erro ao marcar versículo como usado:', error);
     }
   };
 
@@ -893,7 +758,6 @@ export const useNotifications = () => {
       const newSchedules = [...schedules, newSchedule];
       saveSchedules(newSchedules);
       
-      console.log(`[Notifications] Novo agendamento criado: ${newSchedule.id}`);
       
       const success = await createNotification(newSchedule, verses);
       
@@ -906,7 +770,6 @@ export const useNotifications = () => {
 
       return success;
     } catch (error) {
-      console.error('Error adding schedule:', error);
       return false;
     }
   };
@@ -925,7 +788,6 @@ export const useNotifications = () => {
       const newPrayerSchedules = [...prayerSchedules, newSchedule];
       savePrayerSchedules(newPrayerSchedules);
       
-      console.log(`[Notifications] Novo agendamento de oração criado: ${newSchedule.id}`);
       
       const success = await createPrayerNotification(newSchedule);
       
@@ -938,7 +800,6 @@ export const useNotifications = () => {
 
       return success;
     } catch (error) {
-      console.error('Error adding prayer schedule:', error);
       return false;
     }
   };
@@ -947,18 +808,15 @@ export const useNotifications = () => {
   const createPrayerNotification = async (schedule: PrayerSchedule) => {
     try {
       if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Tentativa de criar notificação de oração em web ou Cordova não disponível - ignorando');
         return true;
       }
 
-      console.log(`[Notifications] Criando notificação de oração para horário: ${schedule.time}, dias: ${schedule.days}`);
       
       // Primeiro, cancelar notificações existentes para este agendamento
       for (const day of schedule.days) {
         try {
           const notificationId = parseInt(schedule.id) + day + 1000000; // Offset para evitar conflitos
           window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-            console.log(`[Notifications] Notificação de oração existente ${notificationId} cancelada via Cordova`);
           });
         } catch (error) {
           // Ignorar erro se a notificação não existia
@@ -969,13 +827,11 @@ export const useNotifications = () => {
       for (const day of schedule.days) {
         const success = await createSinglePrayerNotification(schedule, day);
         if (!success) {
-          console.error(`[Notifications] Falha ao criar notificação de oração para dia ${day}`);
         }
       }
 
       return true;
     } catch (error) {
-      console.error('Error creating prayer notification with Cordova:', error);
       toast({
         title: "Erro",
         description: "Não foi possível criar o lembrete de oração. Verifique as permissões do app.",
@@ -994,7 +850,6 @@ export const useNotifications = () => {
 
       if (!schedule.enabled) {
         // Ativando - criar notificações
-        console.log(`[Notifications] Ativando agendamento: ${schedule.id}`);
         const success = await createNotification(schedule, verses);
         if (!success) {
           // Reverter se falhou
@@ -1003,39 +858,32 @@ export const useNotifications = () => {
         }
       } else {
         // Desativando - cancelar notificações
-        console.log(`[Notifications] Desativando agendamento: ${schedule.id}`);
         try {
           for (const day of schedule.days) {
             const notificationId = parseInt(schedule.id) + day;
             window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-              console.log(`[Notifications] Notificação ${notificationId} cancelada via Cordova`);
             });
           }
         } catch (error) {
-          console.error('Error canceling notifications:', error);
         }
       }
       
       return true;
     } catch (error) {
-      console.error('Error toggling schedule:', error);
       return false;
     }
   };
 
   const deleteSchedule = async (schedule: NotificationSchedule) => {
     try {
-      console.log(`[Notifications] Deletando agendamento: ${schedule.id}`);
       
       // Cancelar notificações
       for (const day of schedule.days) {
         try {
           const notificationId = parseInt(schedule.id) + day;
           window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-            console.log(`[Notifications] Notificação ${notificationId} cancelada via Cordova`);
           });
         } catch (error) {
-          console.error(`[Notifications] Erro ao cancelar notificação ${parseInt(schedule.id) + day}:`, error);
         }
       }
 
@@ -1049,7 +897,6 @@ export const useNotifications = () => {
 
       return true;
     } catch (error) {
-      console.error('Error deleting schedule:', error);
       return false;
     }
   };
@@ -1064,7 +911,6 @@ export const useNotifications = () => {
 
       if (!schedule.enabled) {
         // Ativando - criar notificações
-        console.log(`[Notifications] Ativando agendamento de oração: ${schedule.id}`);
         const success = await createPrayerNotification(schedule);
         if (!success) {
           // Reverter se falhou
@@ -1073,22 +919,18 @@ export const useNotifications = () => {
         }
       } else {
         // Desativando - cancelar notificações
-        console.log(`[Notifications] Desativando agendamento de oração: ${schedule.id}`);
         try {
           for (const day of schedule.days) {
             const notificationId = parseInt(schedule.id) + day + 1000000; // Offset para evitar conflitos
             window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-              console.log(`[Notifications] Notificação de oração ${notificationId} cancelada via Cordova`);
             });
           }
         } catch (error) {
-          console.error('Error canceling prayer notifications:', error);
         }
       }
       
       return true;
     } catch (error) {
-      console.error('Error toggling prayer schedule:', error);
       return false;
     }
   };
@@ -1096,17 +938,14 @@ export const useNotifications = () => {
   // NOVA função para deletar agendamento de oração
   const deletePrayerSchedule = async (schedule: PrayerSchedule) => {
     try {
-      console.log(`[Notifications] Deletando agendamento de oração: ${schedule.id}`);
       
       // Cancelar notificações
       for (const day of schedule.days) {
         try {
           const notificationId = parseInt(schedule.id) + day + 1000000; // Offset para evitar conflitos
           window.cordova!.plugins.notification.local.cancel(notificationId, () => {
-            console.log(`[Notifications] Notificação de oração ${notificationId} cancelada via Cordova`);
           });
         } catch (error) {
-          console.error(`[Notifications] Erro ao cancelar notificação de oração ${parseInt(schedule.id) + day + 1000000}:`, error);
         }
       }
 
@@ -1120,7 +959,6 @@ export const useNotifications = () => {
 
       return true;
     } catch (error) {
-      console.error('Error deleting prayer schedule:', error);
       return false;
     }
   };
@@ -1148,12 +986,10 @@ export const useNotifications = () => {
 
   const resetAllNotifications = async () => {
     try {
-      console.log('[Notifications] Iniciando reset de todas as notificações...');
       
       // Cancelar todas as notificações (só no mobile com Cordova)
       if (isMobile && isCordovaAvailable()) {
         window.cordova!.plugins.notification.local.cancelAll(() => {
-          console.log('[Notifications] Todas as notificações canceladas via Cordova');
         });
       }
       
@@ -1171,7 +1007,6 @@ export const useNotifications = () => {
       // Resetar flag de inicialização
       initializationRef.current = false;
       
-      console.log('[Notifications] Todas as notificações foram resetadas');
       
       toast({
         title: "Notificações resetadas",
@@ -1180,7 +1015,6 @@ export const useNotifications = () => {
       
       return true;
     } catch (error) {
-      console.error('Error resetting notifications:', error);
       toast({
         title: "Erro",
         description: "Não foi possível resetar as notificações.",
@@ -1205,7 +1039,6 @@ export const useNotifications = () => {
         });
       });
     } catch (error) {
-      console.error('Error checking notification status:', error);
       return { enabled: false, message: 'Erro ao verificar permissões' };
     }
   };
@@ -1221,7 +1054,6 @@ export const useNotifications = () => {
         return false;
       }
 
-      console.log('[Notifications] Criando notificação de teste via Cordova...');
       
       // Agendar para 1 minuto no futuro
       const testTime = new Date();
@@ -1238,7 +1070,6 @@ export const useNotifications = () => {
         foreground: true
       };
 
-      console.log(`[Notifications] Agendando teste para: ${testTime.toLocaleString()}`);
 
       window.cordova!.plugins.notification.local.schedule(testConfig, (scheduled) => {
         if (scheduled) {
@@ -1257,7 +1088,6 @@ export const useNotifications = () => {
 
       return true;
     } catch (error) {
-      console.error('Error creating test notification:', error);
       toast({
         title: "Erro no teste",
         description: "Não foi possível criar a notificação de teste.",
@@ -1270,21 +1100,16 @@ export const useNotifications = () => {
   const checkNotificationPersistence = async () => {
     try {
       if (!isMobile || !isCordovaAvailable()) {
-        console.log('[Notifications] Verificação de persistência não disponível em web');
         return;
       }
 
-      console.log('[Notifications] Verificando persistência das notificações...');
       
       // Verificar notificações agendadas
       window.cordova!.plugins.notification.local.getScheduled((notifications) => {
-        console.log(`[Notifications] Notificações agendadas encontradas: ${notifications.length}`);
         notifications.forEach((notification: any) => {
-          console.log(`[Notifications] Notificação agendada: ID ${notification.id}, próxima execução: ${notification.trigger?.at || 'repetitiva'}`);
         });
       });
     } catch (error) {
-      console.error('Error checking notification persistence:', error);
     }
   };
 

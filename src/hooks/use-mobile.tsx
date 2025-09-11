@@ -61,7 +61,6 @@ export function useMobileFeatures() {
       try {
         await Haptics.impact({ style });
       } catch (error) {
-        console.log('Haptics not available');
       }
     }
   }, [isNative]);
@@ -71,7 +70,6 @@ export function useMobileFeatures() {
       try {
         await Keyboard.hide();
       } catch (error) {
-        console.log('Keyboard hide not available');
       }
     }
   }, [isNative]);
@@ -81,7 +79,6 @@ export function useMobileFeatures() {
       try {
         await Keyboard.show();
       } catch (error) {
-        console.log('Keyboard show not available');
       }
     }
   }, [isNative]);
@@ -91,7 +88,6 @@ export function useMobileFeatures() {
       try {
         await App.exitApp();
       } catch (error) {
-        console.log('Exit app not available');
       }
     }
   }, [isNative]);

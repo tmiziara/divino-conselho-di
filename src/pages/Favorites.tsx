@@ -51,7 +51,6 @@ const Favorites = () => {
       
       setFavorites(data || []);
     } catch (error) {
-      console.error('Erro ao carregar favoritos:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar seus favoritos.",
@@ -82,7 +81,6 @@ const Favorites = () => {
         description: "O item foi removido dos seus favoritos."
       });
     } catch (error) {
-      console.error('Erro ao deletar favorito:', error);
       toast({
         title: "Erro",
         description: "Não foi possível remover o favorito.",
@@ -327,7 +325,6 @@ const Favorites = () => {
                       }
                       return fav.title;
                     };
-                    console.log('Renderizando favorito:', fav.id, fav.reference);
                     return (
                       <Card key={fav.id} className="p-4 bg-card dark:bg-zinc-900">
                         <div className="flex items-center gap-2 mb-2 justify-end">

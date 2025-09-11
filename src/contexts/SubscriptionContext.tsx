@@ -39,7 +39,6 @@ let subscriptionCache: {
 const CACHE_DURATION = 10 * 60 * 1000;
 
 export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ children, initialSubscription }) => {
-  console.log("[SubscriptionProvider] montado");
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionData | undefined>(initialSubscription);
   const [loading, setLoading] = useState(!initialSubscription);
@@ -61,7 +60,6 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     setLoading(true);
     userIdRef.current = user.id;
     getSubscription(user.id, async () => {
-      console.log('[SubscriptionProvider] Buscando assinatura do usuário', user.id);
       const { data, error } = await supabase.functions.invoke('check-subscription');
       if (error) throw error;
       return {
@@ -80,7 +78,6 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
   const refreshSubscription = async () => {
     if (!user) return;
     await getSubscription(user.id, async () => {
-      console.log('[SubscriptionProvider] Refresh assinatura do usuário', user.id);
       const { data, error } = await supabase.functions.invoke('check-subscription');
       if (error) throw error;
       return {

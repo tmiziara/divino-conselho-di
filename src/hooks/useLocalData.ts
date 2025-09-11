@@ -33,11 +33,9 @@ export const useLocalData = () => {
       if (stored) {
         const data = JSON.parse(stored);
         setLocalData(data);
-        console.log('[LocalData] Dados locais carregados:', data);
         return data;
       }
     } catch (error) {
-      console.error('[LocalData] Erro ao carregar dados locais:', error);
     }
     return null;
   }, []);
@@ -47,16 +45,13 @@ export const useLocalData = () => {
     try {
       localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data));
       setLocalData(data);
-      console.log('[LocalData] Dados locais salvos:', data);
     } catch (error) {
-      console.error('[LocalData] Erro ao salvar dados locais:', error);
     }
   }, []);
 
   // Buscar dados do Supabase
   const fetchSupabaseData = useCallback(async (userId: string): Promise<LocalUserData | null> => {
     try {
-      console.log('[LocalData] Buscando dados do Supabase para usuário:', userId);
       
       // Buscar dados do perfil do usuário (que contém informações de assinatura)
       const { data: profileData, error: profileError } = await supabase
@@ -66,7 +61,6 @@ export const useLocalData = () => {
         .single();
 
       if (profileError && profileError.code !== 'PGRST116') {
-        console.error('[LocalData] Erro ao buscar perfil:', profileError);
         return null;
       }
 
@@ -100,10 +94,8 @@ export const useLocalData = () => {
         user_id: userId
       };
 
-      console.log('[LocalData] Dados do Supabase obtidos:', supabaseData);
       return supabaseData;
     } catch (error) {
-      console.error('[LocalData] Erro ao buscar dados do Supabase:', error);
       return null;
     }
   }, []);
@@ -118,29 +110,22 @@ export const useLocalData = () => {
 
     for (const field of fieldsToCompare) {
       if (local[field as keyof LocalUserData] !== remote[field as keyof LocalUserData]) {
-        console.log(`[LocalData] Dados diferentes no campo ${field}:`, {
-          local: local[field as keyof LocalUserData],
-          remote: remote[field as keyof LocalUserData]
-        });
         return false;
       }
     }
 
-    console.log('[LocalData] Dados idênticos, sem necessidade de atualização');
     return true;
   }, []);
 
   // Sincronizar dados em background
   const syncData = useCallback(async (userId: string, force = false) => {
     if (syncStatus.isSyncing && !force) {
-      console.log('[LocalData] Sincronização já em andamento, ignorando');
       return;
     }
 
     setSyncStatus(prev => ({ ...prev, isSyncing: true, error: null }));
 
     try {
-      console.log('[LocalData] Iniciando sincronização...');
       
       const supabaseData = await fetchSupabaseData(userId);
       if (!supabaseData) {
@@ -150,7 +135,6 @@ export const useLocalData = () => {
       const currentLocalData = loadLocalData();
       
       if (!currentLocalData || force || !compareData(currentLocalData, supabaseData)) {
-        console.log('[LocalData] Atualizando dados locais com dados do Supabase');
         saveLocalData(supabaseData);
         
         // Disparar evento de atualização
@@ -165,9 +149,7 @@ export const useLocalData = () => {
         error: null
       });
 
-      console.log('[LocalData] Sincronização concluída com sucesso');
     } catch (error) {
-      console.error('[LocalData] Erro na sincronização:', error);
       setSyncStatus({
         isSyncing: false,
         lastSync: syncStatus.lastSync,
@@ -181,9 +163,7 @@ export const useLocalData = () => {
     try {
       localStorage.removeItem(LOCAL_DATA_KEY);
       setLocalData(null);
-      console.log('[LocalData] Dados locais limpos');
     } catch (error) {
-      console.error('[LocalData] Erro ao limpar dados locais:', error);
     }
   }, []);
 
@@ -191,14 +171,12 @@ export const useLocalData = () => {
   useEffect(() => {
     const handleUserLogin = (event: CustomEvent) => {
       const { userId } = event.detail;
-      console.log('[LocalData] Usuário logado, inicializando dados para:', userId);
       
       // Forçar sincronização inicial
       syncData(userId, true);
     };
 
     const handleUserLogout = () => {
-      console.log('[LocalData] Usuário deslogado, limpando dados locais...');
       clearLocalData();
     };
 
@@ -222,7 +200,6 @@ export const useLocalData = () => {
 
     // Sincronizar apenas uma vez por sessão para mobile
     const syncOnce = () => {
-      console.log('[LocalData] Sincronização única para mobile');
       syncData(localData.user_id);
     };
 
@@ -234,7 +211,6 @@ export const useLocalData = () => {
 
   // Função para forçar sincronização
   const forceSync = useCallback((userId: string) => {
-    console.log('[LocalData] Forçando sincronização...');
     syncData(userId, true);
   }, [syncData]);
 

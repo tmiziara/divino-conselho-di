@@ -90,7 +90,6 @@ export const useBibleData = (bibleVersion: string = 'nvi') => {
       setBookData(null);
       setChapters([]);
       setVerses([]);
-      console.error('[useBibleData] Erro ao carregar livro:', error);
       return null;
     } finally {
       setLoading(false);
@@ -122,7 +121,6 @@ export const useBibleData = (bibleVersion: string = 'nvi') => {
       setVerses(versesArr);
     } catch (error) {
       setVerses([]);
-      console.error('[useBibleData] Erro ao carregar versículos:', error);
     } finally {
       setLoading(false);
     }

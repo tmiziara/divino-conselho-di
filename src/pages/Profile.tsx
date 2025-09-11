@@ -92,7 +92,6 @@ const Profile = () => {
         });
       }
     } catch (error) {
-      console.error('Erro ao buscar perfil:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar o perfil",
@@ -126,7 +125,6 @@ const Profile = () => {
 
       fetchProfile();
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o perfil",
@@ -150,7 +148,6 @@ const Profile = () => {
 
       passwordForm.reset();
     } catch (error) {
-      console.error('Erro ao atualizar senha:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar a senha",
@@ -166,7 +163,6 @@ const Profile = () => {
         window.open(data.url, '_blank');
       }
     } catch (error) {
-      console.error('Error opening customer portal:', error);
       toast({
         title: "Erro",
         description: "Não foi possível abrir o portal de assinaturas.",
@@ -205,7 +201,6 @@ const Profile = () => {
         .eq('user_id', user.id);
 
       if (favoritesError) {
-        console.error('Erro ao excluir favoritos:', favoritesError);
       }
 
       // 2. Excluir dados de progresso (se existir)
@@ -215,7 +210,6 @@ const Profile = () => {
         .eq('user_id', user.id);
 
       if (progressError) {
-        console.error('Erro ao excluir progresso:', progressError);
       }
 
       // 3. Excluir dados de assinatura (se existir)
@@ -225,7 +219,6 @@ const Profile = () => {
         .eq('user_id', user.id);
 
       if (subscriptionError) {
-        console.error('Erro ao excluir assinatura:', subscriptionError);
       }
 
       // 4. Excluir dados de créditos (se existir)
@@ -235,14 +228,12 @@ const Profile = () => {
         .eq('user_id', user.id);
 
       if (creditsError) {
-        console.error('Erro ao excluir créditos:', creditsError);
       }
 
       // 5. Excluir a conta do usuário
       const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
 
       if (authError) {
-        console.error('Erro ao excluir conta:', authError);
         throw authError;
       }
 
@@ -256,7 +247,6 @@ const Profile = () => {
       window.location.href = "/";
 
     } catch (error) {
-      console.error('Erro ao excluir conta:', error);
       toast({
         title: "Erro",
         description: "Não foi possível excluir sua conta. Tente novamente ou entre em contato conosco.",

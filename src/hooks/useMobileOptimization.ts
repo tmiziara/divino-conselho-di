@@ -28,7 +28,6 @@ export const useMobileOptimization = () => {
   const optimizeCache = useCallback(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then(registration => {
-        console.log('Service Worker registrado:', registration);
       });
     }
   }, []);

@@ -86,7 +86,6 @@ export class ContentAccessManager {
       return true;
 
     } catch (error) {
-      console.error('Error validating with server:', error);
       return false;
     }
   }
@@ -183,7 +182,6 @@ export class ContentAccessManager {
       return data || [];
 
     } catch (error) {
-      console.error(`Error downloading ${contentType}:`, error);
       throw new Error(`Failed to load ${contentType}`);
     }
   }
@@ -213,7 +211,6 @@ export class ContentAccessManager {
       return study;
 
     } catch (error) {
-      console.error('Error loading study:', error);
       throw error;
     }
   }
@@ -230,7 +227,6 @@ export class ContentAccessManager {
       // Por enquanto, todos os estudos ativos são considerados premium
       return data?.is_active || false;
     } catch (error) {
-      console.error('Error checking study premium status:', error);
       return false;
     }
   }
@@ -262,7 +258,6 @@ export class ContentAccessManager {
       };
 
     } catch (error) {
-      console.error('Error downloading study:', error);
       throw new Error('Failed to load study');
     }
   }
@@ -287,7 +282,6 @@ export class ContentAccessManager {
       }
 
     } catch (error) {
-      console.error('Error preloading content:', error);
     }
   }
 

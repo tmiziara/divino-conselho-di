@@ -25,7 +25,6 @@ const AdTest = () => {
 
   const handleTestRewardedAd = async () => {
     await showRewardedAd(() => {
-      console.log('Recompensa recebida!');
     });
   };
 

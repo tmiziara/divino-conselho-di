@@ -31,7 +31,6 @@ export const useSubscription = () => {
   // Carregar dados locais primeiro (rápido)
   const loadLocalSubscription = () => {
     if (localData) {
-      console.log('[useSubscription] Carregando dados locais:', localData);
       const subscriptionData = convertLocalDataToSubscription(localData);
       setSubscription(subscriptionData);
       setLoading(false);
@@ -43,10 +42,8 @@ export const useSubscription = () => {
     if (!user?.id) return;
 
     try {
-      console.log('[useSubscription] Iniciando sincronização com Supabase...');
       await syncData(user.id);
     } catch (error) {
-      console.error('[useSubscription] Erro na sincronização:', error);
     }
   };
 
@@ -91,7 +88,6 @@ export const useSubscription = () => {
   // Para mobile - simplificar listeners
   useEffect(() => {
     const handleUserDataUpdate = (event: CustomEvent) => {
-      console.log('[useSubscription] Dados locais atualizados:', event.detail);
       const subscriptionData = convertLocalDataToSubscription(event.detail);
       setSubscription(subscriptionData);
     };

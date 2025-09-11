@@ -30,7 +30,6 @@ export const useBibleProgress = () => {
         return JSON.parse(stored);
       }
     } catch (error) {
-      console.error('Error reading stored position:', error);
     }
     return {};
   };

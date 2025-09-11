@@ -83,7 +83,6 @@ export const useBibleStudies = () => {
     if (!user?.id) return false;
     
     try {
-      console.log('[useBibleStudies] Verificando acesso premium com Supabase...');
       
       // Buscar dados diretamente do Supabase
       const { data: subscriberData, error } = await supabase
@@ -94,19 +93,16 @@ export const useBibleStudies = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('[useBibleStudies] Erro ao verificar assinatura:', error);
         return false;
       }
 
       if (subscriberData) {
         const hasAccess = subscriberData.subscription_tier === 'premium' || subscriberData.subscription_tier === 'basic';
-        console.log('[useBibleStudies] Acesso premium verificado:', hasAccess, subscriberData);
         return hasAccess;
       }
 
       return false;
     } catch (error) {
-      console.error('[useBibleStudies] Erro ao verificar acesso premium:', error);
       return false;
     }
   }, [user?.id]);
@@ -144,7 +140,6 @@ export const useBibleStudies = () => {
       }));
       setStudies(formattedStudies);
     } catch (error) {
-      console.error('Error fetching studies:', error);
     } finally {
       setLoading(false);
     }
@@ -167,18 +162,12 @@ export const useBibleStudies = () => {
       }
       // Verificar se é premium e se tem acesso
       if (study.is_premium && !hasPremiumAccess()) {
-        console.log('[useBibleStudies] Acesso negado localmente, verificando com Supabase...');
-        console.log('[useBibleStudies] Subscription status:', subscription);
-        console.log('[useBibleStudies] SimpleLicense stats:', simpleLicense.getStats());
         
         // Tentar verificar com Supabase como fallback
         const hasSupabaseAccess = await checkPremiumAccessWithSupabase();
         if (!hasSupabaseAccess) {
-          console.log('[useBibleStudies] Acesso negado também no Supabase');
           setChapters([]);
           return [];
-        } else {
-          console.log('[useBibleStudies] Acesso confirmado no Supabase, carregando capítulos...');
         }
       }
       // Buscar capítulos sob demanda
@@ -201,7 +190,6 @@ export const useBibleStudies = () => {
       chapterCache.set(studySlug, formattedChapters);
       return formattedChapters;
     } catch (error) {
-      console.error('Error fetching chapters:', error);
       setChapters([]);
       return [];
     } finally {
@@ -218,7 +206,6 @@ export const useBibleStudies = () => {
       const progress = stored ? JSON.parse(stored) : [];
       setProgress(progress);
     } catch (error) {
-      console.error('Error fetching progress:', error);
     }
   };
 
@@ -231,7 +218,6 @@ export const useBibleStudies = () => {
       const favorites = stored ? JSON.parse(stored) : [];
       setFavorites(favorites);
     } catch (error) {
-      console.error('Error fetching favorites:', error);
     }
   };
 
@@ -271,7 +257,6 @@ export const useBibleStudies = () => {
         description: "Seu progresso foi salvo.",
       });
     } catch (error) {
-      console.error('Error marking chapter as completed:', error);
       toast({
         title: "Erro ao salvar progresso",
         description: "Não foi possível salvar seu progresso.",
@@ -292,7 +277,6 @@ export const useBibleStudies = () => {
       
       setProgress(updatedProgress);
     } catch (error) {
-      console.error('Error marking chapter as incomplete:', error);
     }
   };
 
@@ -346,7 +330,6 @@ export const useBibleStudies = () => {
       window.localStorage.setItem(`favorites_${user.id}`, JSON.stringify(updatedFavorites));
       setFavorites(updatedFavorites);
     } catch (error) {
-      console.error('Error toggling favorite:', error);
       toast({
         title: "Erro ao salvar favorito",
         description: "Não foi possível salvar o favorito.",

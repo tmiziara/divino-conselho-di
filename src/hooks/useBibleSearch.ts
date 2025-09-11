@@ -35,7 +35,6 @@ export const useBibleSearch = () => {
 
       setSearchResults(data || []);
     } catch (error) {
-      console.error("Error searching verses:", error);
       setSearchResults([]);
     } finally {
       setLoading(false);

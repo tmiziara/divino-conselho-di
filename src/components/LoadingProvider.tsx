@@ -32,11 +32,8 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
 
   // Para mobile - simplificar ao máximo
   useEffect(() => {
-    console.log('[LoadingProvider] Auth loading:', authLoading);
-    
     if (!authLoading) {
       // Para mobile, não precisamos de delay
-      console.log('[LoadingProvider] Ocultando tela de carregamento');
       setShowLoadingScreen(false);
     }
   }, [authLoading]);
@@ -44,7 +41,6 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
   // Timeout de segurança mais curto para mobile
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
-      console.log('[LoadingProvider] Timeout de segurança - forçando liberação');
       setShowLoadingScreen(false);
     }, 3000); // 3 segundos para mobile
 

@@ -34,17 +34,10 @@ export class SpiritualChatService {
         .single();
 
       if (subscriptionError) {
-        console.log('Erro ao verificar assinatura:', subscriptionError);
         // Se não conseguir verificar assinatura, continuar com verificação de créditos
       }
 
       const isPremium = subscription?.subscribed && subscription?.subscription_tier === 'premium';
-      console.log('Status premium no serviço:', {
-        subscription: subscription,
-        subscribed: subscription?.subscribed,
-        tier: subscription?.subscription_tier,
-        isPremium: isPremium
-      });
 
       // 2. Obter perfil do usuário
       const { data: profile } = await supabase
@@ -68,7 +61,6 @@ export class SpiritualChatService {
 
       // 4. Se for premium, não verificar créditos
       if (isPremium) {
-        console.log('Usuário premium - pulando verificação de créditos local');
       }
 
       const userGender = profile.gender || 'masculino';
@@ -115,8 +107,6 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
 
       // Chamar função do Supabase que NÃO salva no banco
       const supabaseUrl = 'https://ssylplbgacuwkqkkhric.supabase.co';
-      console.log('Chamando Edge Function:', `${supabaseUrl}/functions/v1/spiritual-chat-with-credits`);
-      console.log('Payload:', { message, user_id: session.user.id });
       
       const response = await fetch(`${supabaseUrl}/functions/v1/spiritual-chat-with-credits`, {
         method: 'POST',
@@ -133,9 +123,7 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
         })
       });
 
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (!response.ok) {
         // Se for erro de créditos insuficientes
@@ -168,7 +156,6 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
             .eq('user_id', session.user.id);
 
           if (updateError) {
-            console.error('Erro ao atualizar créditos:', updateError);
           }
 
           return {
@@ -177,7 +164,6 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
           };
         } else {
           // Usuário premium - não consumir créditos
-          console.log('Usuário premium - não consumindo créditos localmente');
           return {
             response: data.response,
             credits: null // null indica usuário premium
@@ -192,7 +178,6 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
       };
 
     } catch (error: any) {
-      console.error('Erro no serviço de chat:', error);
       return {
         response: '',
         error: error.message || 'Erro interno do servidor',
@@ -218,7 +203,6 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
 
       return data?.credits || 0;
     } catch (error) {
-      console.error('Erro ao obter créditos:', error);
       return null;
     }
   }
@@ -226,19 +210,14 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
   // Assistir anúncio para ganhar créditos
   async watchAdForCredits(): Promise<{ success: boolean; credits?: number; error?: string }> {
     try {
-      console.log('[SpiritualChatService] Iniciando watchAdForCredits');
       
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        console.log('[SpiritualChatService] Usuário não autenticado');
         return { success: false, error: 'Usuário não autenticado' };
       }
 
-      console.log('[SpiritualChatService] Usuário autenticado:', session.user.id);
-
       // Método direto para adicionar créditos
-      console.log('[SpiritualChatService] Adicionando créditos via método direto...');
       
       // Buscar perfil atual
       const { data: profile, error: profileError } = await supabase
@@ -248,18 +227,14 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
         .single();
 
       if (profileError) {
-        console.error('[SpiritualChatService] Erro ao buscar perfil:', profileError);
         return { success: false, error: 'Erro ao buscar perfil do usuário' };
       }
 
       if (!profile) {
-        console.log('[SpiritualChatService] Perfil não encontrado');
         return { success: false, error: 'Perfil não encontrado' };
       }
 
-      console.log('[SpiritualChatService] Créditos atuais:', profile.credits);
       const newCredits = (profile.credits || 0) + 3;
-      console.log('[SpiritualChatService] Novos créditos:', newCredits);
 
       // Atualizar créditos diretamente
       const { error: updateError } = await supabase
@@ -268,21 +243,18 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
         .eq('user_id', session.user.id);
 
       if (updateError) {
-        console.error('[SpiritualChatService] Erro ao atualizar créditos:', updateError);
         return { success: false, error: 'Erro ao atualizar créditos' };
       }
 
       // Registrar que o anúncio foi assistido (APENAS AQUI)
       this.recordAdWatched(session.user.id);
 
-      console.log('[SpiritualChatService] Créditos atualizados com sucesso!');
       return { 
         success: true, 
         credits: newCredits
       };
 
     } catch (error: any) {
-      console.error('[SpiritualChatService] Erro geral:', error);
       return { 
         success: false, 
         error: error.message || 'Erro ao processar anúncio' 
@@ -294,11 +266,9 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
   canWatchAd(userId: string): { canWatch: boolean; remainingMinutes: number } {
     try {
       const lastAdWatched = this.getLastAdWatchedFromStorage(userId);
-      console.log('[SpiritualChatService] Último anúncio assistido:', lastAdWatched);
       
       if (!lastAdWatched) {
         // Primeira vez assistindo anúncio
-        console.log('[SpiritualChatService] Primeira vez assistindo anúncio');
         return { canWatch: true, remainingMinutes: 0 };
       }
 
@@ -308,20 +278,15 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
       const minutesDiff = Math.floor(timeDiff / (1000 * 60));
       const requiredWait = 15; // 15 minutos
 
-      console.log('[SpiritualChatService] Tempo desde último anúncio:', minutesDiff, 'minutos');
-      console.log('[SpiritualChatService] Tempo necessário para espera:', requiredWait, 'minutos');
 
       if (minutesDiff >= requiredWait) {
-        console.log('[SpiritualChatService] Usuário pode assistir anúncio');
         return { canWatch: true, remainingMinutes: 0 };
       } else {
         const remaining = requiredWait - minutesDiff;
-        console.log('[SpiritualChatService] Usuário deve aguardar mais', remaining, 'minutos');
         return { canWatch: false, remainingMinutes: remaining };
       }
 
     } catch (error) {
-      console.error('[SpiritualChatService] Erro ao verificar timer do anúncio:', error);
       return { canWatch: true, remainingMinutes: 0 }; // Em caso de erro, permitir assistir
     }
   }
@@ -329,11 +294,8 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
   // Registrar que um anúncio foi assistido
   private recordAdWatched(userId: string): void {
     try {
-      console.log('[SpiritualChatService] Registrando anúncio assistido para usuário:', userId);
       this.saveAdWatchedToStorage(userId);
-      console.log('[SpiritualChatService] Anúncio assistido registrado com sucesso');
     } catch (error) {
-      console.error('[SpiritualChatService] Erro ao registrar anúncio assistido:', error);
     }
   }
 
@@ -373,7 +335,6 @@ Evite formalidades e respostas automáticas. Nunca julgue — apenas acolha e aj
       }
 
     } catch (error) {
-      console.error('[SpiritualChatService] Erro ao obter timer do anúncio:', error);
       return { canWatch: true, remainingMinutes: 0, remainingSeconds: 0 };
     }
   }

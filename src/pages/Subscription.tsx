@@ -78,7 +78,6 @@ const Subscription = () => {
         window.open(data.url, '_blank');
       }
     } catch (error) {
-      console.error('Error creating checkout session:', error);
       toast({
         title: "Erro",
         description: "Não foi possível iniciar o processo de pagamento.",
@@ -96,7 +95,6 @@ const Subscription = () => {
         window.open(data.url, '_blank');
       }
     } catch (error) {
-      console.error('Error opening customer portal:', error);
       toast({
         title: "Erro",
         description: "Não foi possível abrir o portal de assinaturas.",

@@ -19,7 +19,6 @@ export const useVerseImage = ({ verse, backgroundImage = 'background1.jpg' }: Us
   const generateImage = useCallback(async (verseData: Verse, bgImage: string, genId: number) => {
     if (!verseData) return;
     setLoading(true);
-    console.log('[useVerseImage] Iniciando geração da imagem', { verseData, bgImage, genId });
     try {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -93,23 +92,19 @@ export const useVerseImage = ({ verse, backgroundImage = 'background1.jpg' }: Us
       // Só atualiza se for a geração mais recente
       if (generationId.current === genId) {
         setImageUrl(dataUrl);
-        console.log('[useVerseImage] Imagem gerada com sucesso', { genId, dataUrlLength: dataUrl.length });
       }
     } catch (error) {
-      console.error('[useVerseImage] Erro ao gerar imagem:', error, { verseData, bgImage, genId });
       if (generationId.current === genId) {
         setImageUrl(null);
       }
     } finally {
       if (generationId.current === genId) {
         setLoading(false);
-        console.log('[useVerseImage] Finalizou geração', { genId });
       }
     }
   }, []);
 
   useEffect(() => {
-    console.log('[useVerseImage] useEffect disparado', { verse, backgroundImage });
     if (verse) {
       generationId.current += 1;
       const currentGen = generationId.current;
@@ -123,7 +118,6 @@ export const useVerseImage = ({ verse, backgroundImage = 'background1.jpg' }: Us
 
   useEffect(() => {
     if (imageUrl && imageUrl.startsWith('data:')) {
-      console.log('[useVerseImage] imageUrl atualizado', { imageUrlLength: imageUrl.length });
     }
   }, [imageUrl]);
 

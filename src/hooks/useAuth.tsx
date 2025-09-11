@@ -15,7 +15,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   const clearInvalidAuth = async () => {
-    console.log("[useAuth] Clearing invalid authentication state");
     await supabase.auth.signOut();
     setUser(null);
     setLoading(false);
@@ -26,18 +25,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Simplified validation - only clear auth on specific JWT errors
       const { error } = await supabase.auth.getUser();
       if (error && error.message.includes("JWT expired")) {
-        console.log("[useAuth] JWT expired - refreshing session");
         return true; // Let Supabase handle token refresh
       }
       return true;
     } catch (error) {
-      console.log("[useAuth] Error validating user:", error);
       return true; // Don't clear auth on errors
     }
   };
 
   useEffect(() => {
-    console.log("[useAuth] Iniciando verificação de sessão...");
     
     // Verificar sessão imediatamente
     const checkSession = async () => {
@@ -45,7 +41,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.log("[useAuth] Session error:", error);
           // Only clear auth on very specific errors
           if (error.message.includes("User from sub claim in JWT does not exist")) {
             await clearInvalidAuth();
@@ -53,11 +48,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         }
 
-        console.log("[useAuth] Sessão verificada:", session ? "Usuário logado" : "Usuário não logado");
         setUser(session?.user || null);
         setLoading(false);
       } catch (error) {
-        console.error("[useAuth] Erro ao verificar sessão:", error);
         setUser(null);
         setLoading(false);
       }
@@ -70,7 +63,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[useAuth] Auth state change:", event);
       
       // Simplified auth state handling
       setUser(session?.user || null);
@@ -79,7 +71,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Handle redirect after login
       if (event === 'SIGNED_IN' && session?.user) {
         // Inicializar dados locais para o usuário
-        console.log('[useAuth] Usuário logado, inicializando dados locais...');
         
         // Disparar evento para inicializar dados locais
         window.dispatchEvent(new CustomEvent('userLoggedIn', {
@@ -98,7 +89,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Handle logout
       if (event === 'SIGNED_OUT') {
-        console.log('[useAuth] Usuário deslogado, limpando dados locais...');
         
         // Disparar evento para limpar dados locais
         window.dispatchEvent(new CustomEvent('userLoggedOut'));
@@ -109,7 +99,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const signOut = async () => {
-    console.log("[useAuth] Manual sign out");
     await supabase.auth.signOut();
   };
 

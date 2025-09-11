@@ -6,7 +6,6 @@ import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { BrowserRouter } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-console.log("App inicializado");
 
 async function preloadAndRender() {
   // Pré-carregar usuário

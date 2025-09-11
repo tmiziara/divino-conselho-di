@@ -60,15 +60,6 @@ const Studies = () => {
       .filter(Boolean);
   }, [categorizedStudies]);
 
-  // Log para depuração robusta
-  console.log('categorizedStudies.length:', categorizedStudies.length);
-  console.log('orderedCategories.length:', orderedCategories.length);
-  try {
-    console.log('categorizedStudies:', JSON.stringify(categorizedStudies));
-    console.log('orderedCategories:', JSON.stringify(orderedCategories));
-  } catch (e) {
-    console.log('Erro ao serializar arrays para log:', e);
-  }
 
   // Separar categorias
   const inProgressCategory = orderedCategories.find(cat => cat.id === 'em-progresso' && cat.count > 0);

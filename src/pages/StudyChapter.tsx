@@ -85,7 +85,6 @@ const StudyChapter = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching study:', error);
     }
   };
 
@@ -95,7 +94,6 @@ const StudyChapter = () => {
 
   const handleMarkAsCompleted = async () => {
     if (!chapter || !study) {
-      console.log('Missing chapter or study:', { chapter, study });
       return;
     }
     
@@ -122,7 +120,6 @@ const StudyChapter = () => {
         }, 1500);
       }
     } catch (error) {
-      console.error('Error marking chapter as completed:', error);
       toast({
         title: "Erro ao salvar progresso",
         description: "Não foi possível marcar o capítulo como concluído.",
@@ -237,37 +234,27 @@ const StudyChapter = () => {
 
   // Função utilitária para compartilhar
   const shareContent = async (title: string, text: string) => {
-    console.log('[Share] Botão de compartilhar clicado');
     try {
       const isCapacitor = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-      console.log('[Share] isCapacitor:', isCapacitor);
       if (isCapacitor && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share) {
-        console.log('[Share] Usando window.Capacitor.Plugins.Share...');
         await window.Capacitor.Plugins.Share.share({
           title,
           text,
           dialogTitle: 'Compartilhar com...'
         });
-        console.log('[Share] Menu nativo aberto com sucesso!');
         return;
       }
       // Web Share API
       if (navigator.share) {
         try {
-          console.log('[Share] Usando Web Share API...');
           await navigator.share({ title, text });
-          console.log('[Share] Web Share API chamada com sucesso!');
           return;
         } catch (error) {
-          console.error('[Share] Erro na Web Share API:', error);
         }
       }
       // Fallback: copiar
-      console.log('[Share] Copiando para área de transferência...');
       await navigator.clipboard.writeText(`${title}\n\n${text}`);
-      console.log('[Share] Copiado para área de transferência!');
     } catch (err) {
-      console.error('[Share] Erro inesperado no compartilhamento:', err);
     }
   };
 

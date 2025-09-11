@@ -56,14 +56,10 @@ export class LocalContentManager {
   private async loadStudies() {
     if (this.loadedStudies) return;
     try {
-      console.time('FetchStudiesJSON');
       const studiesResponse = await fetch('/data/bible_studies.json');
       if (!studiesResponse.ok) throw new Error(`Failed to load studies: ${studiesResponse.status}`);
       const studiesDataText = await studiesResponse.text();
-      console.timeEnd('FetchStudiesJSON');
-      console.time('ParseStudiesJSON');
       const studiesData = JSON.parse(studiesDataText);
-      console.timeEnd('ParseStudiesJSON');
       this.studies = studiesData.map((study: any) => ({
         ...study,
         is_premium: study.is_premium || false,
@@ -72,7 +68,6 @@ export class LocalContentManager {
       }));
       this.loadedStudies = true;
     } catch (error) {
-      console.error('Error loading studies:', error);
       this.studies = [];
       this.loadedStudies = true;
     }
@@ -95,7 +90,6 @@ export class LocalContentManager {
       });
       this.loadedChapters = true;
     } catch (error) {
-      console.error('Error loading chapters:', error);
       this.chaptersByStudy = new Map();
       this.loadedChapters = true;
     }
@@ -112,17 +106,12 @@ export class LocalContentManager {
     // Cache simples em memória
     if (!this.chaptersByStudy.has(studyId)) {
       try {
-        console.time(`FetchChaptersJSON_${studyId}`);
         const response = await fetch(`/data/chapters_${studyId}.json`);
         if (!response.ok) throw new Error('Capítulos não encontrados para o estudo');
         const chaptersText = await response.text();
-        console.timeEnd(`FetchChaptersJSON_${studyId}`);
-        console.time(`ParseChaptersJSON_${studyId}`);
         const chapters = JSON.parse(chaptersText);
-        console.timeEnd(`ParseChaptersJSON_${studyId}`);
         this.chaptersByStudy.set(studyId, chapters);
       } catch (error) {
-        console.error('Erro ao buscar capítulos do estudo', studyId, error);
         this.chaptersByStudy.set(studyId, []);
       }
     }

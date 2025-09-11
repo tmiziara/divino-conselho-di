@@ -27,7 +27,6 @@ export async function shareVerseImage(imageUrl: string) {
     await ensureFilesystemPermission();
   } catch (err) {
     alert('Permissão de armazenamento não concedida. Não é possível compartilhar imagem.');
-    console.error('[Compartilhar Versículo] Erro ao pedir permissão:', err);
     return;
   }
 

@@ -18,7 +18,6 @@ interface Verse {
 }
 
 const VersiculoDoDia = () => {
-  console.log('[VersiculoDoDia] Componente montado');
   const [showAuth, setShowAuth] = useState(false);
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -44,7 +43,6 @@ const VersiculoDoDia = () => {
 
   // Carregar versículos do arquivo
   useEffect(() => {
-    console.log('[VersiculoDoDia] useEffect executado, searchParams:', searchParams.toString());
     const loadVerses = async () => {
       try {
         const response = await fetch('/data/versiculos_por_tema_com_texto.json');
@@ -61,12 +59,6 @@ const VersiculoDoDia = () => {
           const decodedTheme = decodeURIComponent(theme);
           const decodedVersiculoId = decodeURIComponent(versiculoId);
           
-          console.log('[VersiculoDoDia] Parâmetros de notificação recebidos:', { 
-            originalTheme: theme, 
-            decodedTheme, 
-            originalVersiculoId: versiculoId, 
-            decodedVersiculoId 
-          });
           
           // Buscar o versículo específico baseado no tema e ID
           const targetVerse = data.find(verse => 
@@ -75,7 +67,6 @@ const VersiculoDoDia = () => {
           );
           
           if (targetVerse) {
-            console.log('[VersiculoDoDia] Versículo encontrado:', targetVerse);
             
             // Adicionar o versículo específico no início da lista
             const updatedVerses = [targetVerse, ...data];
@@ -89,14 +80,12 @@ const VersiculoDoDia = () => {
             url.searchParams.delete('versiculoId');
             window.history.replaceState({}, '', url.toString());
           } else {
-            console.warn('[VersiculoDoDia] Versículo não encontrado:', { theme, versiculoId });
             setCurrentIndex(getRandomIndex(data.length));
             setCurrentBackground(getRandomBackground());
           }
         } else if (verseParam) {
           try {
             const specificVerse = JSON.parse(decodeURIComponent(verseParam));
-            console.log('[VersiculoDoDia] Versículo específico recebido:', specificVerse);
             
             // Adicionar o versículo específico no início da lista
             const updatedVerses = [specificVerse, ...data];
@@ -109,7 +98,6 @@ const VersiculoDoDia = () => {
             url.searchParams.delete('verse');
             window.history.replaceState({}, '', url.toString());
           } catch (error) {
-            console.error('[VersiculoDoDia] Erro ao processar versículo da URL:', error);
             setCurrentIndex(getRandomIndex(data.length));
             setCurrentBackground(getRandomBackground());
           }
@@ -121,7 +109,6 @@ const VersiculoDoDia = () => {
         
         setLoading(false);
       } catch (error) {
-        console.error('Erro ao carregar versículos:', error);
         setLoading(false);
       }
     };
@@ -150,7 +137,6 @@ const VersiculoDoDia = () => {
     if (!imageUrl) return;
 
     const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
-    console.log('[DEBUG] isNative:', isNative, 'Capacitor:', (window as any).Capacitor);
 
     if (!isNative) {
       alert('O compartilhamento de imagem só está disponível no app instalado.');
@@ -159,10 +145,8 @@ const VersiculoDoDia = () => {
 
     try {
       await shareVerseImage(imageUrl);
-      console.log('[DEBUG] Compartilhamento de imagem chamado!');
     } catch (error) {
       alert('Erro ao compartilhar imagem: ' + error);
-      console.error('[DEBUG] Erro ao compartilhar imagem:', error);
     }
   };
 

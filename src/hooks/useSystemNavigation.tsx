@@ -48,7 +48,6 @@ export function useSystemNavigation() {
 
       } catch (error) {
         setIsNative(false);
-        console.log('Not running in native environment');
       }
     };
 
@@ -89,7 +88,6 @@ export function useSystemNavigation() {
         `;
         document.head.appendChild(style);
       } catch (error) {
-        console.log('Could not hide system UI');
       }
     }
   };
@@ -99,7 +97,6 @@ export function useSystemNavigation() {
       try {
         await StatusBar.setOverlaysWebView({ overlay: false });
       } catch (error) {
-        console.log('Could not show system UI');
       }
     }
   };

@@ -89,7 +89,6 @@ const Study = () => {
             setStudyLoading(false);
           }
         } catch (error) {
-          console.error('Error in loadStudyData:', error);
           // Não deixar o app travar - definir loading como false mesmo com erro
           setStudyLoading(false);
           
@@ -104,7 +103,6 @@ const Study = () => {
                 variant: "destructive"
               });
             } catch (toastError) {
-              console.error('Could not show toast:', toastError);
             }
           }
         } finally {
@@ -114,7 +112,6 @@ const Study = () => {
       };
       
       loadStudyData().catch(error => {
-        console.error('Unhandled error in loadStudyData:', error);
         clearTimeout(timeoutId);
         setStudyLoading(false);
       });

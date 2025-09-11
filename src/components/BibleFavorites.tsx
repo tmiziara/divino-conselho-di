@@ -84,7 +84,6 @@ const BibleFavorites = () => {
 
       <div className="space-y-4">
         {favorites.map((favorite) => {
-          console.log('Renderizando favorito:', favorite.id, favorite.reference);
           return (
             <Card key={favorite.id} className="p-4">
               <div className="flex items-start gap-4">

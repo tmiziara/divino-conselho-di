@@ -50,8 +50,5 @@ export const useStudyCategories = (studies: BibleStudy[], progress: any[]) => {
 
   // Retornar todas as categorias, mesmo as vazias, na ordem do array categories
   const allCats = categories.map(cat => categoriesMap.get(cat.id)).filter(Boolean);
-  // Log para depuração
-  console.log('useStudyCategories - categories IDs:', categories.map(cat => cat.id));
-  console.log('useStudyCategories - allCats:', JSON.stringify(allCats));
   return allCats;
 }; 

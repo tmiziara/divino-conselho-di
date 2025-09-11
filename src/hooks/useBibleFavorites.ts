@@ -49,7 +49,6 @@ export const useBibleFavorites = () => {
 
       setFavorites(data || []);
     } catch (error) {
-      console.error("Error loading favorites:", error);
     } finally {
       setLoading(false);
     }
@@ -91,7 +90,6 @@ export const useBibleFavorites = () => {
 
       setFavorites(prev => [data, ...prev]);
     } catch (error) {
-      console.error("Error adding favorite:", error);
       throw error;
     }
   };
@@ -121,7 +119,6 @@ export const useBibleFavorites = () => {
         !(fav.book === book && fav.chapter === chapter && fav.verse === verse && (!version || fav.version === version))
       ));
     } catch (error) {
-      console.error("Error removing favorite:", error);
       throw error;
     }
   };
@@ -140,7 +137,6 @@ export const useBibleFavorites = () => {
 
       setFavorites(prev => prev.filter(fav => fav.title !== title));
     } catch (error) {
-      console.error("Error removing favorite:", error);
       throw error;
     }
   };

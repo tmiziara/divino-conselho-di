@@ -94,12 +94,6 @@ const Chat = () => {
   const isPremium = subscription?.subscribed && subscription?.subscription_tier === 'premium';
   
   // DEBUG: Log do status premium
-  console.log('[Chat] Status da assinatura:', {
-    subscription: subscription,
-    subscribed: subscription?.subscribed,
-    tier: subscription?.subscription_tier,
-    isPremium: isPremium
-  });
 
   // Carregar histórico ao montar o componente
   useEffect(() => {
@@ -144,7 +138,6 @@ const Chat = () => {
         setAdTimerInterval(interval);
       }
     } catch (error) {
-      console.error('[Chat] Erro ao iniciar timer do anúncio:', error);
     }
   };
 
@@ -232,19 +225,13 @@ const Chat = () => {
     setMessages(prev => [...prev, userMessage]);
     
     try {
-      console.log('Iniciando envio de mensagem...');
-      
       // Obter contexto local
       const conversationHistory = getLocalContext(user.id);
-      console.log('Contexto local:', conversationHistory);
       
       // Enviar mensagem usando o serviço local
-      console.log('Chamando spiritualChatService...');
       const response = await spiritualChatService.sendMessage(currentMessage, conversationHistory);
-      console.log('Resposta do serviço:', response);
       
       if (response.error) {
-        console.error('Erro na resposta:', response.error);
         toast({
           title: "Erro",
           description: response.error,
@@ -287,7 +274,6 @@ const Chat = () => {
       }
       
     } catch (error: any) {
-      console.error('Erro completo:', error);
       toast({
         title: "Erro na conversa",
         description: "Não foi possível receber uma resposta. Tente novamente. Seu crédito não foi consumido.",
@@ -315,16 +301,13 @@ const Chat = () => {
 
   const handleWatchAd = async () => {
     try {
-      console.log('[Chat] Iniciando handleWatchAd');
       
       let creditsAdded = false;
       
       await showRewardedAd(async () => {
         // Este callback é executado quando o usuário assiste o anúncio completo
-        console.log('[Chat] Anúncio assistido, adicionando créditos...');
         try {
           const result = await spiritualChatService.watchAdForCredits();
-          console.log('[Chat] Resultado do watchAdForCredits:', result);
           if (result.success) {
             creditsAdded = true;
             toast({
@@ -333,12 +316,10 @@ const Chat = () => {
             });
             // Atualizar créditos
             setCredits(result.credits);
-            console.log('[Chat] Créditos atualizados:', result.credits);
             
             // APENAS AQUI: Reiniciar timer do anúncio após recompensa entregue
             startAdTimer();
           } else {
-            console.error('[Chat] Erro ao adicionar créditos:', result.error);
             toast({
               title: "Erro",
               description: result.error || "Erro ao adicionar créditos.",
@@ -346,7 +327,6 @@ const Chat = () => {
             });
           }
         } catch (error) {
-          console.error('[Chat] Erro ao adicionar créditos:', error);
           toast({
             title: "Erro",
             description: "Erro ao processar créditos. Tente novamente.",
@@ -358,7 +338,6 @@ const Chat = () => {
       // Fallback: se após 5 segundos os créditos não foram adicionados, adicionar manualmente
       setTimeout(async () => {
         if (!creditsAdded) {
-          console.log('[Chat] Fallback: adicionando créditos manualmente');
           try {
             const result = await spiritualChatService.watchAdForCredits();
             if (result.success) {
@@ -367,19 +346,16 @@ const Chat = () => {
                 description: "Você ganhou 3 créditos por assistir o anúncio.",
               });
               setCredits(result.credits);
-              console.log('[Chat] Créditos adicionados via fallback:', result.credits);
               
               // APENAS AQUI: Reiniciar timer do anúncio após recompensa entregue
               startAdTimer();
             }
           } catch (error) {
-            console.error('[Chat] Erro no fallback:', error);
           }
         }
       }, 5000);
       
     } catch (error) {
-      console.error('[Chat] Erro ao assistir anúncio:', error);
       toast({
         title: "Erro no anúncio",
         description: "Não foi possível carregar o anúncio. Tente novamente.",

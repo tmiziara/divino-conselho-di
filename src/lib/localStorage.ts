@@ -58,7 +58,6 @@ const decryptData = (encryptedData: string): any => {
     const base64 = atob(reversed);
     return JSON.parse(base64);
   } catch (error) {
-    console.error('Error decrypting data:', error);
     return null;
   }
 };
@@ -101,14 +100,12 @@ export class LocalStorageManager {
       });
       
       if (license.validationKey !== expectedHash) {
-        console.warn('License integrity check failed');
         this.clearLicense();
         return null;
       }
       
       return license;
     } catch (error) {
-      console.error('Error reading license:', error);
       return null;
     }
   }
@@ -150,7 +147,6 @@ export class LocalStorageManager {
       const stored = window.localStorage.getItem(STORAGE_KEYS.CACHE);
       return stored ? JSON.parse(stored) : {};
     } catch (error) {
-      console.error('Error reading cache:', error);
       return {};
     }
   }
@@ -169,7 +165,6 @@ export class LocalStorageManager {
       const stored = window.localStorage.getItem(STORAGE_KEYS.PUBLIC_CONTENT);
       return stored ? JSON.parse(stored) : null;
     } catch (error) {
-      console.error('Error reading public content:', error);
       return null;
     }
   }
@@ -195,7 +190,6 @@ export class LocalStorageManager {
       
       return premiumContent;
     } catch (error) {
-      console.error('Error reading premium content:', error);
       return key ? null : {};
     }
   }

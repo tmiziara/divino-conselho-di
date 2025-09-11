@@ -72,7 +72,6 @@ const Notifications = () => {
       setShowForm(false);
       return Promise.resolve(true);
     } catch (error) {
-      console.error('Erro ao adicionar agendamento:', error);
       return Promise.resolve(false);
     }
   };

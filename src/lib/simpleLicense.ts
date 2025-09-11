@@ -28,7 +28,6 @@ export class SimpleLicenseManager {
     try {
       window.localStorage.setItem(LICENSE_KEY, JSON.stringify(license));
     } catch (error) {
-      console.error('Error saving license:', error);
     }
   }
 
@@ -48,7 +47,6 @@ export class SimpleLicenseManager {
       
       return license;
     } catch (error) {
-      console.error('Error reading license:', error);
       return null;
     }
   }
@@ -58,7 +56,6 @@ export class SimpleLicenseManager {
     try {
       window.localStorage.removeItem(LICENSE_KEY);
     } catch (error) {
-      console.error('Error clearing license:', error);
     }
   }
 
@@ -132,7 +129,6 @@ export class SimpleLicenseManager {
       // Aqui você pode integrar com Stripe ou outro sistema de pagamento
       return false;
     } catch (error) {
-      console.error('Error validating with server:', error);
       return false;
     }
   }
