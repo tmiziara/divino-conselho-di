@@ -1,17 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
 import { 
-  ArrowLeft, 
   BookOpen, 
   Heart, 
   HeartOff,
   CheckCircle, 
-  Circle,
   Target,
   Lightbulb,
   ChevronLeft,
@@ -25,6 +22,7 @@ import { useBibleStudies, type BibleStudyChapter } from "@/hooks/useBibleStudies
 import { useBibleFavorites } from "@/hooks/useBibleFavorites";
 import { useToast } from "@/hooks/use-toast";
 import { useAdManager } from "@/hooks/useAdManager";
+import { useContentAccess } from "@/hooks/useContentAccess";
 
 const StudyChapter = () => {
   const { studyId, chapterId } = useParams<{ studyId: string; chapterId: string }>();
@@ -32,9 +30,19 @@ const StudyChapter = () => {
   const [chapter, setChapter] = useState<BibleStudyChapter | null>(null);
   const [study, setStudy] = useState<any>(null);
   const [isMarkingCompleted, setIsMarkingCompleted] = useState(false);
+  const [showReminderCta, setShowReminderCta] = useState(false);
+  const [studyLoading, setStudyLoading] = useState(true);
+  // Phase 3: lock premium chapters behind a clear paywall.
+  const [isPremiumLocked, setIsPremiumLocked] = useState(false);
+  // Phase 4: allow a rewarded ad to unlock a single premium chapter preview per session.
+  const [previewUnlocked, setPreviewUnlocked] = useState(false);
+  const [isUnlockingPreview, setIsUnlockingPreview] = useState(false);
+  const [isPreparingRewarded, setIsPreparingRewarded] = useState(false);
+  const preparingRewardedRef = useRef(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { hasPremiumAccess, loading: accessLoading } = useContentAccess();
   const { 
     chapters, 
     loading, 
@@ -43,15 +51,74 @@ const StudyChapter = () => {
     markChapterAsCompleted
   } = useBibleStudies();
   
-  const { favorites, addToFavorites, removeFromFavorites, removeFavoriteByTitle, loadFavorites } = useBibleFavorites();
-  const { incrementStudyCount } = useAdManager({ versesPerAd: 5, studiesPerAd: 1 });
+  const { favorites, addToFavorites, removeFavoriteByTitle, loadFavorites } = useBibleFavorites();
+  const { incrementStudyCount, showRewardedAd, prepareRewardedAd, isRewardedReady } = useAdManager({ versesPerAd: 5, studiesPerAd: 1 });
+  const REMINDER_CTA_KEY = "reminder_cta_study_v1";
+  const PREVIEW_KEY_PREFIX = "rewarded_preview_chapter_v1";
+  const safeStorageSet = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      // Ignore storage errors to keep UI functional
+    }
+  };
+
+  const getPreviewKey = () => {
+    if (!studyId || !chapterId) return null;
+    return `${PREVIEW_KEY_PREFIX}_${studyId}_${chapterId}`;
+  };
+
+  const hasPreviewAccess = () => {
+    if (previewUnlocked) return true;
+    const key = getPreviewKey();
+    if (!key) return false;
+    try {
+      return sessionStorage.getItem(key) === "true";
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const savePreviewAccess = () => {
+    const key = getPreviewKey();
+    if (!key) return;
+    try {
+      sessionStorage.setItem(key, "true");
+    } catch (error) {
+    }
+  };
 
   useEffect(() => {
-    if (studyId) {
-      fetchChapters(studyId);
-      fetchStudyInfo(studyId);
-    }
-  }, [studyId]);
+    if (!studyId || accessLoading) return;
+
+    const loadStudy = async () => {
+      setStudyLoading(true);
+      const studyData = await fetchStudyInfo(studyId);
+      const previewAvailable = previewUnlocked || hasPreviewAccess();
+      const hasAccess = hasPremiumAccess();
+      const isPremiumStudy = !!studyData?.is_premium;
+      const locked = isPremiumStudy && !hasAccess && !previewAvailable;
+      setIsPremiumLocked(locked);
+
+      if (isPremiumStudy && !hasAccess) {
+        if (previewAvailable && chapterId) {
+          const chapterNumber = parseInt(chapterId, 10);
+          if (Number.isFinite(chapterNumber)) {
+            await loadPreviewChapter(studyId, chapterNumber);
+          }
+        } else {
+          setChapter(null);
+        }
+        setStudyLoading(false);
+        return;
+      }
+
+      await fetchChapters(studyId);
+      setStudyLoading(false);
+    };
+
+    loadStudy().catch(() => setStudyLoading(false));
+  }, [studyId, accessLoading, hasPremiumAccess, previewUnlocked]);
 
   useEffect(() => {
     if (user) {
@@ -60,18 +127,46 @@ const StudyChapter = () => {
   }, [user]);
 
   useEffect(() => {
+    if (isPremiumLocked) {
+      setChapter(null);
+      return;
+    }
     if (chapters.length > 0 && chapterId) {
       const currentChapter = chapters.find(c => c.chapter_number === parseInt(chapterId));
       setChapter(currentChapter || null);
     }
-  }, [chapters, chapterId]);
+  }, [chapters, chapterId, isPremiumLocked]);
+
+  useEffect(() => {
+    // Keep preview state in sync with sessionStorage per chapter.
+    setPreviewUnlocked(hasPreviewAccess());
+  }, [studyId, chapterId, previewUnlocked]);
+
+  useEffect(() => {
+    if (!chapterId) return;
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+  }, [chapterId]);
+
+  useEffect(() => {
+    if (!isPremiumLocked || isRewardedReady || isPreparingRewarded) return;
+    if (preparingRewardedRef.current) return;
+    preparingRewardedRef.current = true;
+    setIsPreparingRewarded(true);
+    prepareRewardedAd()
+      .finally(() => {
+        preparingRewardedRef.current = false;
+        setIsPreparingRewarded(false);
+      });
+  }, [isPremiumLocked, isRewardedReady, prepareRewardedAd]);
 
   const fetchStudyInfo = async (slug: string) => {
     try {
       // Usar o sistema local em vez do Supabase
       const { localContent } = await import('@/lib/localContent');
       const studyData = await localContent.getStudyBySlug(slug);
-      
+
       if (studyData) {
         setStudy({
           id: studyData.id,
@@ -80,20 +175,82 @@ const StudyChapter = () => {
           cover_image: studyData.cover_image,
           total_chapters: studyData.total_chapters,
           is_active: studyData.is_active,
+          is_premium: studyData.is_premium,
+          slug: studyData.slug,
           created_at: studyData.created_at,
           updated_at: studyData.updated_at
         });
       }
+      return studyData || null;
     } catch (error) {
+      return null;
     }
   };
 
+  const loadPreviewChapter = async (slug: string, chapterNumber: number) => {
+    try {
+      // Phase 4 fix: load only the requested premium chapter when unlocked via rewarded ad.
+      const { localContent } = await import('@/lib/localContent');
+      const studyData = await localContent.getStudyBySlug(slug);
+      if (!studyData) {
+        return null;
+      }
+      const preview = await localContent.getChapter(studyData.id, chapterNumber);
+      if (preview) {
+        setChapter(preview);
+      }
+      return preview || null;
+    } catch (error) {
+      return null;
+    }
+  };
   const handleAuthClick = () => {
     setShowAuth(true);
   };
 
+  const runRewardedUnlock = async () => {
+    if (!studyId || !chapterId) return;
+    await showRewardedAd(async () => {
+      savePreviewAccess();
+      setPreviewUnlocked(true);
+      setIsPremiumLocked(false);
+      const chapterNumber = parseInt(chapterId, 10);
+      if (Number.isFinite(chapterNumber)) {
+        await loadPreviewChapter(studyId, chapterNumber);
+      }
+      toast({
+        title: "Prévia liberada",
+        description: "Este capítulo premium foi liberado após o anúncio."
+      });
+    });
+  };
+
+  const handleUnlockPreview = async () => {
+    if (!studyId || !chapterId) return;
+
+    if (!isRewardedReady) {
+      return;
+    }
+
+    setIsUnlockingPreview(true);
+    await runRewardedUnlock();
+    setIsUnlockingPreview(false);
+  };
+
+  // Note: rewarded ads must be initiated by explicit user gesture on Android.
+
   const handleMarkAsCompleted = async () => {
     if (!chapter || !study) {
+      return;
+    }
+
+    if (isChapterCompleted(chapter.id)) {
+      const nextChapter = getNextChapter();
+      if (nextChapter) {
+        navigate(`/estudo/${studyId}/capitulo/${nextChapter.chapter_number}`);
+      } else {
+        navigate(`/estudo/${studyId}`);
+      }
       return;
     }
     
@@ -102,8 +259,17 @@ const StudyChapter = () => {
     try {
       await markChapterAsCompleted(chapter.id, study.id);
       
-      // Incrementar contador de ads quando capítulo é completado
-      incrementStudyCount();
+      // Phase 4: reduce interstitials in the completion moment with a delay/cooldown.
+      incrementStudyCount({ source: 'study', sensitive: true, delayMs: 2000 });
+
+      // Phase 1: contextual reminder CTA after completion (once)
+      try {
+        if (!localStorage.getItem(REMINDER_CTA_KEY)) {
+          setShowReminderCta(true);
+        }
+      } catch (error) {
+        setShowReminderCta(true);
+      }
       
       // Verificar se há próximo capítulo
       const nextChapter = getNextChapter();
@@ -147,24 +313,32 @@ const StudyChapter = () => {
       fav.title === verseKey
     );
 
-    if (isFavorite) {
-      await removeFavoriteByTitle(verseKey);
+    try {
+      if (isFavorite) {
+        await removeFavoriteByTitle(verseKey);
+        toast({
+          title: "Removido dos favoritos",
+          description: "Versículo removido dos favoritos"
+        });
+      } else {
+        await addToFavorites({
+          book: 'study',
+          chapter: chapter.chapter_number,
+          verse: 0,
+          title: verseKey,
+          content: chapter.main_verse,
+          reference: chapter.main_verse_reference
+        });
+        toast({
+          title: "Adicionado aos favoritos",
+          description: `${chapter.main_verse_reference} adicionado aos favoritos`
+        });
+      }
+    } catch (error: any) {
       toast({
-        title: "Removido dos favoritos",
-        description: "Versículo removido dos favoritos"
-      });
-    } else {
-      await addToFavorites({
-        book: 'study',
-        chapter: chapter.chapter_number,
-        verse: 0,
-        title: verseKey,
-        content: chapter.main_verse,
-        reference: chapter.main_verse_reference
-      });
-      toast({
-        title: "Adicionado aos favoritos",
-        description: `${chapter.main_verse_reference} adicionado aos favoritos`
+        title: "Não foi possível salvar o favorito",
+        description: error?.message || "Tente novamente.",
+        variant: "destructive"
       });
     }
   };
@@ -186,24 +360,32 @@ const StudyChapter = () => {
       fav.title === prayerKey
     );
 
-    if (isFavorite) {
-      await removeFavoriteByTitle(prayerKey);
+    try {
+      if (isFavorite) {
+        await removeFavoriteByTitle(prayerKey);
+        toast({
+          title: "Removido dos favoritos",
+          description: "Oração removida dos favoritos"
+        });
+      } else {
+        await addToFavorites({
+          book: 'study',
+          chapter: chapter.chapter_number,
+          verse: 1,
+          title: prayerKey,
+          content: chapter.chapter_prayer,
+          reference: `Oração - ${chapter.title}`
+        });
+        toast({
+          title: "Adicionado aos favoritos",
+          description: `Oração de "${chapter.title}" adicionada aos favoritos`
+        });
+      }
+    } catch (error: any) {
       toast({
-        title: "Removido dos favoritos",
-        description: "Oração removida dos favoritos"
-      });
-    } else {
-      await addToFavorites({
-        book: 'study',
-        chapter: chapter.chapter_number,
-        verse: 1,
-        title: prayerKey,
-        content: chapter.chapter_prayer,
-        reference: `Oração - ${chapter.title}`
-      });
-      toast({
-        title: "Adicionado aos favoritos",
-        description: `Oração de "${chapter.title}" adicionada aos favoritos`
+        title: "Não foi possível salvar o favorito",
+        description: error?.message || "Tente novamente.",
+        variant: "destructive"
       });
     }
   };
@@ -244,7 +426,6 @@ const StudyChapter = () => {
         });
         return;
       }
-      // Web Share API
       if (navigator.share) {
         try {
           await navigator.share({ title, text });
@@ -252,7 +433,6 @@ const StudyChapter = () => {
         } catch (error) {
         }
       }
-      // Fallback: copiar
       await navigator.clipboard.writeText(`${title}\n\n${text}`);
     } catch (err) {
     }
@@ -277,6 +457,122 @@ const StudyChapter = () => {
               <Button className="divine-button" onClick={handleAuthClick}>
                 Fazer Login
               </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
+      </div>
+    );
+  }
+
+  if ((studyLoading && !chapter) || accessLoading) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-background">
+        <Navigation onAuthClick={handleAuthClick} />
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="spiritual-card bg-card text-card-foreground dark:bg-card dark:text-white">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded animate-pulse mb-2" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-20 bg-muted rounded animate-pulse mb-4" />
+                  <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isEffectivelyLocked = isPremiumLocked && !previewUnlocked;
+
+  if (isEffectivelyLocked) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-background">
+        <Navigation onAuthClick={handleAuthClick} />
+        <div className="container mx-auto px-6 py-20">
+          <Card className="spiritual-card max-w-xl mx-auto bg-card dark:bg-card">
+            <CardHeader>
+              <CardTitle className="text-center heavenly-text">
+                <BookOpen className="w-8 h-8 mx-auto mb-2 text-amber-500" />
+                Capítulo premium bloqueado
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-muted-foreground">
+                Este capítulo faz parte do plano Premium.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Assista a um anúncio para liberar uma prévia deste capítulo.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={handleUnlockPreview}
+                  disabled={isUnlockingPreview || isPreparingRewarded}
+                >
+                  {isUnlockingPreview ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                      Abrindo anúncio...
+                    </>
+                  ) : !isRewardedReady ? (
+                    <>
+                      {isPreparingRewarded && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                      )}
+                      Carregando anúncio...
+                    </>
+                  ) : (
+                    "Ver anúncio e liberar prévia"
+                  )}
+                </Button>
+                <Button
+                  className="divine-button"
+                  onClick={() => navigate('/assinatura?plan=premium')}
+                >
+                  Fazer assinatura Premium
+                </Button>
+                <Link to={"/estudos"}>
+                  <Button variant="outline">
+                    Ver outros estudos
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
+      </div>
+    );
+  }
+
+  if (!chapter && !loading && !studyLoading && !accessLoading) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-background">
+        <Navigation onAuthClick={handleAuthClick} />
+        <div className="container mx-auto px-6 py-20">
+          <Card className="spiritual-card max-w-xl mx-auto bg-card dark:bg-card">
+            <CardHeader>
+              <CardTitle className="text-center heavenly-text">
+                <BookOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                Capítulo não encontrado
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-muted-foreground">
+                O capítulo que você está procurando não existe.
+              </p>
+              <Link to={`/estudo/${studyId || ''}`}>
+                <Button variant="outline">
+                  Voltar ao Estudo
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -322,7 +618,7 @@ const StudyChapter = () => {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-                                <Link to={`/estudo/${studyId}`}>
+              <Link to={`/estudo/${studyId}`}>
                 <Button variant="ghost">
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Voltar ao Estudo
@@ -413,7 +709,7 @@ const StudyChapter = () => {
                 </div>
                 <div className="prose prose-sm max-w-none space-y-2">
                   {chapter.reflective_reading
-                    .replace(/\\n\\n/g, '\n\n')
+                    .replace(/\n\n/g, '\n\n')
                     .split('\n\n')
                     .filter(paragraph => paragraph.trim().length > 0)
                     .map((paragraph, index) => (
@@ -497,7 +793,7 @@ const StudyChapter = () => {
                 </div>
                 <div className="bg-purple-50 dark:bg-purple-950/20 p-6 rounded-lg border-l-4 border-purple-500">
                   <p className="font-medium text-justify text-base">
-                    {chapter.practical_application.replace(/\\n/g, '\n')}
+                    {chapter.practical_application.replace(/\n/g, '\n')}
                   </p>
                 </div>
               </div>
@@ -531,6 +827,38 @@ const StudyChapter = () => {
                 )}
               </Button>
             </div>
+
+            {/* Phase 1: contextual reminder CTA */}
+            {showReminderCta && (
+              <Card className="spiritual-card bg-card dark:bg-zinc-900">
+                <CardContent className="p-4 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Quer receber lembretes diários para continuar seus estudos?
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      onClick={() => {
+                        // Phase 2: guided setup for study completion reminders.
+                        safeStorageSet(REMINDER_CTA_KEY, "dismissed");
+                        setShowReminderCta(false);
+                        navigate("/notificacoes?guided=1&source=study&theme=auto");
+                      }}
+                    >
+                      Ativar lembretes
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        safeStorageSet(REMINDER_CTA_KEY, "dismissed");
+                        setShowReminderCta(false);
+                      }}
+                    >
+                      Agora não
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Navegação entre capítulos */}
             <div className="flex items-center justify-between bg-muted/30 p-4 rounded-lg">

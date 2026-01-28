@@ -5,6 +5,7 @@ import { useAuth } from './useAuth';
 import { useSubscription } from './useSubscription';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { trackEvent } from '@/lib/analytics';
 
 export interface BibleStudy {
   id: string;
@@ -56,6 +57,17 @@ export const useBibleStudies = () => {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const chapterCache = new Map<string, BibleStudyChapter[]>();
+
+  const createLocalUuid = () => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+      const random = (Math.random() * 16) | 0;
+      const value = char === 'x' ? random : (random & 0x3) | 0x8;
+      return value.toString(16);
+    });
+  };
 
   // Função para verificar se tem acesso premium
   const hasPremiumAccess = useCallback(() => {
@@ -233,24 +245,41 @@ export const useBibleStudies = () => {
     }
 
     try {
+      const stored = window.localStorage.getItem(`progress_${user.id}`);
+      const progress = stored ? JSON.parse(stored) : [];
+      const existingEntry = progress.find(
+        (item: UserStudyProgress) => item.chapter_id === chapterId
+      );
+      const now = new Date().toISOString();
       const newProgress: UserStudyProgress = {
-        id: `${user.id}_${chapterId}`,
+        id: existingEntry?.id ?? createLocalUuid(),
         user_id: user.id,
         study_id: studyId,
         chapter_id: chapterId,
         is_completed: true,
-        completed_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        completed_at: now,
+        created_at: existingEntry?.created_at ?? now,
+        updated_at: now
       };
 
       // Salvar no localStorage
-      const stored = window.localStorage.getItem(`progress_${user.id}`);
-      const progress = stored ? JSON.parse(stored) : [];
       const updatedProgress = [...progress.filter((p: UserStudyProgress) => p.chapter_id !== chapterId), newProgress];
       window.localStorage.setItem(`progress_${user.id}`, JSON.stringify(updatedProgress));
       
       setProgress(updatedProgress);
+
+      // Phase 5: sync progress to Supabase for cross-device continuity.
+      const { error: syncError } = await supabase
+        .from('user_study_progress')
+        .upsert(newProgress, { onConflict: 'user_id,chapter_id' });
+
+      if (!syncError) {
+        trackEvent({
+          event_name: 'study_complete',
+          user_id: user.id,
+          properties: { study_id: studyId, chapter_id: chapterId },
+        });
+      }
       
       toast({
         title: "Capítulo concluído!",
@@ -367,6 +396,17 @@ export const useBibleStudies = () => {
     
     loadInitialData();
   }, [user?.id]); // Usar apenas user.id como dependência estável
+
+  useEffect(() => {
+    // Phase 5: update progress state when background sync updates local storage.
+    const handleProgressUpdate = (event: CustomEvent) => {
+      setProgress(event.detail || []);
+    };
+    window.addEventListener('studyProgressUpdated', handleProgressUpdate as EventListener);
+    return () => {
+      window.removeEventListener('studyProgressUpdated', handleProgressUpdate as EventListener);
+    };
+  }, []);
 
   return {
     studies,

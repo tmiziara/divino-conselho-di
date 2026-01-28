@@ -72,6 +72,28 @@ const saveChatHistory = (userId: string, messages: ChatMessage[]) => {
   }
 };
 
+// Phase 5: sync a lightweight chat summary for cross-device continuity.
+const syncChatSummary = async (userId: string, messages: ChatMessage[]) => {
+  try {
+    if (messages.length === 0) return;
+    const lastMessage = messages[messages.length - 1];
+    await supabase
+      .from('chat_history_summaries')
+      .upsert(
+        {
+          user_id: userId,
+          total_messages: messages.length,
+          last_message_at: lastMessage.timestamp.toISOString(),
+          last_message_preview: lastMessage.content.slice(0, 160),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
+  } catch (error) {
+    // Best-effort only; summary should not block chat.
+  }
+};
+
 const Chat = () => {
   const { user, signOut } = useAuth();
   const { subscription } = useSubscription();
@@ -89,6 +111,8 @@ const Chat = () => {
   const [adTimerInterval, setAdTimerInterval] = useState<NodeJS.Timeout | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
+  const summarySyncTimeoutRef = useRef<number | null>(null);
 
   // VERIFICAR SE É USUÁRIO PREMIUM
   const isPremium = subscription?.subscribed && subscription?.subscription_tier === 'premium';
@@ -105,6 +129,10 @@ const Chat = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   // Cleanup do timer quando o componente for desmontado
   useEffect(() => {
     return () => {
@@ -113,6 +141,14 @@ const Chat = () => {
       }
     };
   }, [adTimerInterval]);
+
+  useEffect(() => {
+    return () => {
+      if (summarySyncTimeoutRef.current !== null) {
+        window.clearTimeout(summarySyncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Função para iniciar o timer do anúncio
   const startAdTimer = () => {
@@ -151,6 +187,16 @@ const Chat = () => {
   };
 
   // Função para carregar histórico de mensagens
+  const queueChatSummarySync = (userId: string, updatedMessages: ChatMessage[]) => {
+    if (summarySyncTimeoutRef.current !== null) {
+      window.clearTimeout(summarySyncTimeoutRef.current);
+    }
+    summarySyncTimeoutRef.current = window.setTimeout(() => {
+      syncChatSummary(userId, updatedMessages);
+      summarySyncTimeoutRef.current = null;
+    }, 1000);
+  };
+
   const loadChatHistoryLocal = (userId: string) => {
     const history = loadChatHistory(userId);
     if (history && history.length === 0) {
@@ -163,8 +209,12 @@ const Chat = () => {
       };
       setMessages([welcomeMessage]);
       saveChatHistory(userId, [welcomeMessage]);
+      // Phase 5: keep a server-side summary for cross-device resume.
+      queueChatSummarySync(userId, [welcomeMessage]);
     } else if (history) {
       setMessages(history);
+      // Phase 5: refresh summary from local history on load.
+      queueChatSummarySync(userId, history);
     }
   };
 
@@ -222,7 +272,11 @@ const Chat = () => {
       timestamp: new Date()
     };
     
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => {
+      const nextMessages = [...prev, userMessage];
+      messagesRef.current = nextMessages;
+      return nextMessages;
+    });
     
     try {
       // Obter contexto local
@@ -249,7 +303,10 @@ const Chat = () => {
           timestamp: new Date()
         };
         
-        setMessages(prev => [...prev, aiMessage]);
+        const baseMessages = messagesRef.current;
+        const updatedMessages = [...baseMessages, aiMessage];
+        setMessages(updatedMessages);
+        messagesRef.current = updatedMessages;
         
         // Salvar contexto local (mensagem do usuário + resposta da IA)
         const newContext = [
@@ -260,8 +317,9 @@ const Chat = () => {
         saveLocalContext(user.id, newContext);
         
         // Salvar histórico completo
-        const updatedMessages = [...messages, userMessage, aiMessage];
         saveChatHistory(user.id, updatedMessages);
+        // Phase 5: update summary in Supabase for cross-device continuity.
+        queueChatSummarySync(user.id, updatedMessages);
       }
 
       // Atualizar créditos

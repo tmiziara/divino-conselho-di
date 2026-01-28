@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Device } from '@capacitor/device';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 // Declarações de tipo para Cordova Local Notifications
 declare global {
@@ -102,6 +104,7 @@ const SCHEDULES_KEY = 'notification_schedules';
 const PRAYER_SCHEDULES_KEY = 'prayer_schedules'; // NOVA chave
 const USED_VERSES_KEY = 'used_verses';
 const NOTIFICATION_STATE_KEY = 'notification_system_state';
+const NOTIFICATION_META_KEY = 'notification_schedules_meta';
 
 // Interface para controle de estado
 interface NotificationState {
@@ -120,7 +123,9 @@ const isCordovaAvailable = (): boolean => {
   return hasNotificationPlugin;
 };
 
-export const useNotifications = () => {
+export const useNotifications = (options?: { enableInitialization?: boolean }) => {
+  const enableInitialization = options?.enableInitialization ?? true;
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState<NotificationSchedule[]>([]);
   const [prayerSchedules, setPrayerSchedules] = useState<PrayerSchedule[]>([]); // NOVO estado
   const [verses, setVerses] = useState<Verse[]>([]);
@@ -135,6 +140,18 @@ export const useNotifications = () => {
     checkPlatform();
   }, []);
 
+  useEffect(() => {
+    // Phase 5: refresh schedules when cross-device sync updates local storage.
+    const handleSyncUpdate = () => {
+      loadSchedules();
+      loadPrayerSchedules();
+    };
+    window.addEventListener('notificationSchedulesUpdated', handleSyncUpdate as EventListener);
+    return () => {
+      window.removeEventListener('notificationSchedulesUpdated', handleSyncUpdate as EventListener);
+    };
+  }, []);
+
   const checkPlatform = async () => {
     try {
       const info = await Device.getInfo();
@@ -146,6 +163,7 @@ export const useNotifications = () => {
 
   // Carregar dados iniciais apenas uma vez
   useEffect(() => {
+    if (!enableInitialization) return;
     if (isMobile === true && !initializationRef.current) {
       initializationRef.current = true;
       // Aguardar um pouco para garantir que o Cordova esteja carregado
@@ -159,6 +177,7 @@ export const useNotifications = () => {
 
   // Verificar persistência das notificações quando o app é aberto
   useEffect(() => {
+    if (!enableInitialization) return;
     if (isMobile) {
       const checkOnAppOpen = async () => {
         await checkNotificationPersistence();
@@ -453,7 +472,28 @@ export const useNotifications = () => {
   const saveSchedules = (newSchedules: NotificationSchedule[]) => {
     try {
       localStorage.setItem(SCHEDULES_KEY, JSON.stringify(newSchedules));
+      // Phase 5: bump local meta so cross-device sync has a timestamp.
+      localStorage.setItem(
+        NOTIFICATION_META_KEY,
+        JSON.stringify({ updated_at: new Date().toISOString() })
+      );
       setSchedules(newSchedules);
+      // Phase 5: push schedules to Supabase when logged in.
+      if (user?.id) {
+        supabase
+          .from('notification_schedules')
+          .upsert(
+            {
+              user_id: user.id,
+              schedules: newSchedules,
+              prayer_schedules: prayerSchedules,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id' }
+          )
+          .then()
+          .catch(() => {});
+      }
     } catch (error) {
     }
   };
@@ -462,7 +502,28 @@ export const useNotifications = () => {
   const savePrayerSchedules = (newPrayerSchedules: PrayerSchedule[]) => {
     try {
       localStorage.setItem(PRAYER_SCHEDULES_KEY, JSON.stringify(newPrayerSchedules));
+      // Phase 5: bump local meta so cross-device sync has a timestamp.
+      localStorage.setItem(
+        NOTIFICATION_META_KEY,
+        JSON.stringify({ updated_at: new Date().toISOString() })
+      );
       setPrayerSchedules(newPrayerSchedules);
+      // Phase 5: push schedules to Supabase when logged in.
+      if (user?.id) {
+        supabase
+          .from('notification_schedules')
+          .upsert(
+            {
+              user_id: user.id,
+              schedules: schedules,
+              prayer_schedules: newPrayerSchedules,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id' }
+          )
+          .then()
+          .catch(() => {});
+      }
     } catch (error) {
     }
   };
@@ -998,6 +1059,7 @@ export const useNotifications = () => {
       localStorage.removeItem(PRAYER_SCHEDULES_KEY); // NOVA chave
       localStorage.removeItem(USED_VERSES_KEY);
       localStorage.removeItem(NOTIFICATION_STATE_KEY);
+      localStorage.removeItem(NOTIFICATION_META_KEY);
       
       // Resetar estado
       setSchedules([]);
@@ -1006,6 +1068,25 @@ export const useNotifications = () => {
       
       // Resetar flag de inicialização
       initializationRef.current = false;
+
+      // Phase 5: ensure cross-device sync does not rehydrate old schedules.
+      const clearedAt = new Date().toISOString();
+      localStorage.setItem(NOTIFICATION_META_KEY, JSON.stringify({ updated_at: clearedAt }));
+      if (user?.id) {
+        supabase
+          .from('notification_schedules')
+          .upsert(
+            {
+              user_id: user.id,
+              schedules: [],
+              prayer_schedules: [],
+              updated_at: clearedAt,
+            },
+            { onConflict: 'user_id' }
+          )
+          .then()
+          .catch(() => {});
+      }
       
       
       toast({

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Heart, HeartOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { useBibleData } from "@/hooks/useBibleData";
@@ -11,6 +12,7 @@ import { useBibleFavorites } from "@/hooks/useBibleFavorites";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useNavigate } from "react-router-dom";
 
 const BOOK_NAMES = {
   "gn": "Gênesis", "ex": "Êxodo", "lv": "Levítico", "nm": "Números", "dt": "Deuteronômio",
@@ -36,6 +38,9 @@ const BIBLE_VERSIONS = [
   { value: "pt_acf", label: "ACF", premium: true },
 ];
 
+const PREMIUM_TRIAL_KEY = "bible_premium_trial_expires_at";
+const TRIAL_DURATION_HOURS = 24;
+
 interface BibleReaderProps {
   onAuthClick?: () => void;
 }
@@ -43,40 +48,124 @@ interface BibleReaderProps {
 const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { subscription } = useSubscription();
+  const { subscription, loading: subscriptionLoading } = useSubscription();
+  const navigate = useNavigate();
+  // Phase 3: track a local 24h premium Bible trial for version selection.
+  const [premiumTrialExpiresAt, setPremiumTrialExpiresAt] = useState<string | null>(null);
+  const [showPremiumDialog, setShowPremiumDialog] = useState(false);
+  const [pendingVersion, setPendingVersion] = useState<string | null>(null);
   const [bibleVersion, setBibleVersion] = useState<string>("nvi");
   const { 
     chapters, verses, selectedBook, selectedChapter, 
     setSelectedBook, setSelectedChapter,
     loadChapters, loadVerses 
   } = useBibleData(bibleVersion);
-  const { saveProgress, getLastPosition } = useBibleProgress();
+  const { saveProgress, lastPosition, hasLoaded } = useBibleProgress();
   const { favorites, addToFavorites, removeFromFavorites, loadFavorites } = useBibleFavorites();
+
+  // Phase 3 fix: treat legacy "basic" as premium access, but do not grant access while loading.
+  const hasPremiumSubscription =
+    subscription.subscribed && (subscription.subscription_tier === "premium" || subscription.subscription_tier === "basic");
 
   const BIBLICAL_BOOKS = Object.keys(BOOK_NAMES);
 
   useEffect(() => {
+    if (!hasLoaded) return;
+
     if (user) {
       loadFavorites();
-      const lastPosition = getLastPosition();
       if (lastPosition.book) {
         setSelectedBook(lastPosition.book);
-        if (lastPosition.chapter) setSelectedChapter(lastPosition.chapter);
-        if (lastPosition.version) setBibleVersion(lastPosition.version);
+        setSelectedChapter(lastPosition.chapter ?? 1);
+        setBibleVersion(lastPosition.version ?? "nvi");
       } else {
         setSelectedBook("gn");
+        setSelectedChapter(1);
       }
     } else {
       setSelectedBook("gn");
       setSelectedChapter(1);
     }
-  }, [user]);
+  }, [user, hasLoaded, lastPosition?.book, lastPosition?.chapter, lastPosition?.version]);
+
+  const getTrialStorageKey = () => {
+    // Phase 3 fix: scope the trial to the current user (or guest) to avoid unintended sharing.
+    const identity = user?.id || "guest";
+    return `${PREMIUM_TRIAL_KEY}_${identity}`;
+  };
+
+  useEffect(() => {
+    // Phase 3: restore local premium trial state for Bible versions.
+    try {
+      const stored = localStorage.getItem(getTrialStorageKey());
+      if (stored) setPremiumTrialExpiresAt(stored);
+    } catch (error) {
+      // Ignore storage errors to keep the reader usable.
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (selectedBook) {
       loadChapters(selectedBook, bibleVersion);
     }
   }, [selectedBook, bibleVersion]);
+
+  const isTrialActive = () => {
+    if (!premiumTrialExpiresAt) return false;
+    const expiresAt = new Date(premiumTrialExpiresAt).getTime();
+    return Number.isFinite(expiresAt) && expiresAt > Date.now();
+  };
+
+  const startPremiumTrial = () => {
+    const expiresAt = new Date(Date.now() + TRIAL_DURATION_HOURS * 60 * 60 * 1000).toISOString();
+    try {
+      localStorage.setItem(getTrialStorageKey(), expiresAt);
+    } catch (error) {
+      // Ignore storage errors to keep the reader usable.
+    }
+    setPremiumTrialExpiresAt(expiresAt);
+    if (pendingVersion) {
+      setBibleVersion(pendingVersion);
+    }
+    setPendingVersion(null);
+    setShowPremiumDialog(false);
+    toast({
+      title: "Teste ativado",
+      description: "Você liberou as versões premium por 24h.",
+    });
+  };
+
+  const handleBibleVersionChange = (version: string) => {
+    const selected = BIBLE_VERSIONS.find(ver => ver.value === version);
+    const canUsePremium = hasPremiumSubscription || isTrialActive();
+    if (subscriptionLoading && selected?.premium) {
+      // Phase 3 fix: avoid granting premium while subscription is unknown.
+      toast({
+        title: "Carregando assinatura...",
+        description: "Aguarde para acessar versões premium.",
+      });
+      return;
+    }
+    if (selected?.premium && !canUsePremium) {
+      setPendingVersion(version);
+      setShowPremiumDialog(true);
+      return;
+    }
+    setBibleVersion(version);
+  };
+
+  useEffect(() => {
+    // Phase 3 fix: if trial expires or subscription is removed, downgrade premium versions.
+    const isPremiumVersion = BIBLE_VERSIONS.some(ver => ver.value === bibleVersion && ver.premium);
+    const canUsePremium = hasPremiumSubscription || isTrialActive();
+    if (isPremiumVersion && !canUsePremium && !subscriptionLoading) {
+      setBibleVersion("nvi");
+      toast({
+        title: "Versão premium expirada",
+        description: "Sua versão foi restaurada para NVI.",
+      });
+    }
+  }, [bibleVersion, hasPremiumSubscription, premiumTrialExpiresAt, subscriptionLoading]);
 
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -125,26 +214,34 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
     const version = verse.versao?.toLowerCase() || bibleVersion;
     const isFavorite = isVerseFavorite(verse, version);
 
-    if (isFavorite) {
-      await removeFromFavorites(verse.livro, verse.capitulo, verse.versiculo, version);
-      toast({ title: "Removido dos favoritos" });
-    } else {
-      await addToFavorites({
-        book: verse.livro,
-        chapter: verse.capitulo,
-        verse: verse.versiculo,
-        title: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
-        content: verse.texto,
-        reference: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
-        version: version
+    try {
+      if (isFavorite) {
+        await removeFromFavorites(verse.livro, verse.capitulo, verse.versiculo, version);
+        toast({ title: "Removido dos favoritos" });
+      } else {
+        await addToFavorites({
+          book: verse.livro,
+          chapter: verse.capitulo,
+          verse: verse.versiculo,
+          title: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
+          content: verse.texto,
+          reference: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
+          version: version
+        });
+        toast({ title: "Adicionado aos favoritos" });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Não foi possível salvar o favorito",
+        description: error?.message || "Tente novamente.",
+        variant: "destructive"
       });
-      toast({ title: "Adicionado aos favoritos" });
     }
   };
 
-  const isVerseFavorite = (verse: any) => {
+  const isVerseFavorite = (verse: any, forcedVersion?: string) => {
     // Usar a versão do versículo específico ou a versão global como fallback
-    const version = verse.versao?.toLowerCase() || bibleVersion;
+    const version = forcedVersion || verse.versao?.toLowerCase() || bibleVersion;
     return favorites.some(fav =>
       fav.book === verse.livro &&
       fav.chapter === verse.capitulo &&
@@ -170,26 +267,53 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
 
       {/* Versão da Bíblia */}
       <div className="flex justify-center">
-        <Select value={bibleVersion} onValueChange={(v) => {
-          const selected = BIBLE_VERSIONS.find(ver => ver.value === v);
-          if (selected?.premium && (!subscription.subscribed || subscription.subscription_tier !== "premium")) {
-            toast({ title: "Versão Premium", description: "Apenas para assinantes Premium", variant: "destructive" });
-            return;
-          }
-          setBibleVersion(v);
-        }}>
+        <Select value={bibleVersion} onValueChange={handleBibleVersionChange}>
           <SelectTrigger className="w-48 bg-card dark:bg-zinc-900">
             <SelectValue placeholder="Versão da Bíblia" />
           </SelectTrigger>
           <SelectContent>
-            {BIBLE_VERSIONS.map(ver => (
-              <SelectItem key={ver.value} value={ver.value} disabled={ver.premium && (!subscription.subscribed || subscription.subscription_tier !== "premium")}>
-                {ver.label} {ver.premium && (!subscription.subscribed || subscription.subscription_tier !== "premium") && "🔒"}
-              </SelectItem>
-            ))}
+            {BIBLE_VERSIONS.map(ver => {
+              const canUsePremium = hasPremiumSubscription || isTrialActive();
+              const isLocked = ver.premium && !canUsePremium;
+              return (
+                <SelectItem
+                  key={ver.value}
+                  value={ver.value}
+                  className={isLocked ? "text-muted-foreground" : undefined}
+                >
+                  {ver.label}{isLocked ? " (Premium)" : ""}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
+
+      {/* Phase 3: contextual paywall + 24h trial for premium Bible versions */}
+      <AlertDialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Versão premium da Bíblia</AlertDialogTitle>
+            <AlertDialogDescription>
+              As versões AA e ACF fazem parte do plano Premium.
+              Você pode testar gratuitamente por 24 horas ou conhecer os planos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Agora não</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPremiumDialog(false);
+                navigate('/assinatura?plan=premium');
+              }}
+            >
+              Ver planos
+            </Button>
+            <AlertDialogAction onClick={startPremiumTrial}>Testar 24h</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Livro / Capítulo / Navegação */}
       <div className="flex flex-col sm:flex-row gap-4 items-center">

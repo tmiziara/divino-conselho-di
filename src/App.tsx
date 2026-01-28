@@ -25,6 +25,9 @@ import { AdMob } from "@capacitor-community/admob";
 import { StatusBar } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/hooks/useAuth";
+import { useProgressSync } from "@/hooks/useProgressSync";
+import { trackEvent } from "@/lib/analytics";
 import BuyCredits from "./pages/BuyCredits";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
@@ -35,6 +38,7 @@ import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import AdMobBanner from "@/components/AdMobBanner";
 import MobileBottomNavigation from "@/components/MobileBottomNavigation";
+import { recordActivityAndScheduleMissedYou } from "@/lib/notificationEngagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,7 +56,38 @@ const AppContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const initializedRef = React.useRef(false);
+  const lastScreenViewRef = React.useRef<{ path: string; search: string; ts: number } | null>(null);
   const { subscription, loading: subscriptionLoading } = useSubscription();
+  const { user } = useAuth();
+
+  // Phase 5: keep cross-device progress/schedules synced on login.
+  useProgressSync(user?.id);
+
+  // Phase 5: record basic screen view analytics for logged-in users.
+  React.useEffect(() => {
+    if (!user?.id) return;
+    const now = Date.now();
+    const last = lastScreenViewRef.current;
+    if (
+      last &&
+      last.path === location.pathname &&
+      last.search === location.search &&
+      now - last.ts < 5000
+    ) {
+      return;
+    }
+    lastScreenViewRef.current = { path: location.pathname, search: location.search, ts: now };
+    trackEvent({
+      event_name: "screen_view",
+      user_id: user.id,
+      properties: { path: location.pathname, search: location.search },
+    });
+  }, [location.pathname, location.search, user?.id]);
+
+  React.useEffect(() => {
+    // Ensure each route starts at top to avoid sticky scroll positions on mobile.
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   // Verificar se o app foi aberto por uma notificação
   React.useEffect(() => {
@@ -93,6 +128,8 @@ const AppContent = () => {
               } else {
                 navigate('/versiculo-do-dia');
               }
+            } else if (actualPath === '/home' || actualPath === '/' || actualPath === '') {
+              navigate('/');
             } else if (actualPath === '/notificacoes') {
               navigate('/notificacoes');
             } else if (actualPath === '/biblia') {
@@ -175,6 +212,8 @@ const AppContent = () => {
             } else {
               navigate('/versiculo-do-dia');
             }
+          } else if (path === '/home' || path === '/' || path === '') {
+            navigate('/');
           } else if (path === '/notificacoes') {
             navigate('/notificacoes');
           } else if (path === '/biblia') {
@@ -213,6 +252,8 @@ const AppContent = () => {
           navigate(`/versiculo-do-dia?theme=${theme}&versiculoId=${versiculoId}`);
         } else if (path.includes('versiculo-do-dia')) {
           navigate('/versiculo-do-dia');
+        } else if (path.includes('home')) {
+          navigate('/');
         }
       } catch (error) {
       }
@@ -230,12 +271,16 @@ const AppContent = () => {
 
   // Adicionar otimização mobile
   useMobileOptimization();
-
+  // Phase 2: track activity to schedule a local "missed you" reminder.
+  React.useEffect(() => {
+    recordActivityAndScheduleMissedYou();
+  }, [location.pathname]);
   return (
     <div
       style={{
         minHeight: '100vh',
-        paddingBottom: isProfile ? 0 : 60,
+        // Phase 4: keep content above bottom nav + banner via CSS variables.
+        paddingBottom: isProfile ? 0 : 'var(--app-content-bottom-padding)',
       }}
     >
       <Routes>
@@ -302,3 +347,4 @@ const App = () => {
 };
 
 export default App;
+
