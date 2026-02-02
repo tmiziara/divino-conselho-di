@@ -26,6 +26,31 @@
     "testNotification": "Test notification",
     "logout": "Sign Out"
   },
+  "navigation": {
+    "home": "Home",
+    "bible": "Bible",
+    "verseOfDay": "Verse of the Day",
+    "studies": "Bible Studies",
+    "readingPlans": "Reading Plans",
+    "weeklySummary": "Weekly Summary",
+    "prayerJournal": "Prayer Journal",
+    "chat": "Chat",
+    "favorites": "Favorites",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "settings": "Settings",
+    "menu": "Menu",
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "toggleDarkMode": "Toggle dark mode",
+    "verseShort": "Verse",
+    "plansShort": "Plans",
+    "journalShort": "Journal"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "returnHome": "Return to Home"
+  },
   "profile": {
     "languageTitle": "App language",
     "languageDescription": "Choose the app interface language. If you do not choose, we use your phone language."

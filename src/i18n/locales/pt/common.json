@@ -26,6 +26,31 @@
     "testNotification": "Testar notifica??o",
     "logout": "Sair da Conta"
   },
+  "navigation": {
+    "home": "Início",
+    "bible": "Bíblia",
+    "verseOfDay": "Versículo do Dia",
+    "studies": "Estudos Bíblicos",
+    "readingPlans": "Planos de Leitura",
+    "weeklySummary": "Resumo Semanal",
+    "prayerJournal": "Diário de Oração",
+    "chat": "Conversa",
+    "favorites": "Favoritos",
+    "notifications": "Notificações",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "menu": "Menu",
+    "login": "Entrar",
+    "logout": "Sair",
+    "toggleDarkMode": "Alternar modo noturno",
+    "verseShort": "Versículo",
+    "plansShort": "Planos",
+    "journalShort": "Diário"
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "returnHome": "Voltar para o Início"
+  },
   "profile": {
     "languageTitle": "Idioma do aplicativo",
     "languageDescription": "Escolha o idioma da interface. Se n?o escolher, usamos o idioma do seu celular."
