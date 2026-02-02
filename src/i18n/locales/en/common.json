@@ -1,0 +1,17 @@
+﻿{
+  "app": {
+    "name": "Conexao com Deus"
+  },
+  "language": {
+    "label": "Language",
+    "pt": "Portuguese",
+    "en": "English",
+    "changeSuccess": "Language updated successfully"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close"
+  }
+}
