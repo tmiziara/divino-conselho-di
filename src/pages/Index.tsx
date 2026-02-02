@@ -46,184 +46,82 @@ const studiesCount = bibleStudies.length;
 
 
 const features = [
-
-
   {
-
-
     icon: MessageCircle,
-
-
-    title: "Conversa Espiritual",
-
-
-    description: "Converse sobre fé, receba conselhos espirituais e orações personalizadas",
-
-
-    path: "/chat"
-
-
+    path: "/chat",
+    titlePt: "Conversa Espiritual",
+    titleEn: "Spiritual Chat",
+    descriptionPt: "Converse sobre f\u00e9, receba conselhos espirituais e ora\u00e7\u00f5es personalizadas",
+    descriptionEn: "Talk about faith, receive spiritual guidance, and personalized prayers",
   },
-
-
   {
-
-
     icon: BookOpen,
-
-
-    title: "Leitura da Bíblia",
-
-
-    description: "Navegue por todos os livros, capítulos e versículos com busca avançada",
-
-
-    path: "/biblia"
-
-
+    path: "/biblia",
+    titlePt: "Leitura da B\u00edblia",
+    titleEn: "Bible Reading",
+    descriptionPt: "Navegue por todos os livros, cap\u00edtulos e vers\u00edculos com busca avan\u00e7ada",
+    descriptionEn: "Browse all books, chapters, and verses with advanced search",
   },
-
-
   {
-
-
     icon: Star,
-
-
-    title: "Versículo do Dia",
-
-
-    description: "Versículos inspiradores com imagens personalizadas para compartilhar",
-
-
-    path: "/versiculo-do-dia"
-
-
+    path: "/versiculo-do-dia",
+    titlePt: "Vers\u00edculo do Dia",
+    titleEn: "Verse of the Day",
+    descriptionPt: "Vers\u00edculos inspiradores com imagens personalizadas para compartilhar",
+    descriptionEn: "Inspiring verses with personalized images to share",
   },
-
-
   {
-
-
     icon: Heart,
-
-
-    title: "Estudos Bíblicos",
-
-
-    description: `Aprofunde-se em ${studiesCount} estudos bíblicos exclusivos`,
-
-
-    path: "/estudos"
-
-
+    path: "/estudos",
+    titlePt: "Estudos B\u00edblicos",
+    titleEn: "Bible Studies",
+    descriptionPt: `Aprofunde-se em ${studiesCount} estudos b\u00edblicos exclusivos`,
+    descriptionEn: `Go deeper with ${studiesCount} exclusive Bible studies`,
   },
-
-
   {
-
-
     icon: Heart,
-
-
-    title: "Favoritos",
-
-
-    description: "Acesse seus versículos e estudos favoritos salvos",
-
-
-    path: "/favoritos"
-
-
+    path: "/favoritos",
+    titlePt: "Favoritos",
+    titleEn: "Favorites",
+    descriptionPt: "Acesse seus vers\u00edculos e estudos favoritos salvos",
+    descriptionEn: "Access your saved favorite verses and studies",
   },
-
-
   {
-
-
     icon: Bell,
-
-
-    title: "Notificações",
-
-
-    description: "Configure e gerencie suas notificações espirituais",
-
-
-    path: "/notificacoes"
-
-
+    path: "/notificacoes",
+    titlePt: "Notifica\u00e7\u00f5es",
+    titleEn: "Notifications",
+    descriptionPt: "Configure e gerencie suas notifica\u00e7\u00f5es espirituais",
+    descriptionEn: "Set up and manage your spiritual reminders",
   },
-
-
 ];
-
-
-
-
 
 const stats = [
-
-
   {
-
-
     icon: Book,
-
-
     value: "66",
-
-
-    label: "Livros Bíblicos",
-
-
-    description: "Antigo e Novo Testamento"
-
-
+    labelPt: "Livros B\u00edblicos",
+    labelEn: "Bible Books",
+    descriptionPt: "Antigo e Novo Testamento",
+    descriptionEn: "Old and New Testament",
   },
-
-
   {
-
-
     icon: FileText,
-
-
     value: "31.102",
-
-
-    label: "Versículos",
-
-
-    description: "Palavras inspiradas"
-
-
+    labelPt: "Vers\u00edculos",
+    labelEn: "Verses",
+    descriptionPt: "Palavras inspiradas",
+    descriptionEn: "Inspired words",
   },
-
-
   {
-
-
     icon: Lightbulb,
-
-
-    value: "∞",
-
-
-    label: "Inspiração",
-
-
-    description: "Sabedoria divina"
-
-
+    value: "\u221e",
+    labelPt: "Inspira\u00e7\u00e3o",
+    labelEn: "Inspiration",
+    descriptionPt: "Sabedoria divina",
+    descriptionEn: "Divine wisdom",
   },
-
-
 ];
-
-
-
-
 
 const Index = () => {
 
@@ -739,7 +637,7 @@ const Index = () => {
 
 
           <p className="text-lg md:text-xl text-muted-foreground mb-4 leading-relaxed">
-            {tx("Conecte-se com o Divino atrav?s de uma experi?ncia ?nica de f?, ora??o e estudo b?blico personalizado", "Connect with the Divine through a unique journey of faith, prayer, and personalized Bible study")}
+            {tx("Conecte-se com o Divino atrav\u00e9s de uma experi\u00eancia \u00fanica de f\u00e9, ora\u00e7\u00e3o e estudo b\u00edblico personalizado", "Connect with the Divine through a unique journey of faith, prayer, and personalized Bible study")}
           </p>
 
 
@@ -764,7 +662,7 @@ const Index = () => {
                     <BookOpen className="w-5 h-5 mr-2" />
 
 
-                    Explorar Bíblia
+                    {tx("Explorar B\u00edblia", "Explore Bible")}
 
 
                   </Button>
@@ -848,7 +746,7 @@ const Index = () => {
                     <BookOpen className="w-5 h-5 mr-2" />
 
 
-                    Explorar Bíblia
+                    {tx("Explorar B\u00edblia", "Explore Bible")}
 
 
                   </Button>
@@ -878,7 +776,7 @@ const Index = () => {
                   {tx("Seu dia com Deus", "Your day with God")}
                 </CardTitle>
                 <CardDescription className="text-sm font-medium text-blue-700/80 dark:text-blue-200/60">
-                  Três passos simples para manter o hábito diário
+                  {tx("Tr\u00eas passos simples para manter o h\u00e1bito di\u00e1rio", "Three simple steps to keep your daily habit")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 gap-2">
@@ -893,8 +791,8 @@ const Index = () => {
                       <Star className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex flex-col items-start gap-0.5">
-                      <span className="font-semibold text-sm text-foreground">{tx("Vers?culo do Dia", "Verse of the Day")}</span>
-                      <span className="text-xs text-muted-foreground">{tx("Palavra di?ria de inspira??o", "Daily word of inspiration")}</span>
+                      <span className="font-semibold text-sm text-foreground">{tx("Vers\u00edculo do Dia", "Verse of the Day")}</span>
+                      <span className="text-xs text-muted-foreground">{tx("Palavra di\u00e1ria de inspira\u00e7\u00e3o", "Daily word of inspiration")}</span>
                     </div>
                   </div>
                   <span className="text-xs font-medium bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900 transition-colors">
@@ -917,7 +815,7 @@ const Index = () => {
                         {continueReadingLabel || tx("Continuar Leitura", "Continue Reading")}
                       </span>
                       <span className="text-xs text-muted-foreground truncate w-full text-left">
-                        {continueReadingLabel ? tx("Continue de onde parou", "Pick up where you left off") : tx("Inicie sua leitura b?blica", "Start your Bible reading")}
+                        {continueReadingLabel ? tx("Continue de onde parou", "Pick up where you left off") : tx("Inicie sua leitura b\u00edblica", "Start your Bible reading")}
                       </span>
                     </div>
                   </div>
@@ -937,8 +835,8 @@ const Index = () => {
                       <Heart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div className="flex flex-col items-start gap-0.5 min-w-0 flex-1 pr-2">
-                      <span className="font-semibold text-sm text-foreground truncate w-full text-left" title={resumeStudyLabel || "Estudos Bíblicos"}>
-                        {resumeStudyLabel || "Estudos Bíblicos"}
+                      <span className="font-semibold text-sm text-foreground truncate w-full text-left" title={resumeStudyLabel || tx("Estudos B\u00edblicos", "Bible Studies")}>
+                        {resumeStudyLabel || tx("Estudos B\u00edblicos", "Bible Studies")}
                       </span>
                       <span className="text-xs text-muted-foreground truncate w-full text-left">
                         {resumeStudyLabel ? tx("Continue seu aprendizado", "Keep learning") : tx("Explore novos temas", "Explore new topics")}
@@ -992,11 +890,11 @@ const Index = () => {
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary">{activePlan.title}</Badge>
-                      {planCompleted && <Badge variant="secondary">Concluído</Badge>}
+                      {planCompleted && <Badge variant="secondary">{tx("Conclu\u00eddo", "Completed")}</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {planCompleted
-                        ? "Plano concluído. Revise o conteúdo ou escolha um novo plano."
+                        ? tx("Plano conclu\u00eddo. Revise o conte\u00fado ou escolha um novo plano.", "Plan completed. Review the content or choose a new plan.")
                         : tx("Seu plano ativo passou da data prevista. Conclua os dias pendentes no detalhe do plano.", "Your active plan passed the expected date. Finish pending days in the plan details.")}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -1004,18 +902,18 @@ const Index = () => {
                         <Button className="divine-button">{tx("Ver plano", "View plan")}</Button>
                       </Link>
                       <Link to="/planos">
-                        <Button variant="outline">tx("Ver planos", "View plans")</Button>
+                        <Button variant="outline">{tx("Ver planos", "View plans")}</Button>
                       </Link>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
                     <p className="text-sm text-muted-foreground">
-                      Escolha um plano curto para criar constância diária.
+                      {tx("Escolha um plano curto para criar const\u00e2ncia di\u00e1ria.", "Pick a short plan to build daily consistency.")}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <Link to="/planos">
-                        <Button className="divine-button">tx("Ver planos", "View plans")</Button>
+                        <Button className="divine-button">{tx("Ver planos", "View plans")}</Button>
                       </Link>
                       <Link to="/resumo-semanal">
                         <Button variant="outline">{tx("Ver resumo semanal", "View weekly summary")}</Button>
@@ -1037,11 +935,11 @@ const Index = () => {
 
                 <CardHeader>
 
-                  <CardTitle className="text-lg">Personalize seu hábito</CardTitle>
+                  <CardTitle className="text-lg">{tx("Personalize seu h\u00e1bito", "Personalize your routine")}</CardTitle>
 
                   <CardDescription>
 
-                    Responda 3 perguntas rápidas para melhorar suas recomendações
+                    {tx("Responda 3 perguntas r\u00e1pidas para melhorar suas recomenda\u00e7\u00f5es", "Answer 3 quick questions to improve your recommendations")}
 
                   </CardDescription>
 
@@ -1051,7 +949,7 @@ const Index = () => {
 
                   <div className="flex flex-col gap-2">
 
-                    <label className="text-sm font-medium">Melhor horário para lembrar você</label>
+                    <label className="text-sm font-medium">{tx("Melhor hor\u00e1rio para lembrar voc\u00ea", "Best time to remind you")}</label>
 
                     <Input
 
@@ -1085,9 +983,9 @@ const Index = () => {
 
                       <option value="relacionamentos">{tx("Relacionamentos", "Relationships")}</option>
 
-                      <option value="proposito">Propósito</option>
+                      <option value="proposito">{tx("Prop\u00f3sito", "Purpose")}</option>
 
-                      <option value="fe">Fé</option>
+                      <option value="fe">{tx("F\u00e9", "Faith")}</option>
 
                     </select>
 
@@ -1109,7 +1007,7 @@ const Index = () => {
 
                       <option value="leve">{tx("Leve (5 min)", "Light (5 min)")}</option>
 
-                      <option value="medio">Médio (10 min)</option>
+                      <option value="medio">{tx("M\u00e9dio (10 min)", "Medium (10 min)")}</option>
 
                       <option value="profundo">{tx("Profundo (15+ min)", "Deep (15+ min)")}</option>
 
@@ -1121,7 +1019,7 @@ const Index = () => {
 
                     <Button className="flex-1" onClick={handleOnboardingSave}>
 
-                      Salvar preferências
+                      {tx("Salvar prefer\u00eancias", "Save preferences")}
 
                     </Button>
 
@@ -1155,11 +1053,11 @@ const Index = () => {
 
                 <CardHeader>
 
-                  <CardTitle className="text-lg">{tx("Ative lembretes dirios", "Enable daily reminders")}</CardTitle>
+                  <CardTitle className="text-lg">{tx("Ative lembretes di\u00e1rios", "Enable daily reminders")}</CardTitle>
 
                   <CardDescription>
 
-                    {tx("Configure um horrio e tema em 30 segundos.", "Set a time and theme in 30 seconds.")}
+                    {tx("Configure um hor\u00e1rio e tema em 30 segundos.", "Set a time and theme in 30 seconds.")}
 
                   </CardDescription>
 
@@ -1205,7 +1103,7 @@ const Index = () => {
 
                   >
 
-                    {tx("Agora no", "Not now")}
+                    {tx("Agora n\u00e3o", "Not now")}
 
                   </Button>
 
@@ -1255,7 +1153,7 @@ const Index = () => {
                   <CardDescription className="text-xs font-medium text-foreground mb-1 leading-tight">
 
 
-                    {stat.label}
+                    {tx(stat.labelPt, stat.labelEn)}
 
 
                   </CardDescription>
@@ -1264,7 +1162,7 @@ const Index = () => {
                   <p className="text-[10px] text-muted-foreground leading-tight">
 
 
-                    {stat.description}
+                    {tx(stat.descriptionPt, stat.descriptionEn)}
 
 
                   </p>
@@ -1306,7 +1204,7 @@ const Index = () => {
               <p className="text-base text-muted-foreground max-w-2xl mx-auto">
 
 
-                {tx("Ferramentas poderosas para fortalecer sua f? e aprofundar seu relacionamento com Deus", "Powerful tools to strengthen your faith and deepen your relationship with God")}
+                {tx("Ferramentas poderosas para fortalecer sua f\u00e9 e aprofundar seu relacionamento com Deus", "Powerful tools to strengthen your faith and deepen your relationship with God")}
 
 
               </p>
@@ -1339,7 +1237,7 @@ const Index = () => {
                       </div>
 
 
-                      <CardTitle className="text-xs font-bold text-primary leading-tight whitespace-nowrap">{feature.title}</CardTitle>
+                      <CardTitle className="text-xs font-bold text-primary leading-tight whitespace-nowrap">{tx(feature.titlePt, feature.titleEn)}</CardTitle>
 
 
                     </CardHeader>
@@ -1351,7 +1249,7 @@ const Index = () => {
                       <CardDescription className="text-[10px] text-foreground mb-1 leading-tight">
 
 
-                        {feature.description}
+                        {tx(feature.descriptionPt, feature.descriptionEn)}
 
 
                       </CardDescription>
@@ -1390,10 +1288,10 @@ const Index = () => {
               <div className="bg-gradient-to-r from-yellow-200 via-yellow-100 to-blue-100 dark:from-yellow-900 dark:via-yellow-800 dark:to-blue-900 border border-yellow-300 dark:border-yellow-700 rounded-xl p-4 max-w-md w-full flex flex-col items-center shadow-md">
 
 
-                <span className="text-lg font-semibold text-yellow-700 dark:text-yellow-200 mb-1">{tx("Desbloqueie todo o conte?do premium!", "Unlock all premium content!")}</span>
+                <span className="text-lg font-semibold text-yellow-700 dark:text-yellow-200 mb-1">{tx("Desbloqueie todo o conte\u00fado premium!", "Unlock all premium content!")}</span>
 
 
-                <span className="text-sm text-gray-700 dark:text-gray-200 mb-3 text-center">{tx("Tenha acesso a estudos exclusivos, recursos avan?ados e uma experi?ncia sem limites.", "Get access to exclusive studies, advanced features, and an unlimited experience.")}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-200 mb-3 text-center">{tx("Tenha acesso a estudos exclusivos, recursos avan\u00e7ados e uma experi\u00eancia sem limites.", "Get access to exclusive studies, advanced features, and an unlimited experience.")}</span>
 
 
                 <Button
@@ -1477,10 +1375,10 @@ const Index = () => {
             <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
 
 
-              {tx("Junte-se a milhares de fi?is que j? transformaram suas vidas atrav?s", "Join thousands of believers who have already transformed their lives through")}
+              {tx("Junte-se a milhares de fi\u00e9is que j\u00e1 transformaram suas vidas atrav\u00e9s", "Join thousands of believers who have already transformed their lives through")}
 
 
-              {tx("da Palavra de Deus e da ora??o", "the Word of God and prayer")}
+              {tx("da Palavra de Deus e da ora\u00e7\u00e3o", "the Word of God and prayer")}
 
 
             </p>
