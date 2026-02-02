@@ -43,13 +43,13 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
     if (searchQuery.trim()) {
       searchVerses(searchQuery);
     }
-  }, [searchQuery]);
+  }, [searchQuery, searchVerses]);
 
   useEffect(() => {
     if (user) {
       loadFavorites();
     }
-  }, [user]);
+  }, [user, loadFavorites]);
 
   const handleSearch = () => {
     if (query.trim()) {

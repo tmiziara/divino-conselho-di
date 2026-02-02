@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.conexaodeus.app',
+  appId: 'com.mizflow.conexaodeus',
   appName: 'Conexao com Deus',
   webDir: 'dist',
   // Removendo server.androidScheme para evitar problemas com localhost

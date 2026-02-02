@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, User, Crown, LogOut, Home, BookOpen, MessageCircle, Heart, User as UserIcon, X, GraduationCap, Sparkles, Settings as SettingsIcon, Bell, Sun, Moon, Star } from "lucide-react";
+import { Shield, User, Crown, LogOut, Home, BookOpen, MessageCircle, Heart, User as UserIcon, X, GraduationCap, Sparkles, Settings as SettingsIcon, Bell, Sun, Moon, Star, CalendarDays, NotebookPen, BarChart3 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,6 +52,9 @@ const Navigation = ({ onAuthClick }: NavigationProps) => {
     { path: '/biblia', label: 'Bíblia', icon: BookOpen },
     { path: '/versiculo-do-dia', label: 'Versículo do Dia', icon: Star },
     { path: '/estudos', label: 'Estudos Bíblicos', icon: GraduationCap },
+    { path: '/planos', label: 'Planos de Leitura', icon: CalendarDays },
+    { path: '/resumo-semanal', label: 'Resumo Semanal', icon: BarChart3 },
+    { path: '/diario', label: 'Diário de Oração', icon: NotebookPen },
     { path: '/chat', label: 'Conversa', icon: MessageCircle },
     { path: '/favoritos', label: 'Favoritos', icon: Heart },
     { path: '/notificacoes', label: 'Notificações', icon: Bell },

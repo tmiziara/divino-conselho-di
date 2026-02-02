@@ -1,6 +1,6 @@
 // BibleReader.tsx
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Heart, HeartOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -86,13 +86,22 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       setSelectedBook("gn");
       setSelectedChapter(1);
     }
-  }, [user, hasLoaded, lastPosition?.book, lastPosition?.chapter, lastPosition?.version]);
+  }, [
+    user,
+    hasLoaded,
+    lastPosition?.book,
+    lastPosition?.chapter,
+    lastPosition?.version,
+    loadFavorites,
+    setSelectedBook,
+    setSelectedChapter,
+  ]);
 
-  const getTrialStorageKey = () => {
+  const getTrialStorageKey = useCallback(() => {
     // Phase 3 fix: scope the trial to the current user (or guest) to avoid unintended sharing.
     const identity = user?.id || "guest";
     return `${PREMIUM_TRIAL_KEY}_${identity}`;
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     // Phase 3: restore local premium trial state for Bible versions.
@@ -102,19 +111,19 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
     } catch (error) {
       // Ignore storage errors to keep the reader usable.
     }
-  }, [user?.id]);
+  }, [getTrialStorageKey]);
 
   useEffect(() => {
     if (selectedBook) {
       loadChapters(selectedBook, bibleVersion);
     }
-  }, [selectedBook, bibleVersion]);
+  }, [selectedBook, bibleVersion, loadChapters]);
 
-  const isTrialActive = () => {
+  const isTrialActive = useCallback(() => {
     if (!premiumTrialExpiresAt) return false;
     const expiresAt = new Date(premiumTrialExpiresAt).getTime();
     return Number.isFinite(expiresAt) && expiresAt > Date.now();
-  };
+  }, [premiumTrialExpiresAt]);
 
   const startPremiumTrial = () => {
     const expiresAt = new Date(Date.now() + TRIAL_DURATION_HOURS * 60 * 60 * 1000).toISOString();
@@ -165,14 +174,14 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
         description: "Sua versão foi restaurada para NVI.",
       });
     }
-  }, [bibleVersion, hasPremiumSubscription, premiumTrialExpiresAt, subscriptionLoading]);
+  }, [bibleVersion, hasPremiumSubscription, isTrialActive, subscriptionLoading, toast]);
 
   useEffect(() => {
     if (selectedBook && selectedChapter) {
       loadVerses(selectedBook, selectedChapter, bibleVersion);
       saveProgress(selectedBook, selectedChapter, 1, bibleVersion);
     }
-  }, [selectedBook, selectedChapter, bibleVersion]);
+  }, [selectedBook, selectedChapter, bibleVersion, loadVerses, saveProgress]);
 
   const handleBookChange = (book: string) => {
     if (!user && book !== "gn") {

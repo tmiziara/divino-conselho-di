@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,12 +63,12 @@ const StudyChapter = () => {
     }
   };
 
-  const getPreviewKey = () => {
+  const getPreviewKey = useCallback(() => {
     if (!studyId || !chapterId) return null;
     return `${PREVIEW_KEY_PREFIX}_${studyId}_${chapterId}`;
-  };
+  }, [chapterId, studyId]);
 
-  const hasPreviewAccess = () => {
+  const hasPreviewAccess = useCallback(() => {
     if (previewUnlocked) return true;
     const key = getPreviewKey();
     if (!key) return false;
@@ -77,7 +77,7 @@ const StudyChapter = () => {
     } catch (error) {
       return false;
     }
-  };
+  }, [getPreviewKey, previewUnlocked]);
 
   const savePreviewAccess = () => {
     const key = getPreviewKey();
@@ -118,13 +118,13 @@ const StudyChapter = () => {
     };
 
     loadStudy().catch(() => setStudyLoading(false));
-  }, [studyId, accessLoading, hasPremiumAccess, previewUnlocked]);
+  }, [studyId, accessLoading, chapterId, fetchChapters, hasPremiumAccess, hasPreviewAccess, previewUnlocked]);
 
   useEffect(() => {
     if (user) {
       loadFavorites();
     }
-  }, [user]);
+  }, [loadFavorites, user]);
 
   useEffect(() => {
     if (isPremiumLocked) {
@@ -140,7 +140,7 @@ const StudyChapter = () => {
   useEffect(() => {
     // Keep preview state in sync with sessionStorage per chapter.
     setPreviewUnlocked(hasPreviewAccess());
-  }, [studyId, chapterId, previewUnlocked]);
+  }, [studyId, chapterId, hasPreviewAccess]);
 
   useEffect(() => {
     if (!chapterId) return;
@@ -159,7 +159,7 @@ const StudyChapter = () => {
         preparingRewardedRef.current = false;
         setIsPreparingRewarded(false);
       });
-  }, [isPremiumLocked, isRewardedReady, prepareRewardedAd]);
+  }, [isPremiumLocked, isPreparingRewarded, isRewardedReady, prepareRewardedAd]);
 
   const fetchStudyInfo = async (slug: string) => {
     try {

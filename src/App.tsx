@@ -34,6 +34,12 @@ import Notifications from "./pages/Notifications";
 import VersiculoDoDia from "./pages/VersiculoDoDia";
 import AdTest from "./pages/AdTest";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ReadingPlans from "./pages/ReadingPlans";
+import ReadingPlanDetail from "./pages/ReadingPlanDetail";
+import WeeklySummary from "./pages/WeeklySummary";
+import PrayerJournalList from "./pages/PrayerJournalList";
+import PrayerJournalNew from "./pages/PrayerJournalNew";
+import PrayerJournalEntry from "./pages/PrayerJournalEntry";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import AdMobBanner from "@/components/AdMobBanner";
@@ -87,7 +93,7 @@ const AppContent = () => {
   React.useEffect(() => {
     // Ensure each route starts at top to avoid sticky scroll positions on mobile.
     window.scrollTo(0, 0);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Verificar se o app foi aberto por uma notificação
   React.useEffect(() => {
@@ -164,7 +170,7 @@ const AppContent = () => {
     };
 
     checkCurrentDeeplink();
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Configurar navegação do sistema quando o app carregar
   React.useEffect(() => {
@@ -303,6 +309,12 @@ const AppContent = () => {
         <Route path="/configuracoes" element={<Settings />} />
         <Route path="/politica-privacidade" element={<PrivacyPolicy />} />
         <Route path="/notificacoes" element={<Notifications />} />
+        <Route path="/planos" element={<ReadingPlans />} />
+        <Route path="/plano/:planId" element={<ReadingPlanDetail />} />
+        <Route path="/resumo-semanal" element={<WeeklySummary />} />
+        <Route path="/diario" element={<PrayerJournalList />} />
+        <Route path="/diario/nova" element={<PrayerJournalNew />} />
+        <Route path="/diario/:entryId" element={<PrayerJournalEntry />} />
         <Route path="/ad-test" element={<AdTest />} />
         {/* Rotas alternativas/antigas para compatibilidade */}
         <Route path="/estudos" element={<Studies />} />

@@ -107,3 +107,9 @@ O aplicativo não estava otimizado para tablets de 7 e 10 polegadas, apresentand
 A otimização para tablets foi implementada com sucesso. O aplicativo agora oferece uma experiência nativa e otimizada para tablets de 7 e 10 polegadas, eliminando a aparência "web" e fornecendo navegação adequada para cada tamanho de dispositivo.
 
 
+
+
+
+
+
+

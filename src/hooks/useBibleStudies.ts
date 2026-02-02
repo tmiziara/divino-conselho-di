@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { localContent, LocalStudy, LocalChapter } from '@/lib/localContent';
 import { simpleLicense } from '@/lib/simpleLicense';
 import { useAuth } from './useAuth';
@@ -6,6 +6,8 @@ import { useSubscription } from './useSubscription';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { trackEvent } from '@/lib/analytics';
+import { recordActivity } from '@/lib/activityLog';
+import { useStreaks } from '@/hooks/useStreaks';
 
 export interface BibleStudy {
   id: string;
@@ -51,12 +53,13 @@ export const useBibleStudies = () => {
   const { user } = useAuth();
   const { subscription } = useSubscription();
   const { toast } = useToast();
+  const { registerCompletion } = useStreaks();
   const [studies, setStudies] = useState<BibleStudy[]>([]);
   const [chapters, setChapters] = useState<BibleStudyChapter[]>([]);
   const [progress, setProgress] = useState<UserStudyProgress[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const chapterCache = new Map<string, BibleStudyChapter[]>();
+  const chapterCacheRef = useRef(new Map<string, BibleStudyChapter[]>());
 
   const createLocalUuid = () => {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -162,9 +165,10 @@ export const useBibleStudies = () => {
     try {
       setLoading(true);
       // Verificar cache
-      if (chapterCache.has(studySlug)) {
-        setChapters(chapterCache.get(studySlug)!);
-        return chapterCache.get(studySlug)!;
+      if (chapterCacheRef.current.has(studySlug)) {
+        const cached = chapterCacheRef.current.get(studySlug)!;
+        setChapters(cached);
+        return cached;
       }
       // Buscar estudo local
       const study = await localContent.getStudyBySlug(studySlug);
@@ -199,7 +203,7 @@ export const useBibleStudies = () => {
         updated_at: chapter.updated_at
       }));
       setChapters(formattedChapters);
-      chapterCache.set(studySlug, formattedChapters);
+      chapterCacheRef.current.set(studySlug, formattedChapters);
       return formattedChapters;
     } catch (error) {
       setChapters([]);
@@ -207,10 +211,10 @@ export const useBibleStudies = () => {
     } finally {
       setLoading(false);
     }
-  }, [hasPremiumAccess]);
+  }, [checkPremiumAccessWithSupabase, hasPremiumAccess]);
 
   // Buscar progresso do usuário (simplificado - local storage)
-  const fetchProgress = async () => {
+  const fetchProgress = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -219,10 +223,10 @@ export const useBibleStudies = () => {
       setProgress(progress);
     } catch (error) {
     }
-  };
+  }, [user]);
 
   // Buscar favoritos do usuário (simplificado - local storage)
-  const fetchFavorites = async () => {
+  const fetchFavorites = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -231,7 +235,7 @@ export const useBibleStudies = () => {
       setFavorites(favorites);
     } catch (error) {
     }
-  };
+  }, [user]);
 
   // Marcar capítulo como concluído
   const markChapterAsCompleted = async (chapterId: string, studyId: string) => {
@@ -280,7 +284,16 @@ export const useBibleStudies = () => {
           properties: { study_id: studyId, chapter_id: chapterId },
         });
       }
-      
+
+      // Phase 6: count study completions toward weekly summary and streaks.
+      recordActivity({
+        userId: user.id,
+        source: "study",
+        count: 1,
+        uniqueKey: `${studyId}-${chapterId}`,
+      });
+      registerCompletion();
+
       toast({
         title: "Capítulo concluído!",
         description: "Seu progresso foi salvo.",
@@ -395,7 +408,7 @@ export const useBibleStudies = () => {
     };
     
     loadInitialData();
-  }, [user?.id]); // Usar apenas user.id como dependência estável
+  }, [fetchFavorites, fetchProgress, fetchStudies, user]);
 
   useEffect(() => {
     // Phase 5: update progress state when background sync updates local storage.

@@ -51,12 +51,32 @@
         </provider>
 
         <!-- Receiver para notificações locais -->
-        <receiver android:name="de.appplant.cordova.plugin.localnotification.TriggerReceiver" />
-        <receiver android:name="de.appplant.cordova.plugin.localnotification.ClearReceiver" />
-        <receiver android:name="de.appplant.cordova.plugin.notification.TriggerReceiver" />
-        <receiver android:name="de.appplant.cordova.plugin.notification.ClearReceiver" />
-        <receiver android:name="de.appplant.cordova.plugin.notification.CancelReceiver" />
-        <receiver android:name="de.appplant.cordova.plugin.notification.UpdateReceiver" />
+        <receiver 
+            android:name="de.appplant.cordova.plugin.localnotification.TriggerReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED" />
+        <receiver 
+            android:name="de.appplant.cordova.plugin.localnotification.ClearReceiver"
+            android:enabled="true"
+            android:exported="true" />
+        <receiver 
+            android:name="de.appplant.cordova.plugin.notification.TriggerReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED" />
+        <receiver 
+            android:name="de.appplant.cordova.plugin.notification.ClearReceiver"
+            android:enabled="true"
+            android:exported="true" />
+        <receiver 
+            android:name="de.appplant.cordova.plugin.notification.CancelReceiver"
+            android:enabled="true"
+            android:exported="true" />
+        <receiver 
+            android:name="de.appplant.cordova.plugin.notification.UpdateReceiver"
+            android:enabled="true"
+            android:exported="true" />
 
     </application>
 
@@ -72,8 +92,6 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     
     <!-- Optional: For better offline experience -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -65,11 +65,7 @@ const Profile = () => {
     },
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, [user]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -100,7 +96,11 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profileForm, toast, user]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile, user]);
 
   const onProfileSubmit = async (data: ProfileFormData) => {
     if (!user) return;

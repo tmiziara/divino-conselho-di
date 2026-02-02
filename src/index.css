@@ -45,6 +45,13 @@
 
     --radius: 0.5rem;
 
+    /* Phase 4: ad-safe spacing variables */
+    --admob-banner-height: 0px;
+    --mobile-bottom-nav-height: 0px;
+    --app-content-bottom-padding: calc(
+      var(--mobile-bottom-nav-height) + var(--admob-banner-height) + env(safe-area-inset-bottom, 0px)
+    );
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -112,7 +119,7 @@
     overflow-x: hidden;
     /* Improve touch scrolling */
     -webkit-overflow-scrolling: touch;
-    /* Garantir que o conteúdo não seja coberto pela barra de navegação */
+    /* Safe area only; app container handles nav/banner spacing */
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
@@ -123,15 +130,19 @@
     }
     
     body {
-      /* Ajustar padding para considerar a barra de navegação do sistema */
-      padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+      /* Manter apenas a safe area; o container usa variáveis de layout */
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     /* Esconder a barra de navegação do sistema quando possível */
     @supports (padding-bottom: env(safe-area-inset-bottom)) {
       body {
-        padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
       }
+    }
+
+    :root {
+      --mobile-bottom-nav-height: 4rem;
     }
   }
 
@@ -142,8 +153,8 @@
     }
     
     body {
-      /* Ajustar padding para tablets - navegação bottom também */
-      padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+      /* Manter apenas a safe area; o container usa variáveis de layout */
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     /* Melhor espaçamento para tablets */
@@ -151,6 +162,10 @@
       max-width: 90%;
       padding-left: 2rem;
       padding-right: 2rem;
+    }
+
+    :root {
+      --mobile-bottom-nav-height: 4.5rem;
     }
   }
 
@@ -241,7 +256,7 @@
 
   /* Mobile bottom navigation - Posicionado acima da barra de navegação do sistema */
   .mobile-bottom-nav {
-    bottom: env(safe-area-inset-bottom, 0px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--admob-banner-height));
     padding-bottom: env(safe-area-inset-bottom, 0px);
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -304,13 +319,13 @@
 
     /* Garantir que o conteúdo não seja coberto pela barra de navegação */
     .mobile-content {
-      padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+      padding-bottom: var(--app-content-bottom-padding);
     }
 
     /* Esconder barra de navegação do sistema quando possível */
     @supports (padding-bottom: env(safe-area-inset-bottom)) {
       .mobile-content {
-        padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+        padding-bottom: var(--app-content-bottom-padding);
       }
     }
   }
@@ -404,7 +419,7 @@
     .mobile-bottom-nav {
       z-index: 9999;
       position: fixed;
-      bottom: 0;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + var(--admob-banner-height));
       left: 0;
       right: 0;
       background: rgba(255, 255, 255, 0.98);
@@ -420,7 +435,7 @@
     .mobile-bottom-nav {
       z-index: 9999;
       position: fixed;
-      bottom: 0;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + var(--admob-banner-height));
       left: 0;
       right: 0;
       background: rgba(255, 255, 255, 0.95);

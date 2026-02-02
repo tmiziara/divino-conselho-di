@@ -4,15 +4,27 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 
 // Função para ativar o modo imersivo no Android
 function enableImmersiveMode() {
+  const safeInvoke = (fn?: () => any) => {
+    if (!fn) return;
+    try {
+      const result = fn();
+      if (result && typeof result.catch === 'function') {
+        result.catch(() => {});
+      }
+    } catch (error) {
+      // Ignore to avoid noisy console errors on unsupported platforms.
+    }
+  };
+
   if (window?.AndroidFullScreen && window.AndroidFullScreen.immersiveMode) {
-    window.AndroidFullScreen.immersiveMode();
-  } else if (window?.cordova && window.cordova.plugins && window.cordova.plugins.AndroidFullScreen) {
-    window.cordova.plugins.AndroidFullScreen.immersiveMode();
-  } else {
-    // Fallback: usar API Fullscreen do navegador
-    const el = document.documentElement;
-    if (el.requestFullscreen) el.requestFullscreen();
+    safeInvoke(() => window.AndroidFullScreen.immersiveMode());
+    return;
   }
+  if (window?.cordova && window.cordova.plugins && window.cordova.plugins.AndroidFullScreen) {
+    safeInvoke(() => window.cordova.plugins.AndroidFullScreen.immersiveMode());
+    return;
+  }
+  // No browser fullscreen fallback here to avoid gesture-related errors.
 }
 
 export function useSystemNavigation() {

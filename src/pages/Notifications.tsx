@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import AuthDialog from '@/components/AuthDialog';
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,19 @@ import Switch from '@mui/material/Switch';
 import { Badge } from "@/components/ui/badge";
 import { Bell, Clock, Calendar, Trash2, Plus, Settings, BookOpen, Loader2, Heart } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { trackEvent } from "@/lib/analytics";
 
 const Notifications = () => {
   const [showForm, setShowForm] = useState(false);
   const [showAuth, setShowAuth] = useState(false); // NOVO estado
-  const handleAuthClick = () => setShowAuth(true); // NOVA funÃ§Ã£o
+  const handleAuthClick = () => setShowAuth(true); // NOVA função
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  // Phase 2: track when guided setup is requested.
+  const guidedSetup = searchParams.get('guided') === '1';
+  const guidedInitialized = useRef(false);
   const [formData, setFormData] = useState({
     time: "08:00",
     days: [] as number[],
@@ -43,6 +51,63 @@ const Notifications = () => {
     THEMES,
     DAYS_OF_WEEK,
   } = useNotifications();
+  // Phase 2: use onboarding preferences to prefill templates and guided setup.
+  const safeStorageGet = (key: string) => {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const onboardingPrefs = useMemo(() => {
+    try {
+      const stored = safeStorageGet("onboarding_v1");
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      return null;
+    }
+  }, []);
+
+  const defaultTime = onboardingPrefs?.time || "08:00";
+  const allDays = useMemo(() => DAYS_OF_WEEK.map((day) => day.value), [DAYS_OF_WEEK]);
+  // Phase 2: gentler default days for guided setup (weekdays).
+  const defaultDays = useMemo(() => [1, 2, 3, 4, 5], []);
+  const themeValues = useMemo(() => new Set(THEMES.map((theme) => theme.value)), [THEMES]);
+  // Phase 2: quick templates for prefilled notification setup.
+  const quickTemplates = [
+    { id: "auto", label: "Diário (Auto)", type: "verse", theme: "auto" },
+    { id: "paz", label: "Paz", type: "verse", theme: "paz" },
+    { id: "esperanca", label: "Esperança", type: "verse", theme: "esperança" },
+    { id: "oracao", label: "Oração diária", type: "prayer", theme: "auto" },
+  ];
+
+  const applyTemplate = (template: { type: "verse" | "prayer"; theme: string }) => {
+    setFormData({
+      time: defaultTime,
+      days: defaultDays,
+      theme: template.theme,
+      type: template.type,
+    });
+    setShowForm(true);
+  };
+
+  // Phase 2: guided setup can prefill the form based on query params.
+  useEffect(() => {
+    if (!guidedSetup || guidedInitialized.current) return;
+    guidedInitialized.current = true;
+    const rawTheme = searchParams.get('theme') || "auto";
+    const themeParam = themeValues.has(rawTheme) ? rawTheme : "auto";
+    const typeParam = searchParams.get('type') === 'prayer' ? 'prayer' : 'verse';
+
+    setFormData({
+      time: defaultTime,
+      days: defaultDays,
+      theme: themeParam,
+      type: typeParam,
+    });
+    setShowForm(true);
+  }, [guidedSetup, searchParams, defaultTime, defaultDays, themeValues]);
 
   const [notificationStatus, setNotificationStatus] = useState<{ enabled: boolean; message: string } | null>({
     enabled: true,
@@ -66,6 +131,17 @@ const Notifications = () => {
           days: formData.days,
           theme: formData.theme,
         });
+      if (user?.id) {
+        trackEvent({
+          event_name: "notification_enabled",
+          user_id: user.id,
+          properties: {
+            type: formData.type,
+            days: formData.days,
+          },
+        });
+      }
+
       }
 
       setFormData({ time: "08:00", days: [], theme: "auto", type: "verse" });
@@ -73,6 +149,30 @@ const Notifications = () => {
       return Promise.resolve(true);
     } catch (error) {
       return Promise.resolve(false);
+    }
+  };
+
+  const handleToggleSchedule = async (schedule: typeof schedules[number]) => {
+    const shouldEnable = !schedule.enabled;
+    const result = await toggleSchedule(schedule);
+    if (result && shouldEnable && user?.id) {
+      trackEvent({
+        event_name: "notification_enabled",
+        user_id: user.id,
+        properties: { type: "verse" },
+      });
+    }
+  };
+
+  const handleTogglePrayerSchedule = async (schedule: typeof prayerSchedules[number]) => {
+    const shouldEnable = !schedule.enabled;
+    const result = await togglePrayerSchedule(schedule);
+    if (result && shouldEnable && user?.id) {
+      trackEvent({
+        event_name: "notification_enabled",
+        user_id: user.id,
+        properties: { type: "prayer" },
+      });
     }
   };
 
@@ -160,6 +260,47 @@ const Notifications = () => {
           </Card>
         </div>
 
+
+        {/* Phase 2: Guided setup banner */}
+        {guidedSetup && (
+          <Card className="mb-6 bg-card border border-border dark:bg-zinc-900 dark:border-border">
+            <CardHeader>
+              <CardTitle>Configuração guiada</CardTitle>
+              <CardDescription>
+                Escolha um tema e horário para começar a receber lembretes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={() => setShowForm(true)} className="flex-1">
+                Ajustar detalhes
+              </Button>
+              <Button variant="outline" onClick={() => setShowForm(false)}>
+                Ver meus agendamentos
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Phase 2: Theme-based templates */}
+        <Card className="mb-6 bg-card border border-border dark:bg-zinc-900 dark:border-border">
+          <CardHeader>
+            <CardTitle>Modelos rápidos</CardTitle>
+            <CardDescription>
+              Escolha um tema e deixe o resto pronto automaticamente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {quickTemplates.map((template) => (
+              <Button
+                key={template.id}
+                variant="outline"
+                onClick={() => applyTemplate(template)}
+              >
+                {template.label}
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
         {/* BotÃ£o Adicionar */}
         <div className="mb-6 flex gap-2 flex-wrap">
           <Button 
@@ -325,7 +466,7 @@ const Notifications = () => {
                       <div className="flex items-center gap-1 ml-2">
                         <Switch
                           checked={schedule.enabled}
-                          onChange={(e) => toggleSchedule(schedule)}
+                          onChange={() => handleToggleSchedule(schedule)}
                           size="small"
                         />
                         <Button
@@ -373,7 +514,7 @@ const Notifications = () => {
                       <div className="flex items-center gap-1 ml-2">
                         <Switch
                           checked={schedule.enabled}
-                          onChange={(e) => togglePrayerSchedule(schedule)}
+                          onChange={() => handleTogglePrayerSchedule(schedule)}
                           size="small"
                         />
                         <Button
@@ -399,3 +540,15 @@ const Notifications = () => {
 };
 
 export default Notifications; 
+
+
+
+
+
+
+
+
+
+
+
+

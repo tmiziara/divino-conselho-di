@@ -76,6 +76,6 @@ Se tiver problemas, verifique:
 
 ## 📋 **Informações do App**
 - **Nome**: Conexão com Deus
-- **Package**: com.conexaodeus.app
+- **Package**: com.mizflow.conexaodeus
 - **Versão**: 1.0
 - **Keystore**: conexao-deus.keystore 

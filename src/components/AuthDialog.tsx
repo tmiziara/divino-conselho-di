@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Heart, Mail, Lock, User, Shield, Crown, Star, Zap } from "lucide-react";
+import { Heart, Mail, Lock, User, Shield, Star, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,17 +30,17 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       id: "free",
       name: "Gratuito",
       price: "R$ 0",
-      description: "Recursos básicos para começar",
+      description: "Recursos essenciais para começar",
       icon: Star,
-      features: ["Leitura completa da Bíblia", "Busca básica", "Favoritos limitados (10)"]
+      features: ["Leitura completa da Bíblia", "Busca de versículos", "Favoritos limitados (10)", "Chat com créditos (limitado)"]
     },
     {
       id: "premium",
       name: "Premium",
       price: "R$ 15/mês",
-      description: "Para líderes espirituais",
+      description: "Para quem quer acesso total",
       icon: Zap,
-      features: ["Tudo do Básico", "Chat ilimitado", "Comentários avançados", "Grupos de estudo"]
+      features: ["Tudo do plano Gratuito", "Versões AA/ACF", "Estudos bíblicos premium", "Favoritos ilimitados", "Chat sem consumir créditos", "Sem anúncios"]
     }
   ];
 

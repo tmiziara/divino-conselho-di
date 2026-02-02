@@ -173,6 +173,7 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile]);
 
   // Verificar persistência das notificações quando o app é aberto
@@ -197,6 +198,7 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       const timer = setTimeout(checkOnAppOpen, 3000); // Aguardar 3 segundos para o Cordova carregar
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile]);
 
   // Função para obter estado atual do sistema

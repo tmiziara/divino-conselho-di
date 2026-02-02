@@ -69,7 +69,7 @@ No `capacitor.config.ts`, adicione:
 
 ```typescript
 const config: CapacitorConfig = {
-  appId: 'com.conexaodeus.app',
+  appId: 'com.mizflow.conexaodeus',
   appName: 'Conexao com Deus',
   webDir: 'dist',
   server: {

@@ -25,7 +25,7 @@ const BibleFavorites = () => {
 
   useEffect(() => {
     loadFavorites();
-  }, []);
+  }, [loadFavorites]);
 
   const handleShare = async (title: string, text: string) => {
     try {

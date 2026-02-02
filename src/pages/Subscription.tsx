@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Star, Zap, Loader2 } from "lucide-react";
+import { Check, Star, Zap } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,12 +27,12 @@ const Subscription = () => {
       name: "Gratuito",
       price: "R$ 0",
       period: "/mês",
-      description: "Recursos básicos para começar sua jornada espiritual",
+      description: "Recursos essenciais para iniciar sua jornada espiritual",
       features: [
         "Leitura completa da Bíblia",
-        "Busca básica de versículos",
+        "Busca de versículos",
         "Favoritos limitados (10)",
-        "Chat espiritual básico (5 mensagens/dia)",
+        "Chat com créditos (limitado)",
       ],
       icon: Star,
       popular: false,
@@ -42,15 +42,14 @@ const Subscription = () => {
       name: "Premium",
       price: "R$ 15",
       period: "/mês",
-      description: "Para líderes espirituais e estudantes avançados",
+      description: "Acesso total ao conteúdo premium do app",
       features: [
-        "Tudo do plano Básico",
-        "Chat espiritual ilimitado",
-        "Créditos ilimitados",
+        "Tudo do plano Gratuito",
+        "Versões AA/ACF da Bíblia",
+        "Estudos bíblicos premium",
         "Favoritos ilimitados",
-        "Todos os estudos bíblicos habilitados",
+        "Chat sem consumir créditos",
         "Sem anúncios",
-        "Suporte premium 24/7",
       ],
       icon: Zap,
       popular: true,
@@ -130,7 +129,8 @@ const Subscription = () => {
           {user && !subscriptionLoading && subscription !== undefined && subscription.subscribed && (
             <div className="mt-8">
               <Badge variant="secondary" className="text-lg px-4 py-2">
-                Plano Atual: {subscription.subscription_tier === "premium" ? "Premium" : "Gratuito"}
+                {/* Phase 3 fix: reflect legacy "basic" tier correctly in UI */}
+                Plano Atual: {subscription.subscription_tier === "premium" ? "Premium" : subscription.subscription_tier === "basic" ? "Básico" : "Gratuito"}
               </Badge>
               <div className="mt-4">
                 <Button
@@ -231,4 +231,3 @@ const Subscription = () => {
 };
 
 export default Subscription;
-

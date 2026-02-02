@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useSubscription } from './useSubscription';
 import { useLocalData } from './useLocalData';
 import { useAuth } from './useAuth';
@@ -8,7 +9,7 @@ export const useContentAccess = () => {
   const { localData, syncStatus } = useLocalData();
 
   // Determinar se o usuário tem acesso premium
-  const hasPremiumAccess = () => {
+  const hasPremiumAccess = useCallback(() => {
     // Se não há usuário, não tem acesso premium
     if (!user) return false;
 
@@ -24,10 +25,10 @@ export const useContentAccess = () => {
     // Usar dados da subscription (que já inclui dados locais)
     return subscription.subscribed && 
            (subscription.subscription_tier === 'premium' || subscription.subscription_tier === 'basic');
-  };
+  }, [user, subscriptionLoading, localData, subscription.subscribed, subscription.subscription_tier]);
 
   // Verificar se a assinatura está ativa
-  const isSubscriptionActive = () => {
+  const isSubscriptionActive = useCallback(() => {
     if (!user) return false;
 
     if (subscriptionLoading) {
@@ -38,10 +39,10 @@ export const useContentAccess = () => {
     }
 
     return subscription.subscribed;
-  };
+  }, [user, subscriptionLoading, localData, subscription.subscribed]);
 
   // Verificar se é usuário premium
-  const isPremiumUser = () => {
+  const isPremiumUser = useCallback(() => {
     if (!user) return false;
 
     if (subscriptionLoading) {
@@ -52,10 +53,10 @@ export const useContentAccess = () => {
     }
 
     return subscription.subscription_tier === 'premium';
-  };
+  }, [user, subscriptionLoading, localData, subscription.subscription_tier]);
 
   // Verificar se é usuário básico
-  const isBasicUser = () => {
+  const isBasicUser = useCallback(() => {
     if (!user) return false;
 
     if (subscriptionLoading) {
@@ -66,10 +67,10 @@ export const useContentAccess = () => {
     }
 
     return subscription.subscription_tier === 'basic';
-  };
+  }, [user, subscriptionLoading, localData, subscription.subscription_tier]);
 
   // Verificar se é usuário gratuito
-  const isFreeUser = () => {
+  const isFreeUser = useCallback(() => {
     if (!user) return true;
 
     if (subscriptionLoading) {
@@ -80,24 +81,24 @@ export const useContentAccess = () => {
     }
 
     return subscription.subscription_tier === 'free';
-  };
+  }, [user, subscriptionLoading, localData, subscription.subscription_tier]);
 
   // Verificar se os dados estão prontos
-  const isDataReady = () => {
+  const isDataReady = useCallback(() => {
     if (!user) return true; // Usuário não autenticado - dados prontos
     if (subscriptionLoading) return false; // Ainda carregando
     return true; // Dados prontos
-  };
+  }, [user, subscriptionLoading]);
 
   // Status de sincronização
-  const getSyncStatus = () => {
+  const getSyncStatus = useCallback(() => {
     return {
       isSyncing: syncStatus.isSyncing,
       lastSync: syncStatus.lastSync,
       error: syncStatus.error,
       hasLocalData: !!localData
     };
-  };
+  }, [syncStatus.isSyncing, syncStatus.lastSync, syncStatus.error, localData]);
 
   return {
     hasPremiumAccess,

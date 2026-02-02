@@ -6,12 +6,15 @@ import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { trackEvent } from "@/lib/analytics";
 
 const Success = () => {
   const { checkSubscription } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     // Show success message and check subscription
@@ -19,6 +22,15 @@ const Success = () => {
       title: "Pagamento Confirmado!",
       description: "Sua assinatura foi ativada com sucesso.",
     });
+
+    if (user?.id) {
+      // Phase 5: record a subscription success event.
+      trackEvent({
+        event_name: "subscription_start",
+        user_id: user.id,
+        properties: { source: "stripe_success" },
+      });
+    }
 
     // Check subscription and redirect to home after 3 seconds
     const timer = setTimeout(() => {
@@ -29,7 +41,7 @@ const Success = () => {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [checkSubscription, toast, navigate]);
+  }, [checkSubscription, toast, navigate, user?.id]);
 
   return (
     <div className="min-h-screen celestial-bg">

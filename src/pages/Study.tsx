@@ -1,125 +1,132 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import { 
   BookOpen, 
   ChevronLeft, 
   ChevronRight,
-  Heart, 
-  HeartOff, 
-  Play, 
   CheckCircle,
   Clock,
-  Calendar,
+  Heart,
   Target,
-  Lightbulb,
-  MessageCircle,
   Sparkles,
   Lock
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useBibleStudies, type BibleStudy, type BibleStudyChapter } from '@/hooks/useBibleStudies';
-import { useBibleFavorites } from '@/hooks/useBibleFavorites';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useContentAccess } from '@/hooks/useContentAccess';
 import { localContent } from '@/lib/localContent';
-import { cn } from '@/lib/utils';
 import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
 
 const Study = () => {
   const { studyId } = useParams<{ studyId: string }>();
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [selectedChapter, setSelectedChapter] = useState<BibleStudyChapter | null>(null);
-  const [showChapterDialog, setShowChapterDialog] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [showChapterContent, setShowChapterContent] = useState(false);
   const [study, setStudy] = useState<BibleStudy | null>(null);
   const [studyLoading, setStudyLoading] = useState(true);
+  // Phase 3: premium lock state + preview for premium studies.
+  const [isPremiumLocked, setIsPremiumLocked] = useState(false);
+  const [previewChapter, setPreviewChapter] = useState<BibleStudyChapter | null>(null);
+  // Phase 4: keep track of rewarded unlock for chapter 1 in this session.
+  const [isChapterOneUnlocked, setIsChapterOneUnlocked] = useState(false);
   
   const { 
     chapters, 
     loading, 
     fetchChapters,
-    isChapterCompleted,
-    isChapterFavorite,
-    getStudyProgress,
-    toggleFavorite
+    isChapterCompleted
   } = useBibleStudies();
 
   const { hasPremiumAccess, loading: accessLoading } = useContentAccess();
 
   useEffect(() => {
-    if (studyId) {
-      setStudyLoading(true);
-      
-      // Timeout de segurança para evitar travamento
-      const timeoutId = setTimeout(() => {
-        setStudyLoading(false);
-      }, 15000); // 15 segundos
-      
-      const loadStudyData = async () => {
-        try {
-          // Usar o sistema simplificado
-          await fetchChapters(studyId);
-          
-          // Buscar informações do estudo local (agora assíncrono)
-          const studyData = await localContent.getStudyBySlug(studyId);
-          
-          if (studyData) {
-            setStudy({
-              id: studyData.id,
-              title: studyData.title,
-              description: studyData.description,
-              cover_image: studyData.cover_image,
-              total_chapters: studyData.total_chapters,
-              is_active: studyData.is_active,
-              slug: studyData.slug,
-              created_at: studyData.created_at,
-              updated_at: studyData.updated_at
-            });
-          } else {
-            // Não deixar o app travar - definir loading como false mesmo com erro
-            setStudyLoading(false);
+    if (!studyId || accessLoading) return;
+    setStudyLoading(true);
+
+    // Timeout de segurança para evitar travamento
+    const timeoutId = setTimeout(() => {
+      setStudyLoading(false);
+    }, 15000); // 15 segundos
+
+    const loadStudyData = async () => {
+      try {
+        // Buscar informações do estudo local (agora assíncrono)
+        const studyData = await localContent.getStudyBySlug(studyId);
+
+        if (studyData) {
+          setStudy({
+            id: studyData.id,
+            title: studyData.title,
+            description: studyData.description,
+            cover_image: studyData.cover_image,
+            total_chapters: studyData.total_chapters,
+            is_active: studyData.is_active,
+            is_premium: studyData.is_premium,
+            slug: studyData.slug,
+            created_at: studyData.created_at,
+            updated_at: studyData.updated_at
+          });
+
+          const canAccessPremium = !studyData.is_premium || hasPremiumAccess();
+          if (studyData.is_premium && !canAccessPremium) {
+            setIsPremiumLocked(true);
+            // Preview: carregar apenas o primeiro capítulo para mostrar um gostinho.
+            const preview = await localContent.getChapter(studyData.id, 1);
+            setPreviewChapter(preview || null);
+            return;
           }
-        } catch (error) {
+
+          setIsPremiumLocked(false);
+          setPreviewChapter(null);
+          // Usar o sistema simplificado (apenas quando há acesso)
+          await fetchChapters(studyId);
+        } else {
           // Não deixar o app travar - definir loading como false mesmo com erro
           setStudyLoading(false);
-          
-          // Mostrar toast de erro se disponível
-          if (error.message && error.message !== 'Estudo não encontrado') {
-            // Tentar usar o toast se disponível
-            try {
-              const { toast } = require('@/hooks/use-toast');
-              toast({
-                title: "Erro ao carregar estudo",
-                description: "Não foi possível carregar o estudo. Tente novamente.",
-                variant: "destructive"
-              });
-            } catch (toastError) {
-            }
-          }
-        } finally {
-          clearTimeout(timeoutId);
-          setStudyLoading(false);
         }
-      };
-      
-      loadStudyData().catch(error => {
+      } catch (error: any) {
+        // Não deixar o app travar - definir loading como false mesmo com erro
+        setStudyLoading(false);
+
+        // Mostrar toast de erro se disponível
+        if (error?.message && error.message !== 'Estudo não encontrado') {
+          try {
+            const { toast } = require('@/hooks/use-toast');
+            toast({
+              title: "Erro ao carregar estudo",
+              description: "Não foi possível carregar o estudo. Tente novamente.",
+              variant: "destructive"
+            });
+          } catch (toastError) {
+          }
+        }
+      } finally {
         clearTimeout(timeoutId);
         setStudyLoading(false);
-      });
-      
-      // Cleanup function
-      return () => {
-        clearTimeout(timeoutId);
-      };
+      }
+    };
+
+    loadStudyData().catch(() => {
+      clearTimeout(timeoutId);
+      setStudyLoading(false);
+    });
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [studyId, accessLoading, hasPremiumAccess, fetchChapters]);
+
+  useEffect(() => {
+    if (!studyId) return;
+    try {
+      const key = `rewarded_preview_chapter_v1_${studyId}_1`;
+      setIsChapterOneUnlocked(sessionStorage.getItem(key) === "true");
+    } catch (error) {
+      setIsChapterOneUnlocked(false);
     }
   }, [studyId]);
 
@@ -155,7 +162,7 @@ const Study = () => {
   }
 
   // Mostrar loading enquanto está carregando o estudo
-  if (studyLoading || loading || accessLoading) {
+  if (studyLoading || accessLoading || (loading && !isPremiumLocked)) {
     return (
       <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
@@ -208,7 +215,78 @@ const Study = () => {
     );
   }
 
-  const progress = getStudyProgress(study.id);
+  if (study && isPremiumLocked) {
+    const previewText = previewChapter?.reflective_reading
+      ?.replace(/\n\n/g, '\n\n')
+      .split('\n\n')
+      .find(paragraph => paragraph.trim().length > 0);
+
+    return (
+      <div className="min-h-screen bg-background dark:bg-background">
+        <Navigation onAuthClick={handleAuthClick} />
+        
+        <div className="container mx-auto px-6 py-20">
+          <Card className="spiritual-card max-w-2xl mx-auto bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
+            <CardHeader className="text-center">
+              <CardTitle className="heavenly-text text-2xl">
+                <Lock className="w-8 h-8 mx-auto mb-3 text-amber-500" />
+                Estudo premium bloqueado
+              </CardTitle>
+              <p className="text-muted-foreground">
+                Este estudo faz parte do plano Premium.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {previewChapter && (
+                <div className="bg-muted/30 p-4 rounded-lg">
+                  <p className="text-sm font-semibold text-primary mb-2">Preview do Capítulo 1</p>
+                  <p className="text-sm italic mb-2">"{previewChapter.main_verse}"</p>
+                  <p className="text-xs text-muted-foreground">{previewChapter.main_verse_reference}</p>
+                  {previewText && (
+                    <p className="text-sm text-muted-foreground mt-3">{previewText}</p>
+                  )}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Você pode liberar 1 capítulo premium assistindo a um anúncio.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Phase 4: send the user to a locked chapter where the rewarded preview is available. */}
+                {!isChapterOneUnlocked ? (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => navigate(`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/1`)}
+                  >
+                    Ver anúncio e liberar capítulo 1
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => navigate(`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/1`)}
+                  >
+                    Ler capítulo 1 liberado
+                  </Button>
+                )}
+                <Button
+                  className="divine-button flex-1"
+                  onClick={() => navigate('/assinatura?plan=premium')}
+                >
+                  Fazer assinatura Premium
+                </Button>
+                <Link to="/estudos" className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    Ver outros estudos
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">

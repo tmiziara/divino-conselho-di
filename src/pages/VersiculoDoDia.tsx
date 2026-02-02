@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useVerseImage } from "@/hooks/useVerseImage";
 import SwipeContainer from "@/components/SwipeContainer";
 import { shareVerseImage } from './shareVerseImage';
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAdManager } from "@/hooks/useAdManager";
 
 interface Verse {
@@ -24,10 +24,39 @@ const VersiculoDoDia = () => {
   const [currentBackground, setCurrentBackground] = useState('background1.jpg');
   const [verses, setVerses] = useState<Verse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const { incrementVerseCount } = useAdManager({ versesPerAd: 5, studiesPerAd: 1 });
+  const navigate = useNavigate();
+  const [guestViews, setGuestViews] = useState(0);
+  const [showGuestLimit, setShowGuestLimit] = useState(false);
+  const [showReminderCta, setShowReminderCta] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   
   const currentVerse = verses[currentIndex];
+  const GUEST_VIEW_KEY = "guest_verse_views";
+  const GUEST_VIEW_LIMIT = 2;
+  const REMINDER_CTA_KEY = "reminder_cta_verse_v1";
+
+  const triggerGuestLimit = () => {
+    setShowGuestLimit(true);
+  };
+
+  const safeStorageGet = (key: string) => {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const safeStorageSet = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      // Ignore storage errors to keep UI functional
+    }
+  };
 
   // Lista de imagens de background disponíveis
   const backgroundImages = [
@@ -44,9 +73,17 @@ const VersiculoDoDia = () => {
   // Carregar versículos do arquivo
   useEffect(() => {
     const loadVerses = async () => {
+      setLoading(true);
+      setLoadError(null);
       try {
         const response = await fetch('/data/versiculos_por_tema_com_texto.json');
         const data = await response.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          setVerses([]);
+          setLoadError("Nenhum versículo disponível no momento.");
+          setLoading(false);
+          return;
+        }
         setVerses(data);
         
         // Verificar se há parâmetros de notificação na URL
@@ -108,13 +145,27 @@ const VersiculoDoDia = () => {
         }
         
         setLoading(false);
+
+        // Phase 1: allow a limited preview for guests
+        if (!user) {
+          const stored = safeStorageGet(GUEST_VIEW_KEY);
+          const initialCount = stored ? parseInt(stored, 10) : 0;
+          const nextCount = Math.max(initialCount, 1); // opening counts as first preview
+          safeStorageSet(GUEST_VIEW_KEY, nextCount.toString());
+          setGuestViews(nextCount);
+          if (nextCount >= GUEST_VIEW_LIMIT) {
+            triggerGuestLimit();
+          }
+        }
       } catch (error) {
+        setLoadError("Não foi possível carregar os versículos.");
         setLoading(false);
       }
     };
 
     loadVerses();
-  }, [searchParams]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, user, reloadToken]);
 
   const { imageUrl, loading: imageLoading } = useVerseImage({
     verse: currentVerse,
@@ -154,6 +205,16 @@ const VersiculoDoDia = () => {
   const handleShare = handleShareImage;
 
   const navigateVerse = (direction: 'prev' | 'next') => {
+    // Phase 1: limit guest preview to 2 verses before prompting login
+    if (!user && guestViews >= GUEST_VIEW_LIMIT) {
+      triggerGuestLimit();
+      return;
+    }
+
+    if (verses.length === 0) {
+      return;
+    }
+
     if (direction === 'prev' && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
       setCurrentBackground(getRandomBackground());
@@ -162,47 +223,62 @@ const VersiculoDoDia = () => {
       setCurrentIndex(currentIndex + 1);
       setCurrentBackground(getRandomBackground());
       incrementVerseCount(); // Incrementar contador de ads
+    } else {
+      return;
+    }
+
+    // Phase 1: track guest previews
+    if (!user) {
+      const nextViews = guestViews + 1;
+      setGuestViews(nextViews);
+      safeStorageSet(GUEST_VIEW_KEY, nextViews.toString());
+      if (nextViews >= GUEST_VIEW_LIMIT) {
+        triggerGuestLimit();
+      }
+    }
+
+    // Phase 1: contextual reminder CTA (once)
+    if (!safeStorageGet(REMINDER_CTA_KEY)) {
+      setShowReminderCta(true);
     }
   };
 
   // Função para gerar versículo completamente aleatório
   const generateRandomVerse = () => {
+    if (!user && guestViews >= GUEST_VIEW_LIMIT) {
+      triggerGuestLimit();
+      return;
+    }
+
+    if (verses.length === 0) {
+      return;
+    }
+
     const randomVerseIndex = getRandomIndex(verses.length);
     const randomBackground = getRandomBackground();
-    
+    if (randomVerseIndex === currentIndex && randomBackground === currentBackground) {
+      return;
+    }
     setCurrentIndex(randomVerseIndex);
     setCurrentBackground(randomBackground);
+
+    if (!user) {
+      const nextViews = guestViews + 1;
+      setGuestViews(nextViews);
+      safeStorageSet(GUEST_VIEW_KEY, nextViews.toString());
+      if (nextViews >= GUEST_VIEW_LIMIT) {
+        triggerGuestLimit();
+      }
+    }
+
+    if (!safeStorageGet(REMINDER_CTA_KEY)) {
+      setShowReminderCta(true);
+    }
   };
 
   const handleAuthClick = () => {
     setShowAuth(true);
   };
-
-  // Se não estiver logado, mostrar tela de login
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background dark:bg-background">
-        <Navigation onAuthClick={handleAuthClick} />
-        <div className="container mx-auto px-6 py-20">
-          <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-card">
-            <CardContent className="text-center p-6">
-              <BookOpen className="w-12 h-12 mx-auto mb-4 text-primary" />
-              <h2 className="text-2xl font-bold mb-2 heavenly-text">
-                Versículo do Dia
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Faça login para acessar versículos inspiradores e compartilhar com seus amigos
-              </p>
-              <Button className="divine-button" onClick={handleAuthClick}>
-                Fazer Login
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-        <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
-      </div>
-    );
-  }
 
   // Loading inicial
   if (loading) {
@@ -219,6 +295,20 @@ const VersiculoDoDia = () => {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-background">
+        <Navigation onAuthClick={handleAuthClick} />
+        <div className="container mx-auto px-4 py-6">
+          <div className="max-w-md mx-auto text-center">
+            <p className="text-muted-foreground mb-4">{loadError}</p>
+            <Button onClick={() => setReloadToken((value) => value + 1)}>Tentar novamente</Button>
+          </div>
+        </div>
+        <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background dark:bg-background">
       <Navigation onAuthClick={handleAuthClick} />
@@ -263,16 +353,18 @@ const VersiculoDoDia = () => {
                       className="w-full h-auto rounded-t-lg"
                     />
                     
-                    {/* Botão de compartilhar */}
-                    <div className="absolute top-4 right-4">
-                      <Button
-                        onClick={handleShare}
-                        size="sm"
-                        className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {/* Botão de compartilhar (somente logado) */}
+                    {user && (
+                      <div className="absolute top-4 right-4">
+                        <Button
+                          onClick={handleShare}
+                          size="sm"
+                          className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="h-96 flex items-center justify-center">
@@ -333,6 +425,58 @@ const VersiculoDoDia = () => {
             </Button>
           </div>
 
+          {/* Phase 1: Contextual reminder CTA */}
+          {showReminderCta && (
+            <div className="mt-6">
+              <Card className="spiritual-card bg-card dark:bg-zinc-900">
+                <CardContent className="p-4 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Quer receber lembretes diários com versículos?
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      onClick={() => {
+                        // Phase 2: guided setup with prefilled theme from the verse.
+                        const themeParam = currentVerse?.tema ? encodeURIComponent(currentVerse.tema) : "auto";
+                        safeStorageSet(REMINDER_CTA_KEY, "dismissed");
+                        setShowReminderCta(false);
+                        navigate(`/notificacoes?guided=1&source=verse&theme=${themeParam}`);
+                      }}
+                    >
+                      Ativar lembretes
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        safeStorageSet(REMINDER_CTA_KEY, "dismissed");
+                        setShowReminderCta(false);
+                      }}
+                    >
+                      Agora não
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Phase 1: Soft sign-up nudge for guests */}
+          {showGuestLimit && !user && (
+            <div className="mt-6">
+              <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-card">
+                <CardContent className="text-center p-6">
+                  <BookOpen className="w-10 h-10 mx-auto mb-3 text-primary" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Você já viu seus 2 versículos gratuitos. Entre para continuar.
+                  </p>
+                  <Button className="divine-button" onClick={handleAuthClick}>
+                    Fazer Login
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Instruções */}
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
@@ -348,3 +492,4 @@ const VersiculoDoDia = () => {
 };
 
 export default VersiculoDoDia; 
+

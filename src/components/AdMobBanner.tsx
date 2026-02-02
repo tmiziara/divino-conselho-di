@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AdMob, BannerAdSize, BannerAdPosition, BannerAdPluginEvents } from '@capacitor-community/admob';
 import { useSubscription } from '@/hooks/useSubscription';
 
@@ -15,11 +15,19 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const listenersRef = useRef<any[]>([]);
 
+  const getAdaptiveBannerHeight = () => {
+    if (typeof window === 'undefined') return 0;
+    const width = window.innerWidth;
+    if (width >= 728) return 90;
+    if (width >= 468) return 60;
+    return 50;
+  };
+
   // ID do banner de produção
   const BANNER_AD_ID = "ca-app-pub-7772749408418204/7297967059";
 
   // Função para mostrar o banner
-  const showBanner = async () => {
+  const showBanner = useCallback(async () => {
     // VERIFICAÇÃO DUPLA: nunca mostrar para premium
     if (subscription?.subscription_tier === "premium") {
       return;
@@ -64,7 +72,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
         }
       }, 5000);
     }
-  };
+  }, [isLoading, subscription?.subscription_tier]);
 
   // Função para ocultar o banner
   const hideBanner = async () => {
@@ -82,7 +90,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
   };
 
   // Configurar listeners para eventos do banner
-  const setupListeners = async () => {
+  const setupListeners = useCallback(async () => {
     try {
       // Listener para quando o banner é carregado
       const loadedListener = await AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
@@ -120,7 +128,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
       listenersRef.current = [loadedListener, closedListener, failedListener, impressionListener];
     } catch (err) {
     }
-  };
+  }, [showBanner, subscription?.subscription_tier]);
 
   // PRINCIPAL: Gerenciar visibilidade do banner baseado no status da assinatura
   useEffect(() => {
@@ -155,7 +163,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
     };
 
     manageBanner();
-  }, [subscription?.subscription_tier, subscriptionLoading]);
+  }, [showBanner, subscription?.subscription_tier, subscriptionLoading]);
 
   // Configurar listeners quando o componente montar
   useEffect(() => {
@@ -174,7 +182,32 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
         clearTimeout(retryTimeoutRef.current);
       }
     };
-  }, []);
+  }, [setupListeners]);
+
+  // Phase 4: reserve safe space so the native banner does not overlap nav/content.
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    if (subscriptionLoading || subscription?.subscription_tier === "premium") {
+      document.documentElement.style.setProperty('--admob-banner-height', '0px');
+      return;
+    }
+
+    const updateBannerHeight = () => {
+      const shouldReserveSpace = isVisible || isLoading || !!error;
+      const height = shouldReserveSpace ? getAdaptiveBannerHeight() : 0;
+      document.documentElement.style.setProperty('--admob-banner-height', `${height}px`);
+    };
+
+    updateBannerHeight();
+    window.addEventListener('resize', updateBannerHeight);
+
+    return () => {
+      window.removeEventListener('resize', updateBannerHeight);
+      document.documentElement.style.setProperty('--admob-banner-height', '0px');
+    };
+  }, [isVisible, isLoading, error, subscription?.subscription_tier, subscriptionLoading]);
 
   // VERIFICAÇÃO INMEDIATA: sempre ocultar banner para usuários premium
   useEffect(() => {

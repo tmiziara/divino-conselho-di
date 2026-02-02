@@ -17,6 +17,7 @@ export type Database = {
           updated_at: string
           user_id: string
           verse: number | null
+          version: string | null
         }
         Insert: {
           book: string
@@ -25,6 +26,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           verse?: number | null
+          version?: string | null
         }
         Update: {
           book?: string
@@ -33,6 +35,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           verse?: number | null
+          version?: string | null
         }
         Relationships: []
       }
@@ -215,6 +218,84 @@ export type Database = {
           type?: string
           user_id?: string
           verse?: number | null
+        }
+        Relationships: []
+      }
+      notification_schedules: {
+        Row: {
+          created_at: string
+          prayer_schedules: Json | null
+          schedules: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          prayer_schedules?: Json | null
+          schedules?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          prayer_schedules?: Json | null
+          schedules?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      analytics_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          properties: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          properties?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          properties?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_history_summaries: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          total_messages: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          total_messages?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          total_messages?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

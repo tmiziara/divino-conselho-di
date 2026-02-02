@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Conexao com Deus</string>
     <string name="title_activity_main">Conexao com Deus</string>
-    <string name="package_name">com.conexaodeus.app</string>
-    <string name="custom_url_scheme">com.conexaodeus.app</string>
+    <string name="package_name">com.mizflow.conexaodeus</string>
+    <string name="custom_url_scheme">com.mizflow.conexaodeus</string>
 </resources>

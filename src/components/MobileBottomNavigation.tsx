@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, MessageCircle, Heart, User, Star, GraduationCap, Bell, Settings } from "lucide-react";
+import { Home, BookOpen, MessageCircle, Heart, User, Star, GraduationCap, Bell, Settings, CalendarDays, NotebookPen } from "lucide-react";
 import { useMobileFeatures } from "@/hooks/use-mobile";
 import { useShouldShowMobileNav, useDeviceType } from "@/hooks/useTablet";
 
@@ -24,6 +24,8 @@ const MobileBottomNavigation = () => {
     { path: '/biblia', label: 'Bíblia', icon: BookOpen },
     { path: '/versiculo-do-dia', label: 'Versículo', icon: Star },
     { path: '/estudos', label: 'Estudos', icon: GraduationCap },
+    { path: '/planos', label: 'Planos', icon: CalendarDays },
+    { path: '/diario', label: 'Diário', icon: NotebookPen },
     { path: '/chat', label: 'Chat', icon: MessageCircle },
   ];
 
@@ -33,6 +35,8 @@ const MobileBottomNavigation = () => {
     { path: '/biblia', label: 'Bíblia', icon: BookOpen },
     { path: '/versiculo-do-dia', label: 'Versículo', icon: Star },
     { path: '/estudos', label: 'Estudos', icon: GraduationCap },
+    { path: '/planos', label: 'Planos', icon: CalendarDays },
+    { path: '/diario', label: 'Diário', icon: NotebookPen },
     { path: '/chat', label: 'Chat', icon: MessageCircle },
     { path: '/favoritos', label: 'Favoritos', icon: Heart },
     { path: '/notificacoes', label: 'Notificações', icon: Bell },

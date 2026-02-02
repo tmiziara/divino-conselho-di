@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useLocalData } from "./useLocalData";
@@ -29,25 +29,25 @@ export const useSubscription = () => {
   };
 
   // Carregar dados locais primeiro (rápido)
-  const loadLocalSubscription = () => {
+  const loadLocalSubscription = useCallback(() => {
     if (localData) {
       const subscriptionData = convertLocalDataToSubscription(localData);
       setSubscription(subscriptionData);
       setLoading(false);
     }
-  };
+  }, [localData]);
 
   // Sincronizar com Supabase em background
-  const syncWithSupabase = async () => {
+  const syncWithSupabase = useCallback(async () => {
     if (!user?.id) return;
 
     try {
       await syncData(user.id);
     } catch (error) {
     }
-  };
+  }, [syncData, user?.id]);
 
-  const checkSubscription = async () => {
+  const checkSubscription = useCallback(async () => {
     if (!user) {
       setSubscription({
         subscribed: false,
@@ -63,7 +63,7 @@ export const useSubscription = () => {
 
     // Sincronizar em background (lento)
     syncWithSupabase();
-  };
+  }, [loadLocalSubscription, syncWithSupabase, user]);
 
   const createCheckoutSession = async (plan: "premium") => {
     if (!user) throw new Error("User must be authenticated");
@@ -104,11 +104,11 @@ export const useSubscription = () => {
     if (localData) {
       loadLocalSubscription();
     }
-  }, [localData]);
+  }, [localData, loadLocalSubscription]);
 
   useEffect(() => {
     checkSubscription();
-  }, [user]);
+  }, [checkSubscription, user]);
 
   return {
     subscription,

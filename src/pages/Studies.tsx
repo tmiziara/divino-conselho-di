@@ -25,7 +25,8 @@ const Studies = () => {
   // Função para verificar se tem acesso premium (memoizada)
   const hasPremiumAccess = useMemo(() => {
     if (subscriptionLoading || subscription === undefined) return undefined;
-    if (subscription.subscribed && subscription.subscription_tier === 'premium') {
+    // Phase 3 fix: treat legacy "basic" as premium access to keep entitlements consistent.
+    if (subscription.subscribed && (subscription.subscription_tier === 'premium' || subscription.subscription_tier === 'basic')) {
       return true;
     }
     return false;

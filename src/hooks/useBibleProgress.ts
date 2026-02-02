@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { recordActivity } from "@/lib/activityLog";
+import { useStreaks } from "@/hooks/useStreaks";
 
 interface ReadingPosition {
   book: string;
@@ -12,6 +14,7 @@ interface ReadingPosition {
 
 export const useBibleProgress = () => {
   const { user } = useAuth();
+  const { registerCompletion } = useStreaks();
   const [lastPosition, setLastPosition] = useState<Partial<ReadingPosition>>({});
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -44,16 +47,33 @@ export const useBibleProgress = () => {
     };
   }, []);
 
-  const saveProgress = (book: string, chapter: number, verse: number = 1, version: string = 'nvi') => {
+  const persistPosition = (
+    book: string,
+    chapter: number,
+    verse: number = 1,
+    version: string = 'nvi',
+    options?: { trackActivity?: boolean; sync?: boolean }
+  ) => {
+    const { trackActivity = true, sync = true } = options || {};
     const position: ReadingPosition = { book, chapter, verse, version, updated_at: new Date().toISOString() };
     
     // Save to localStorage for all users
     localStorage.setItem('bible_reading_position', JSON.stringify(position));
     setLastPosition(position);
     window.dispatchEvent(new CustomEvent('bibleProgressUpdated', { detail: position }));
-    
-    // If user is logged in, we could also save to database in the future
-    if (user) {
+
+    if (trackActivity) {
+      // Phase 6: record a reading activity once per chapter/day for streaks and summary.
+      recordActivity({
+        userId: user?.id,
+        source: "bible",
+        count: 1,
+        uniqueKey: `${book}-${chapter}`,
+      });
+      registerCompletion();
+    }
+
+    if (sync && user) {
       // Phase 5: Save to Supabase to enable cross-device resume.
       supabase
         .from('bible_progress')
@@ -75,6 +95,14 @@ export const useBibleProgress = () => {
     }
   };
 
+  const saveProgress = (book: string, chapter: number, verse: number = 1, version: string = 'nvi') => {
+    persistPosition(book, chapter, verse, version, { trackActivity: true, sync: true });
+  };
+
+  const setPreviewPosition = (book: string, chapter: number, verse: number = 1, version: string = 'nvi') => {
+    persistPosition(book, chapter, verse, version, { trackActivity: false, sync: false });
+  };
+
   const getLastPosition = (): Partial<ReadingPosition> => {
     return lastPosition;
   };
@@ -86,6 +114,7 @@ export const useBibleProgress = () => {
 
   return {
     saveProgress,
+    setPreviewPosition,
     getLastPosition,
     clearProgress,
     lastPosition,

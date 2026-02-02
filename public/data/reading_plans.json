@@ -1,0 +1,114 @@
+[
+  {
+    "id": "plano_paz",
+    "title": "Jornada da Paz",
+    "description": "7 dias para encontrar paz em meio \u00e0s preocupa\u00e7\u00f5es.",
+    "durationDays": 7,
+    "items": [
+      {
+        "dayNumber": 1,
+        "title": "Confie no Senhor",
+        "book": "sl",
+        "chapter": 23,
+        "verseRange": "1-3",
+        "reflection": "Onde voc\u00ea precisa de descanso hoje?"
+      },
+      {
+        "dayNumber": 2,
+        "title": "N\u00e3o temas",
+        "book": "is",
+        "chapter": 41,
+        "verseRange": "10",
+        "reflection": "Qual medo voc\u00ea pode entregar hoje?"
+      },
+      {
+        "dayNumber": 3,
+        "title": "Ansiedade e ora\u00e7\u00e3o",
+        "book": "fp",
+        "chapter": 4,
+        "verseRange": "6-7",
+        "reflection": "O que voc\u00ea pode transformar em ora\u00e7\u00e3o?"
+      },
+      {
+        "dayNumber": 4,
+        "title": "Ref\u00fagio seguro",
+        "book": "sl",
+        "chapter": 46,
+        "verseRange": "1-2",
+        "reflection": "Qual \u00e9 seu ref\u00fagio quando tudo parece pesado?"
+      },
+      {
+        "dayNumber": 5,
+        "title": "Descanso para a alma",
+        "book": "mt",
+        "chapter": 11,
+        "verseRange": "28-30",
+        "reflection": "Como voc\u00ea pode descansar em Jesus hoje?"
+      },
+      {
+        "dayNumber": 6,
+        "title": "Paz que guarda",
+        "book": "jo",
+        "chapter": 14,
+        "verseRange": "27",
+        "reflection": "Que \u00e1rea precisa da paz de Cristo?"
+      },
+      {
+        "dayNumber": 7,
+        "title": "Cora\u00e7\u00e3o tranquilo",
+        "book": "sl",
+        "chapter": 62,
+        "verseRange": "1",
+        "reflection": "O que muda quando voc\u00ea espera em Deus?"
+      }
+    ]
+  },
+  {
+    "id": "plano_esperanca",
+    "title": "Esperan\u00e7a em 5 dias",
+    "description": "Cinco dias para renovar a esperan\u00e7a e seguir em frente.",
+    "durationDays": 5,
+    "items": [
+      {
+        "dayNumber": 1,
+        "title": "Nova cada manh\u00e3",
+        "book": "lm",
+        "chapter": 3,
+        "verseRange": "22-23",
+        "reflection": "Em que \u00e1rea voc\u00ea precisa de um novo come\u00e7o?"
+      },
+      {
+        "dayNumber": 2,
+        "title": "\u00c2ncora firme",
+        "book": "hb",
+        "chapter": 6,
+        "verseRange": "19",
+        "reflection": "O que mant\u00e9m sua f\u00e9 firme?"
+      },
+      {
+        "dayNumber": 3,
+        "title": "Deus cuida",
+        "book": "1pe",
+        "chapter": 5,
+        "verseRange": "7",
+        "reflection": "Que peso voc\u00ea pode entregar agora?"
+      },
+      {
+        "dayNumber": 4,
+        "title": "For\u00e7a na fraqueza",
+        "book": "2co",
+        "chapter": 12,
+        "verseRange": "9",
+        "reflection": "Onde a gra\u00e7a de Deus te sustenta?"
+      },
+      {
+        "dayNumber": 5,
+        "title": "Futuro com prop\u00f3sito",
+        "book": "jr",
+        "chapter": 29,
+        "verseRange": "11",
+        "reflection": "Qual esperan\u00e7a Deus tem colocado no seu cora\u00e7\u00e3o?"
+      }
+    ]
+  }
+]

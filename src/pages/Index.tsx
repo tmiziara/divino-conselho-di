@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 import { Input } from "@/components/ui/input";
 
-import { Heart, BookOpen, MessageCircle, Star, Shield, Sparkles, Book, FileText, Lightbulb, Bell } from "lucide-react";
+import { Heart, BookOpen, MessageCircle, Star, Shield, Sparkles, Book, FileText, Lightbulb, Bell, CalendarDays, Flame } from "lucide-react";
 
 
 import { Link, useNavigate } from "react-router-dom";
@@ -31,6 +32,8 @@ import bibleStudies from "../../public/data/bible_studies.json";
 import { useSubscription } from "@/hooks/useSubscription";
 
 import { localContent } from "@/lib/localContent";
+import { useReadingPlans } from "@/hooks/useReadingPlans";
+import { useStreaks } from "@/hooks/useStreaks";
 
 
 
@@ -228,6 +231,8 @@ const Index = () => {
   const { user } = useAuth();
 
   const { subscription, loading: subscriptionLoading } = useSubscription();
+  const { activePlan, getTodayPlanItem, isPlanCompleted } = useReadingPlans();
+  const { current: currentStreak } = useStreaks();
 
   const navigate = useNavigate();
 
@@ -297,7 +302,7 @@ const Index = () => {
 
   // Small helper to keep UI labels readable
 
-  const BOOK_NAMES: Record<string, string> = {
+  const BOOK_NAMES = useMemo<Record<string, string>>(() => ({
 
     gn: "Gênesis",
 
@@ -431,7 +436,7 @@ const Index = () => {
 
     ap: "Apocalipse",
 
-  };
+  }), []);
 
 
 
@@ -449,7 +454,7 @@ const Index = () => {
 
   }, []);
 
-  const evaluateNotificationGuide = () => {
+  const evaluateNotificationGuide = useCallback(() => {
 
     if (showOnboarding) return;
 
@@ -481,7 +486,7 @@ const Index = () => {
 
     }
 
-  };
+  }, [showOnboarding]);
 
 
 
@@ -517,7 +522,7 @@ const Index = () => {
 
     };
 
-  }, [showOnboarding]);
+  }, [evaluateNotificationGuide]);
 
 
 
@@ -549,7 +554,7 @@ const Index = () => {
 
     }
 
-  }, []);
+  }, [BOOK_NAMES]);
 
 
   useEffect(() => {
@@ -689,6 +694,10 @@ const Index = () => {
 
 
 
+
+  const todayPlanItem = activePlan ? getTodayPlanItem(activePlan.id) : null;
+  const streakLabel = currentStreak > 0 ? `${currentStreak} dias seguidos` : "Comece sua constância";
+  const planCompleted = activePlan ? isPlanCompleted(activePlan.id) : false;
 
   return (
 
@@ -935,6 +944,80 @@ const Index = () => {
                     Estudar
                   </span>
                 </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Phase 6: Daily plan + streak preview */}
+          <div className="w-full max-w-3xl mx-auto mb-6">
+            <Card className="spiritual-card border border-amber-100/70 bg-gradient-to-b from-amber-50/70 to-white shadow-sm dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                  <CalendarDays className="w-5 h-5 text-amber-600 dark:text-amber-300" />
+                  Plano do dia
+                </CardTitle>
+                <CardDescription className="text-sm font-medium text-amber-700/80 dark:text-amber-200/60 flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  {streakLabel}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {activePlan && todayPlanItem ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">
+                        {activePlan.title}
+                      </Badge>
+                      <Badge>Dia {todayPlanItem.dayNumber}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {todayPlanItem.item.title} · {todayPlanItem.item.book.toUpperCase()} {todayPlanItem.item.chapter}
+                      {todayPlanItem.item.verseRange ? `:${todayPlanItem.item.verseRange}` : ""}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link to={`/plano/${activePlan.id}`}>
+                        <Button className="divine-button">Continuar plano</Button>
+                      </Link>
+                      <Link to="/resumo-semanal">
+                        <Button variant="outline">Ver resumo semanal</Button>
+                      </Link>
+                    </div>
+                  </div>
+                ) : activePlan ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">{activePlan.title}</Badge>
+                      {planCompleted && <Badge variant="secondary">Concluído</Badge>}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {planCompleted
+                        ? "Plano concluído. Revise o conteúdo ou escolha um novo plano."
+                        : "Seu plano ativo passou da data prevista. Conclua os dias pendentes no detalhe do plano."}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link to={`/plano/${activePlan.id}`}>
+                        <Button className="divine-button">Ver plano</Button>
+                      </Link>
+                      <Link to="/planos">
+                        <Button variant="outline">Ver planos</Button>
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      Escolha um plano curto para criar constância diária.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link to="/planos">
+                        <Button className="divine-button">Ver planos</Button>
+                      </Link>
+                      <Link to="/resumo-semanal">
+                        <Button variant="outline">Ver resumo semanal</Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

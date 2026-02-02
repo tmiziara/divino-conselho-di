@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getSubscription, clearSubscriptionCache } from "@/lib/subscriptionSingleton";
@@ -73,9 +74,9 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [user?.id]);
+  }, [user, subscription]);
 
-  const refreshSubscription = async () => {
+  const refreshSubscription = useCallback(async () => {
     if (!user) return;
     await getSubscription(user.id, async () => {
       const { data, error } = await supabase.functions.invoke('check-subscription');
@@ -87,23 +88,23 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       };
     })
       .then(setSubscription);
-  };
+  }, [user]);
 
-  const createCheckoutSession = async (plan: "premium") => {
+  const createCheckoutSession = useCallback(async (plan: "premium") => {
     if (!user) throw new Error("User must be authenticated");
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { plan },
     });
     if (error) throw error;
     return data;
-  };
+  }, [user]);
 
-  const openCustomerPortal = async () => {
+  const openCustomerPortal = useCallback(async () => {
     if (!user) throw new Error("User must be authenticated");
     const { data, error } = await supabase.functions.invoke('customer-portal');
     if (error) throw error;
     return data;
-  };
+  }, [user]);
 
   // Memoizar o valor do contexto para evitar re-renders e múltiplos fetches
   const value = useMemo(() => ({
@@ -112,7 +113,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     refreshSubscription,
     createCheckoutSession,
     openCustomerPortal,
-  }), [subscription, loading]);
+  }), [subscription, loading, refreshSubscription, createCheckoutSession, openCustomerPortal]);
 
   return (
     <SubscriptionContext.Provider value={value}>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -119,16 +119,6 @@ const Chat = () => {
   
   // DEBUG: Log do status premium
 
-  // Carregar histórico ao montar o componente
-  useEffect(() => {
-    if (user) {
-      loadChatHistoryLocal(user.id);
-      loadLocalContext(user.id);
-      reloadCredits();
-      startAdTimer();
-    }
-  }, [user]);
-
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
@@ -148,10 +138,10 @@ const Chat = () => {
         window.clearTimeout(summarySyncTimeoutRef.current);
       }
     };
-  }, []);
+  }, [user]);
 
   // Função para iniciar o timer do anúncio
-  const startAdTimer = () => {
+  const startAdTimer = useCallback(() => {
     if (!user) return;
 
     try {
@@ -175,7 +165,7 @@ const Chat = () => {
       }
     } catch (error) {
     }
-  };
+  }, [user]);
 
   // Função para formatar o tempo restante
   const formatAdTimer = () => {
@@ -187,7 +177,7 @@ const Chat = () => {
   };
 
   // Função para carregar histórico de mensagens
-  const queueChatSummarySync = (userId: string, updatedMessages: ChatMessage[]) => {
+  const queueChatSummarySync = useCallback((userId: string, updatedMessages: ChatMessage[]) => {
     if (summarySyncTimeoutRef.current !== null) {
       window.clearTimeout(summarySyncTimeoutRef.current);
     }
@@ -195,9 +185,9 @@ const Chat = () => {
       syncChatSummary(userId, updatedMessages);
       summarySyncTimeoutRef.current = null;
     }, 1000);
-  };
+  }, []);
 
-  const loadChatHistoryLocal = (userId: string) => {
+  const loadChatHistoryLocal = useCallback((userId: string) => {
     const history = loadChatHistory(userId);
     if (history && history.length === 0) {
       // Mensagem de boas-vindas inicial
@@ -216,7 +206,7 @@ const Chat = () => {
       // Phase 5: refresh summary from local history on load.
       queueChatSummarySync(userId, history);
     }
-  };
+  }, [queueChatSummarySync]);
 
   // Função para carregar contexto local
   const loadLocalContext = (userId: string) => {
@@ -422,7 +412,7 @@ const Chat = () => {
     }
   };
 
-  const reloadCredits = async () => {
+  const reloadCredits = useCallback(async () => {
     if (!user) return;
     const { data, error } = await supabase
       .from('profiles')
@@ -430,7 +420,17 @@ const Chat = () => {
       .eq('user_id', user.id)
       .single();
     if (!error && data) setCredits(data.credits);
-  };
+  }, [user]);
+
+  // Carregar histórico ao montar o componente
+  useEffect(() => {
+    if (user) {
+      loadChatHistoryLocal(user.id);
+      loadLocalContext(user.id);
+      reloadCredits();
+      startAdTimer();
+    }
+  }, [loadChatHistoryLocal, reloadCredits, startAdTimer, user]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('pt-BR', { 

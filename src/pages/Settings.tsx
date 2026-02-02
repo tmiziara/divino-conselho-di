@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, LogOut, Info, Shield } from "lucide-react";
+import { ChevronLeft, LogOut, Info, Shield, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AuthDialog from '@/components/AuthDialog';
+import { useNotifications } from "@/hooks/useNotifications";
 
 export default function Settings() {
   const navigate = useNavigate();
   const [showAuth, setShowAuth] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState<{ enabled: boolean; message: string } | null>(null);
+  const { getNotificationStatus, testNotification } = useNotifications({ enableInitialization: false });
   const handleAuthClick = () => setShowAuth(true);
 
   // Exemplo de logout (adapte para seu contexto de auth)
@@ -15,6 +18,10 @@ export default function Settings() {
     // Adapte para seu mÃ©todo de logout
     window.location.href = '/logout';
   };
+  // Phase 2: simple notification health check in Settings.
+  useEffect(() => {
+    getNotificationStatus().then((status) => setNotificationStatus(status));
+  }, [getNotificationStatus]);
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
@@ -48,7 +55,22 @@ export default function Settings() {
             </Button>
           </div>
 
-          {/* Sair */}
+
+          {/* Phase 2: Health check de notificações */}
+          <div className="w-full max-w-xs bg-card text-card-foreground dark:bg-zinc-900 dark:text-white rounded-lg shadow-md p-6 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-primary" />
+              <div>
+                <span className="font-semibold">Notificações</span>
+                <p className="text-sm text-muted-foreground">
+                  {notificationStatus?.message || "Verificando status..."}
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => testNotification()}>
+              Testar notificação
+            </Button>
+          </div>\n          {/* Sair */}
           <Button variant="outline" className="w-full max-w-xs flex items-center gap-2 mt-4" onClick={handleLogout}>
             <LogOut className="w-4 h-4" />
             Sair da Conta
@@ -59,3 +81,8 @@ export default function Settings() {
     </div>
   );
 } 
+
+
+
+
+

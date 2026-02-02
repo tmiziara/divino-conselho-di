@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, BookOpen, MessageCircle, Trash2, Share2, Sparkles } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
-import SocialShare from "@/components/SocialShare";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useNavigate } from "react-router-dom";
 
 interface Favorite {
   id: string;
@@ -27,14 +27,15 @@ interface Favorite {
 
 const Favorites = () => {
   const { user } = useAuth();
-  const { subscription } = useSubscription(); // ← ADICIONAR ESTA LINHA
+  const { subscription, loading: subscriptionLoading } = useSubscription();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showAuth, setShowAuth] = useState(false);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Função para carregar favoritos do banco de dados
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
@@ -59,7 +60,7 @@ const Favorites = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, user]);
 
   // Função para deletar favorito
   const deleteFavorite = async (favoriteId: string) => {
@@ -92,10 +93,11 @@ const Favorites = () => {
   // Effect para carregar favoritos quando o usuário está logado
   useEffect(() => {
     loadFavorites();
-  }, [user]);
+  }, [loadFavorites]);
 
-  // VERIFICAR SE ATINGIU O LIMITE
+  // Verificar se atingiu o limite
   const hasReachedLimit = () => {
+    if (subscriptionLoading) return false;
     if (!subscription.subscribed || subscription.subscription_tier === 'free') {
       return favorites.length >= 10;
     }
@@ -235,7 +237,9 @@ const Favorites = () => {
               Seus Favoritos
             </h1>
             <div className="text-center text-muted-foreground">
-              {subscription.subscribed && subscription.subscription_tier === 'premium' ? (
+              {subscriptionLoading ? (
+                <p>Carregando plano...</p>
+              ) : subscription.subscribed && subscription.subscription_tier === 'premium' ? (
                 <p>✨ Plano Premium - Favoritos ilimitados</p>
               ) : (
                 <p>
@@ -261,9 +265,10 @@ const Favorites = () => {
               </p>
               <Button 
                 className="mt-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                onClick={() => window.location.href = '/subscription'}
+                // Phase 3: contextual paywall for favorites limit
+                onClick={() => navigate('/assinatura?plan=premium')}
               >
-                <Sparkles className="w-4 h4 mr-2" />
+                <Sparkles className="w-4 h-4 mr-2" />
                 Fazer Upgrade
               </Button>
             </div>

@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, Heart, ChevronRight, Sparkles, Clock, Lock, ArrowLeft } from "lucide-react";
+import { BookOpen, ChevronRight, Clock, Lock, ArrowLeft } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AuthDialog from "@/components/AuthDialog";
@@ -25,7 +25,8 @@ const CategoryStudies = () => {
 
   const hasPremiumAccess = useMemo(() => {
     if (subscriptionLoading || subscription === undefined) return undefined;
-    return subscription.subscribed && subscription.subscription_tier === 'premium';
+    // Phase 3 fix: treat legacy "basic" as premium access to keep entitlements consistent.
+    return subscription.subscribed && (subscription.subscription_tier === 'premium' || subscription.subscription_tier === 'basic');
   }, [subscription, subscriptionLoading]);
 
   const handleAuthClick = () => {
@@ -36,10 +37,7 @@ const CategoryStudies = () => {
   const currentCategory = categorizedStudies.find(cat => cat.id === categoryId);
   const categoryConfig = getCategoryConfig(categoryId || '');
 
-  console.time('CategoryStudiesPageLoad');
-
   if (!user) {
-    console.timeEnd('CategoryStudiesPageLoad');
     return (
       <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
@@ -67,7 +65,6 @@ const CategoryStudies = () => {
   }
 
   if (!currentCategory || !categoryConfig) {
-    console.timeEnd('CategoryStudiesPageLoad');
     return (
       <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
@@ -93,7 +90,6 @@ const CategoryStudies = () => {
   const IconComponent = categoryConfig.icon;
 
   if (loading || subscriptionLoading || subscription === undefined) {
-    // Mostra loading
     return (
       <div className="min-h-screen bg-background dark:bg-background">
         <Navigation onAuthClick={handleAuthClick} />
@@ -116,9 +112,6 @@ const CategoryStudies = () => {
       </div>
     );
   }
-
-  // Quando dados carregados, medir tempo até o conteúdo aparecer
-  console.timeEnd('CategoryStudiesPageLoad');
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
@@ -161,28 +154,14 @@ const CategoryStudies = () => {
           </div>
         </div>
 
-        {loading || subscriptionLoading || subscription === undefined ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="spiritual-card bg-card text-card-foreground dark:bg-zinc-900 dark:text-white">
-                <CardHeader>
-                  <div className="h-6 bg-muted rounded animate-pulse mb-2" />
-                  <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="h-20 bg-muted rounded animate-pulse mb-4" />
-                  <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : currentCategory.studies.length > 0 ? (
+        {currentCategory.studies.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentCategory.studies.map((study) => {
               const studyProgress = progress.filter(p => p.study_id === study.id);
               const completedChapters = studyProgress.filter(p => p.is_completed).length;
               const totalChapters = study.total_chapters;
               const categoryConfig = getCategoryConfig(study.category);
+              const isLocked = study.is_premium && hasPremiumAccess === false;
               
               return (
                 <Card key={study.id} className="spiritual-card group hover:shadow-lg transition-all duration-300 bg-card text-card-foreground dark:bg-zinc-900 dark:text-white">
@@ -195,7 +174,6 @@ const CategoryStudies = () => {
                         <CardDescription className="text-sm break-words">
                           {study.description}
                         </CardDescription>
-                        {/* Categoria do estudo */}
                         {categoryConfig && (
                           <div className="flex items-center gap-1 mt-1">
                             <categoryConfig.icon className="w-4 h-4 text-gray-500" />
@@ -242,18 +220,17 @@ const CategoryStudies = () => {
                     </div>
 
                     {/* Botão de ação */}
-                    {study.is_premium && hasPremiumAccess === false ? (
+                    {isLocked ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div className="w-full">
-                              <Button 
-                                className="w-full divine-button group-hover:bg-primary/90 transition-colors"
-                                disabled={true}
-                              >
-                                <span>Assinatura Necessária</span>
-                                <Lock className="w-4 h-4 ml-2" />
-                              </Button>
+                              <Link to={`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}`}>
+                                <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
+                                  <span>Ver estudo premium</span>
+                                  <Lock className="w-4 h-4 ml-2" />
+                                </Button>
+                              </Link>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -261,14 +238,14 @@ const CategoryStudies = () => {
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
-                    ) : hasPremiumAccess === true || !study.is_premium ? (
+                    ) : (
                       <Link to={`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}`}>
                         <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
                           <span>Começar Estudo</span>
                           <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       </Link>
-                    ) : null}
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -290,6 +267,7 @@ const CategoryStudies = () => {
           </Card>
         )}
       </div>
+      <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
     </div>
   );
 };
