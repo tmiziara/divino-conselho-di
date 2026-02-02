@@ -12,6 +12,7 @@ import { Heart, BookOpen, MessageCircle, Star, Shield, Sparkles, Book, FileText,
 
 
 import { Link, useNavigate } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
 
 
 import Navigation from "@/components/Navigation";
@@ -233,8 +234,10 @@ const Index = () => {
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const { activePlan, getTodayPlanItem, isPlanCompleted } = useReadingPlans();
   const { current: currentStreak } = useStreaks();
+  const { isEnglish } = useLanguage();
 
   const navigate = useNavigate();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -735,7 +738,9 @@ const Index = () => {
           </div>
 
 
-          <p className="text-lg md:text-xl text-muted-foreground mb-4 leading-relaxed">Conecte-se com o Divino através de uma experiência única de fé, oração e estudo bíblico personalizado</p>
+          <p className="text-lg md:text-xl text-muted-foreground mb-4 leading-relaxed">
+            {tx("Conecte-se com o Divino atrav?s de uma experi?ncia ?nica de f?, ora??o e estudo b?blico personalizado", "Connect with the Divine through a unique journey of faith, prayer, and personalized Bible study")}
+          </p>
 
 
           {/* Botões centralizados, menores e sem ocupar toda a largura */}
@@ -786,7 +791,7 @@ const Index = () => {
                     <MessageCircle className="w-5 h-5" />
 
 
-                    <span>Conversa Espiritual</span>
+                    <span>{tx("Conversa Espiritual", "Spiritual Chat")}</span>
 
 
                   </Button>
@@ -819,7 +824,7 @@ const Index = () => {
                   <Star className="w-5 h-5 mr-2" />
 
 
-                  Comece Sua Jornada
+                  {tx("Comece Sua Jornada", "Start Your Journey")}
 
 
                 </Button>
@@ -870,7 +875,7 @@ const Index = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  Seu dia com Deus
+                  {tx("Seu dia com Deus", "Your day with God")}
                 </CardTitle>
                 <CardDescription className="text-sm font-medium text-blue-700/80 dark:text-blue-200/60">
                   Três passos simples para manter o hábito diário
@@ -888,16 +893,16 @@ const Index = () => {
                       <Star className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex flex-col items-start gap-0.5">
-                      <span className="font-semibold text-sm text-foreground">Versículo do Dia</span>
-                      <span className="text-xs text-muted-foreground">Palavra diária de inspiração</span>
+                      <span className="font-semibold text-sm text-foreground">{tx("Vers?culo do Dia", "Verse of the Day")}</span>
+                      <span className="text-xs text-muted-foreground">{tx("Palavra di?ria de inspira??o", "Daily word of inspiration")}</span>
                     </div>
                   </div>
                   <span className="text-xs font-medium bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900 transition-colors">
-                    Ler
+                    {tx("Ler", "Read")}
                   </span>
                 </Button>
 
-                {/* Continuar Leitura */}
+                {/* {tx("Continuar Leitura", "Continue Reading")} */}
                 <Button
                   variant="ghost"
                   className="w-full justify-between h-auto py-4 px-4 bg-white/60 dark:bg-zinc-900/40 hover:bg-white/90 dark:hover:bg-zinc-800/60 border border-blue-100 dark:border-zinc-800/50 rounded-xl transition-all duration-300 group shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900/30"
@@ -909,15 +914,15 @@ const Index = () => {
                     </div>
                     <div className="flex flex-col items-start gap-0.5 min-w-0 flex-1 pr-2">
                       <span className="font-semibold text-sm text-foreground truncate w-full text-left">
-                        {continueReadingLabel || "Continuar Leitura"}
+                        {continueReadingLabel || tx("Continuar Leitura", "Continue Reading")}
                       </span>
                       <span className="text-xs text-muted-foreground truncate w-full text-left">
-                        {continueReadingLabel ? "Continue de onde parou" : "Inicie sua leitura bíblica"}
+                        {continueReadingLabel ? tx("Continue de onde parou", "Pick up where you left off") : tx("Inicie sua leitura b?blica", "Start your Bible reading")}
                       </span>
                     </div>
                   </div>
                   <span className="text-xs font-medium bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900 transition-colors flex-shrink-0">
-                    Abrir
+                    {tx("Abrir", "Open")}
                   </span>
                 </Button>
 
@@ -936,12 +941,12 @@ const Index = () => {
                         {resumeStudyLabel || "Estudos Bíblicos"}
                       </span>
                       <span className="text-xs text-muted-foreground truncate w-full text-left">
-                        {resumeStudyLabel ? "Continue seu aprendizado" : "Explore novos temas"}
+                        {resumeStudyLabel ? tx("Continue seu aprendizado", "Keep learning") : tx("Explore novos temas", "Explore new topics")}
                       </span>
                     </div>
                   </div>
                   <span className="text-xs font-medium bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full group-hover:bg-purple-100 dark:group-hover:bg-purple-900 transition-colors flex-shrink-0">
-                    Estudar
+                    {tx("Estudar", "Study")}
                   </span>
                 </Button>
               </CardContent>
@@ -954,7 +959,7 @@ const Index = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-2">
                   <CalendarDays className="w-5 h-5 text-amber-600 dark:text-amber-300" />
-                  Plano do dia
+                  {tx("Plano do dia", "Plan of the day")}
                 </CardTitle>
                 <CardDescription className="text-sm font-medium text-amber-700/80 dark:text-amber-200/60 flex items-center gap-2">
                   <Flame className="w-4 h-4 text-orange-500" />
@@ -968,7 +973,7 @@ const Index = () => {
                       <Badge variant="secondary">
                         {activePlan.title}
                       </Badge>
-                      <Badge>Dia {todayPlanItem.dayNumber}</Badge>
+                      <Badge>{tx(`Dia ${todayPlanItem.dayNumber}`, `Day ${todayPlanItem.dayNumber}`)}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {todayPlanItem.item.title} · {todayPlanItem.item.book.toUpperCase()} {todayPlanItem.item.chapter}
@@ -976,10 +981,10 @@ const Index = () => {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <Link to={`/plano/${activePlan.id}`}>
-                        <Button className="divine-button">Continuar plano</Button>
+                        <Button className="divine-button">{tx("Continuar plano", "Continue plan")}</Button>
                       </Link>
                       <Link to="/resumo-semanal">
-                        <Button variant="outline">Ver resumo semanal</Button>
+                        <Button variant="outline">{tx("Ver resumo semanal", "View weekly summary")}</Button>
                       </Link>
                     </div>
                   </div>
@@ -992,14 +997,14 @@ const Index = () => {
                     <p className="text-sm text-muted-foreground">
                       {planCompleted
                         ? "Plano concluído. Revise o conteúdo ou escolha um novo plano."
-                        : "Seu plano ativo passou da data prevista. Conclua os dias pendentes no detalhe do plano."}
+                        : tx("Seu plano ativo passou da data prevista. Conclua os dias pendentes no detalhe do plano.", "Your active plan passed the expected date. Finish pending days in the plan details.")}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <Link to={`/plano/${activePlan.id}`}>
-                        <Button className="divine-button">Ver plano</Button>
+                        <Button className="divine-button">{tx("Ver plano", "View plan")}</Button>
                       </Link>
                       <Link to="/planos">
-                        <Button variant="outline">Ver planos</Button>
+                        <Button variant="outline">tx("Ver planos", "View plans")</Button>
                       </Link>
                     </div>
                   </div>
@@ -1010,10 +1015,10 @@ const Index = () => {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <Link to="/planos">
-                        <Button className="divine-button">Ver planos</Button>
+                        <Button className="divine-button">tx("Ver planos", "View plans")</Button>
                       </Link>
                       <Link to="/resumo-semanal">
-                        <Button variant="outline">Ver resumo semanal</Button>
+                        <Button variant="outline">{tx("Ver resumo semanal", "View weekly summary")}</Button>
                       </Link>
                     </div>
                   </div>
@@ -1062,7 +1067,7 @@ const Index = () => {
 
                   <div className="flex flex-col gap-2">
 
-                    <label className="text-sm font-medium">Tema que mais precisa hoje</label>
+                    <label className="text-sm font-medium">{tx("Tema que mais precisa hoje", "Topic you need the most today")}</label>
 
                     <select
 
@@ -1074,11 +1079,11 @@ const Index = () => {
 
                     >
 
-                      <option value="paz">Paz</option>
+                      <option value="paz">{tx("Paz", "Peace")}</option>
 
-                      <option value="ansiedade">Ansiedade</option>
+                      <option value="ansiedade">{tx("Ansiedade", "Anxiety")}</option>
 
-                      <option value="relacionamentos">Relacionamentos</option>
+                      <option value="relacionamentos">{tx("Relacionamentos", "Relationships")}</option>
 
                       <option value="proposito">Propósito</option>
 
@@ -1090,7 +1095,7 @@ const Index = () => {
 
                   <div className="flex flex-col gap-2">
 
-                    <label className="text-sm font-medium">Seu ritmo de leitura</label>
+                    <label className="text-sm font-medium">{tx("Seu ritmo de leitura", "Your reading pace")}</label>
 
                     <select
 
@@ -1102,11 +1107,11 @@ const Index = () => {
 
                     >
 
-                      <option value="leve">Leve (5 min)</option>
+                      <option value="leve">{tx("Leve (5 min)", "Light (5 min)")}</option>
 
                       <option value="medio">Médio (10 min)</option>
 
-                      <option value="profundo">Profundo (15+ min)</option>
+                      <option value="profundo">{tx("Profundo (15+ min)", "Deep (15+ min)")}</option>
 
                     </select>
 
@@ -1122,7 +1127,7 @@ const Index = () => {
 
                     <Button variant="outline" onClick={handleOnboardingSkip}>
 
-                      Pular
+                      {tx("Pular", "Skip")}
 
                     </Button>
 
@@ -1150,11 +1155,11 @@ const Index = () => {
 
                 <CardHeader>
 
-                  <CardTitle className="text-lg">Ative lembretes dirios</CardTitle>
+                  <CardTitle className="text-lg">{tx("Ative lembretes dirios", "Enable daily reminders")}</CardTitle>
 
                   <CardDescription>
 
-                    Configure um horrio e tema em 30 segundos.
+                    {tx("Configure um horrio e tema em 30 segundos.", "Set a time and theme in 30 seconds.")}
 
                   </CardDescription>
 
@@ -1182,7 +1187,7 @@ const Index = () => {
 
                   >
 
-                    Configurar lembretes
+                    {tx("Configurar lembretes", "Set reminders")}
 
                   </Button>
 
@@ -1200,7 +1205,7 @@ const Index = () => {
 
                   >
 
-                    Agora no
+                    {tx("Agora no", "Not now")}
 
                   </Button>
 
@@ -1292,7 +1297,7 @@ const Index = () => {
               <h2 className="text-2xl font-bold mb-1 heavenly-text">
 
 
-                Recursos Espirituais
+                {tx("Recursos Espirituais", "Spiritual Resources")}
 
 
               </h2>
@@ -1301,7 +1306,7 @@ const Index = () => {
               <p className="text-base text-muted-foreground max-w-2xl mx-auto">
 
 
-                Ferramentas poderosas para fortalecer sua fé e aprofundar seu relacionamento com Deus
+                {tx("Ferramentas poderosas para fortalecer sua f? e aprofundar seu relacionamento com Deus", "Powerful tools to strengthen your faith and deepen your relationship with God")}
 
 
               </p>
@@ -1385,10 +1390,10 @@ const Index = () => {
               <div className="bg-gradient-to-r from-yellow-200 via-yellow-100 to-blue-100 dark:from-yellow-900 dark:via-yellow-800 dark:to-blue-900 border border-yellow-300 dark:border-yellow-700 rounded-xl p-4 max-w-md w-full flex flex-col items-center shadow-md">
 
 
-                <span className="text-lg font-semibold text-yellow-700 dark:text-yellow-200 mb-1">Desbloqueie todo o conteúdo premium!</span>
+                <span className="text-lg font-semibold text-yellow-700 dark:text-yellow-200 mb-1">{tx("Desbloqueie todo o conte?do premium!", "Unlock all premium content!")}</span>
 
 
-                <span className="text-sm text-gray-700 dark:text-gray-200 mb-3 text-center">Tenha acesso a estudos exclusivos, recursos avançados e uma experiência sem limites.</span>
+                <span className="text-sm text-gray-700 dark:text-gray-200 mb-3 text-center">{tx("Tenha acesso a estudos exclusivos, recursos avan?ados e uma experi?ncia sem limites.", "Get access to exclusive studies, advanced features, and an unlimited experience.")}</span>
 
 
                 <Button
@@ -1424,7 +1429,7 @@ const Index = () => {
                 >
 
 
-                  Quero ser Premium
+                  {tx("Quero ser Premium", "I want Premium")}
 
 
                 </Button>
@@ -1463,7 +1468,7 @@ const Index = () => {
             <h2 className="text-3xl font-bold mb-4 heavenly-text">
 
 
-              Comece Sua Jornada Espiritual Hoje
+              {tx("Comece Sua Jornada Espiritual Hoje", "Start Your Spiritual Journey Today")}
 
 
             </h2>
@@ -1472,10 +1477,10 @@ const Index = () => {
             <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
 
 
-              Junte-se a milhares de fiéis que já transformaram suas vidas através
+              {tx("Junte-se a milhares de fi?is que j? transformaram suas vidas atrav?s", "Join thousands of believers who have already transformed their lives through")}
 
 
-              da Palavra de Deus e da oração
+              {tx("da Palavra de Deus e da ora??o", "the Word of God and prayer")}
 
 
             </p>
@@ -1496,7 +1501,7 @@ const Index = () => {
               <Heart className="w-5 h-5 mr-3" />
 
 
-              Iniciar Gratuitamente
+              {tx("Iniciar Gratuitamente", "Start for Free")}
 
 
             </Button>
