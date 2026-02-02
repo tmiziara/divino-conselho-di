@@ -1,4 +1,4 @@
-﻿-- PR2: persist app language preference in profiles.
+-- PR2: persist app language preference in profiles.
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS language TEXT;
 
