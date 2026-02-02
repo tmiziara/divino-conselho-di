@@ -28,6 +28,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { useProgressSync } from "@/hooks/useProgressSync";
 import { trackEvent } from "@/lib/analytics";
+import { supabase } from "@/integrations/supabase/client";
 import BuyCredits from "./pages/BuyCredits";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
@@ -45,6 +46,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import AdMobBanner from "@/components/AdMobBanner";
 import MobileBottomNavigation from "@/components/MobileBottomNavigation";
 import { recordActivityAndScheduleMissedYou } from "@/lib/notificationEngagement";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,9 +67,49 @@ const AppContent = () => {
   const lastScreenViewRef = React.useRef<{ path: string; search: string; ts: number } | null>(null);
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const { user } = useAuth();
+  const { language, setLanguage } = useLanguage();
 
   // Phase 5: keep cross-device progress/schedules synced on login.
   useProgressSync(user?.id);
+
+  // Keep language in sync with persisted profile preference.
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    let cancelled = false;
+
+    supabase
+      .from("profiles")
+      .select("language")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data?.language === "pt" || data?.language === "en") {
+          void setLanguage(data.language);
+          return;
+        }
+
+        // First login without a saved preference: persist current device-based language.
+        void supabase
+          .from("profiles")
+          .upsert(
+            {
+              user_id: user.id,
+              language,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" }
+          )
+          .then()
+          .catch(() => {});
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [language, setLanguage, user?.id]);
 
   // Phase 5: record basic screen view analytics for logged-in users.
   React.useEffect(() => {

@@ -17,6 +17,8 @@ import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import AuthDialog from '@/components/AuthDialog';
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/hooks/useLanguage";
+import { useTranslation } from "react-i18next";
 
 const profileSchema = z.object({
   display_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -40,12 +42,15 @@ const Profile = () => {
   const { user, signOut } = useAuth();
   const { subscription, openCustomerPortal, loading: subscriptionLoading } = useSubscription();
   const { toast } = useToast();
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
   const handleAuthClick = () => setShowAuth(true);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingLanguage, setIsSavingLanguage] = useState(false);
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -86,6 +91,10 @@ const Profile = () => {
           email: data.email || user.email || "",
           gender: (data.gender as "masculino" | "feminino" | "outros") || "masculino",
         });
+
+        if (data.language === "pt" || data.language === "en") {
+          await setLanguage(data.language);
+        }
       }
     } catch (error) {
       toast({
@@ -96,7 +105,7 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  }, [profileForm, toast, user]);
+  }, [profileForm, setLanguage, toast, user]);
 
   useEffect(() => {
     fetchProfile();
@@ -130,6 +139,38 @@ const Profile = () => {
         description: "Não foi possível atualizar o perfil",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleLanguageChange = async (nextLanguage: "pt" | "en") => {
+    setIsSavingLanguage(true);
+
+    try {
+      await setLanguage(nextLanguage);
+
+      if (user?.id) {
+        const { error } = await supabase
+          .from("profiles")
+          .upsert(
+            {
+              user_id: user.id,
+              language: nextLanguage,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" }
+          );
+
+        if (error) throw error;
+      }
+
+      toast({ title: t("language.changeSuccess") });
+    } catch (error) {
+      toast({
+        title: t("language.changeError"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingLanguage(false);
     }
   };
 
@@ -313,6 +354,31 @@ const Profile = () => {
             )}
           </div>
         )}
+        <Card className="mb-6 w-full max-w-xl bg-card dark:bg-zinc-900">
+          <CardHeader>
+            <CardTitle>{t("profile.languageTitle")}</CardTitle>
+            <CardDescription>{t("profile.languageDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={language}
+              onValueChange={(value) => {
+                if (value === "pt" || value === "en") {
+                  void handleLanguageChange(value);
+                }
+              }}
+              disabled={isSavingLanguage}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pt">{t("language.pt")}</SelectItem>
+                <SelectItem value="en">{t("language.en")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
         <div className="grid gap-6">
           {/* Subscription Status */}
           <Card className="bg-card dark:bg-zinc-900">

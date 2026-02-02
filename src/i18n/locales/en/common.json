@@ -1,4 +1,4 @@
-﻿{
+{
   "app": {
     "name": "Conexao com Deus"
   },
@@ -6,12 +6,28 @@
     "label": "Language",
     "pt": "Portuguese",
     "en": "English",
-    "changeSuccess": "Language updated successfully"
+    "changeSuccess": "Language updated successfully",
+    "changeError": "Could not save the language to your account."
   },
   "common": {
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close"
+  },
+  "settings": {
+    "title": "Settings",
+    "backHome": "Back to Home",
+    "version": "Version {{version}}",
+    "privacyPolicy": "Privacy Policy",
+    "viewPolicy": "View Policy",
+    "notifications": "Notifications",
+    "checkingNotificationStatus": "Checking status...",
+    "testNotification": "Test notification",
+    "logout": "Sign Out"
+  },
+  "profile": {
+    "languageTitle": "App language",
+    "languageDescription": "Choose the app interface language. If you do not choose, we use your phone language."
   }
 }

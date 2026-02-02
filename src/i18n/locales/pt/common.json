@@ -1,17 +1,33 @@
-﻿{
+{
   "app": {
-    "name": "Conexão com Deus"
+    "name": "Conex?o com Deus"
   },
   "language": {
     "label": "Idioma",
-    "pt": "Português",
+    "pt": "Portugu?s",
     "en": "English",
-    "changeSuccess": "Idioma atualizado com sucesso"
+    "changeSuccess": "Idioma atualizado com sucesso",
+    "changeError": "N?o foi poss?vel salvar o idioma na sua conta."
   },
   "common": {
     "loading": "Carregando...",
     "save": "Salvar",
     "cancel": "Cancelar",
     "close": "Fechar"
+  },
+  "settings": {
+    "title": "Configura??es",
+    "backHome": "Voltar ? Home",
+    "version": "Vers?o {{version}}",
+    "privacyPolicy": "Pol?tica de Privacidade",
+    "viewPolicy": "Ver Pol?tica",
+    "notifications": "Notifica??es",
+    "checkingNotificationStatus": "Verificando status...",
+    "testNotification": "Testar notifica??o",
+    "logout": "Sair da Conta"
+  },
+  "profile": {
+    "languageTitle": "Idioma do aplicativo",
+    "languageDescription": "Escolha o idioma da interface. Se n?o escolher, usamos o idioma do seu celular."
   }
 }
