@@ -1,13 +1,13 @@
 {
   "app": {
-    "name": "Conex?o com Deus"
+    "name": "Conex\u00e3o com Deus"
   },
   "language": {
     "label": "Idioma",
-    "pt": "Portugu?s",
-    "en": "English",
+    "pt": "Portugu\u00eas (Brasil)",
+    "en": "Ingl\u00eas (EUA)",
     "changeSuccess": "Idioma atualizado com sucesso",
-    "changeError": "N?o foi poss?vel salvar o idioma na sua conta."
+    "changeError": "N\u00e3o foi poss\u00edvel salvar o idioma na sua conta."
   },
   "common": {
     "loading": "Carregando...",
@@ -16,43 +16,43 @@
     "close": "Fechar"
   },
   "settings": {
-    "title": "Configura??es",
-    "backHome": "Voltar ? Home",
-    "version": "Vers?o {{version}}",
-    "privacyPolicy": "Pol?tica de Privacidade",
-    "viewPolicy": "Ver Pol?tica",
-    "notifications": "Notifica??es",
+    "title": "Configura\u00e7\u00f5es",
+    "backHome": "Voltar \u00e0 Home",
+    "version": "Vers\u00e3o {{version}}",
+    "privacyPolicy": "Pol\u00edtica de Privacidade",
+    "viewPolicy": "Ver Pol\u00edtica",
+    "notifications": "Notifica\u00e7\u00f5es",
     "checkingNotificationStatus": "Verificando status...",
-    "testNotification": "Testar notifica??o",
+    "testNotification": "Testar notifica\u00e7\u00e3o",
     "logout": "Sair da Conta"
   },
   "navigation": {
-    "home": "Início",
-    "bible": "Bíblia",
-    "verseOfDay": "Versículo do Dia",
-    "studies": "Estudos Bíblicos",
+    "home": "In\u00edcio",
+    "bible": "B\u00edblia",
+    "verseOfDay": "Vers\u00edculo do Dia",
+    "studies": "Estudos B\u00edblicos",
     "readingPlans": "Planos de Leitura",
     "weeklySummary": "Resumo Semanal",
-    "prayerJournal": "Diário de Oração",
+    "prayerJournal": "Di\u00e1rio de Ora\u00e7\u00e3o",
     "chat": "Conversa",
     "favorites": "Favoritos",
-    "notifications": "Notificações",
+    "notifications": "Notifica\u00e7\u00f5es",
     "profile": "Perfil",
-    "settings": "Configurações",
+    "settings": "Configura\u00e7\u00f5es",
     "menu": "Menu",
     "login": "Entrar",
     "logout": "Sair",
     "toggleDarkMode": "Alternar modo noturno",
-    "verseShort": "Versículo",
+    "verseShort": "Vers\u00edculo",
     "plansShort": "Planos",
-    "journalShort": "Diário"
+    "journalShort": "Di\u00e1rio"
   },
   "notFound": {
-    "title": "Página não encontrada",
-    "returnHome": "Voltar para o Início"
+    "title": "P\u00e1gina n\u00e3o encontrada",
+    "returnHome": "Voltar para o In\u00edcio"
   },
   "profile": {
     "languageTitle": "Idioma do aplicativo",
-    "languageDescription": "Escolha o idioma da interface. Se n?o escolher, usamos o idioma do seu celular."
+    "languageDescription": "Escolha o idioma da interface. Se n\u00e3o escolher, usamos o idioma do seu celular."
   }
 }
