@@ -149,18 +149,30 @@ const Profile = () => {
       await setLanguage(nextLanguage);
 
       if (user?.id) {
-        const { error } = await supabase
+        const payload = {
+          language: nextLanguage,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: updatedRows, error: updateError } = await supabase
           .from("profiles")
-          .upsert(
-            {
+          .update(payload)
+          .eq("user_id", user.id)
+          .select("user_id");
+
+        if (updateError) throw updateError;
+
+        if (!updatedRows || updatedRows.length === 0) {
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert({
               user_id: user.id,
               language: nextLanguage,
               updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id" }
-          );
+            });
 
-        if (error) throw error;
+          if (insertError) throw insertError;
+        }
       }
 
       toast({ title: t("language.changeSuccess") });

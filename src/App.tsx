@@ -72,13 +72,13 @@ const AppContent = () => {
   // Phase 5: keep cross-device progress/schedules synced on login.
   useProgressSync(user?.id);
 
-  // Keep language in sync with persisted profile preference.
+  // Load persisted profile language once after auth.
   React.useEffect(() => {
     if (!user?.id) return;
 
     let cancelled = false;
 
-    supabase
+    void supabase
       .from("profiles")
       .select("language")
       .eq("user_id", user.id)
@@ -87,29 +87,40 @@ const AppContent = () => {
         if (cancelled) return;
         if (data?.language === "pt" || data?.language === "en") {
           void setLanguage(data.language);
-          return;
         }
-
-        // First login without a saved preference: persist current device-based language.
-        void supabase
-          .from("profiles")
-          .upsert(
-            {
-              user_id: user.id,
-              language,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id" }
-          )
-          .then()
-          .catch(() => {});
       })
       .catch(() => {});
 
     return () => {
       cancelled = true;
     };
-  }, [language, setLanguage, user?.id]);
+  }, [setLanguage, user?.id]);
+
+  // Persist selected language; prefer UPDATE to avoid RLS failures from UPSERT.
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    const persistLanguage = async () => {
+      const payload = { language, updated_at: new Date().toISOString() };
+
+      const { data: updatedRows, error: updateError } = await supabase
+        .from("profiles")
+        .update(payload)
+        .eq("user_id", user.id)
+        .select("user_id");
+
+      if (updateError) return;
+      if (updatedRows && updatedRows.length > 0) return;
+
+      await supabase.from("profiles").insert({
+        user_id: user.id,
+        language,
+        updated_at: new Date().toISOString(),
+      });
+    };
+
+    void persistLanguage();
+  }, [language, user?.id]);
 
   // Phase 5: record basic screen view analytics for logged-in users.
   React.useEffect(() => {
