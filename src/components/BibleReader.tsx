@@ -15,7 +15,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 
-const BOOK_NAMES = {
+const BOOK_NAMES_PT = {
   "gn": "Gênesis", "ex": "Êxodo", "lv": "Levítico", "nm": "Números", "dt": "Deuteronômio",
   "js": "Josué", "jz": "Juízes", "rt": "Rute", "1sm": "1 Samuel", "2sm": "2 Samuel",
   "1rs": "1 Reis", "2rs": "2 Reis", "1cr": "1 Crônicas", "2cr": "2 Crônicas",
@@ -33,10 +33,37 @@ const BOOK_NAMES = {
   "1jo": "1 João", "2jo": "2 João", "3jo": "3 João", "jd": "Judas", "ap": "Apocalipse"
 };
 
-const BIBLE_VERSIONS = [
+const BOOK_NAMES_EN = {
+  "gn": "Genesis", "ex": "Exodus", "lv": "Leviticus", "nm": "Numbers", "dt": "Deuteronomy",
+  "js": "Joshua", "jz": "Judges", "rt": "Ruth", "1sm": "1 Samuel", "2sm": "2 Samuel",
+  "1rs": "1 Kings", "2rs": "2 Kings", "1cr": "1 Chronicles", "2cr": "2 Chronicles",
+  "ed": "Ezra", "ne": "Nehemiah", "et": "Esther", "jó": "Job", "sl": "Psalms",
+  "pv": "Proverbs", "ec": "Ecclesiastes", "ct": "Song of Solomon", "is": "Isaiah",
+  "jr": "Jeremiah", "lm": "Lamentations", "ez": "Ezekiel", "dn": "Daniel",
+  "os": "Hosea", "jl": "Joel", "am": "Amos", "ob": "Obadiah", "jn": "Jonah",
+  "mq": "Micah", "na": "Nahum", "hc": "Habakkuk", "sf": "Zephaniah",
+  "ag": "Haggai", "zc": "Zechariah", "ml": "Malachi", "mt": "Matthew",
+  "mc": "Mark", "lc": "Luke", "jo": "John", "atos": "Acts", "rm": "Romans",
+  "1co": "1 Corinthians", "2co": "2 Corinthians", "gl": "Galatians", "ef": "Ephesians",
+  "fp": "Philippians", "cl": "Colossians", "1ts": "1 Thessalonians", "2ts": "2 Thessalonians",
+  "1tm": "1 Timothy", "2tm": "2 Timothy", "tt": "Titus", "fm": "Philemon",
+  "hb": "Hebrews", "tg": "James", "1pe": "1 Peter", "2pe": "2 Peter",
+  "1jo": "1 John", "2jo": "2 John", "3jo": "3 John", "jd": "Jude", "ap": "Revelation"
+};
+
+type BibleVersionOption = { value: string; label: string; premium: boolean };
+
+const BIBLE_VERSIONS_PT: BibleVersionOption[] = [
   { value: "nvi", label: "NVI", premium: false },
   { value: "pt_aa", label: "AA", premium: true },
   { value: "pt_acf", label: "ACF", premium: true },
+];
+
+const BIBLE_VERSIONS_EN: BibleVersionOption[] = [
+  { value: "niv", label: "NIV", premium: false },
+  { value: "esv", label: "ESV", premium: true },
+  { value: "nkjv", label: "NKJV", premium: true },
+  { value: "nasb1995", label: "NASB95", premium: true },
 ];
 
 const PREMIUM_TRIAL_KEY = "bible_premium_trial_expires_at";
@@ -53,11 +80,18 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
   const navigate = useNavigate();
   const { isEnglish } = useLanguage();
   const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
+  const bookNames = isEnglish ? BOOK_NAMES_EN : BOOK_NAMES_PT;
+  const versionOptions = isEnglish ? BIBLE_VERSIONS_EN : BIBLE_VERSIONS_PT;
+  const fallbackVersion = isEnglish ? "niv" : "nvi";
+  const getAllowedVersion = useCallback((version?: string | null) => {
+    if (!version) return fallbackVersion;
+    return versionOptions.some((item) => item.value === version) ? version : fallbackVersion;
+  }, [fallbackVersion, versionOptions]);
   // Phase 3: track a local 24h premium Bible trial for version selection.
   const [premiumTrialExpiresAt, setPremiumTrialExpiresAt] = useState<string | null>(null);
   const [showPremiumDialog, setShowPremiumDialog] = useState(false);
   const [pendingVersion, setPendingVersion] = useState<string | null>(null);
-  const [bibleVersion, setBibleVersion] = useState<string>("nvi");
+  const [bibleVersion, setBibleVersion] = useState<string>(fallbackVersion);
   const { 
     chapters, verses, selectedBook, selectedChapter, 
     setSelectedBook, setSelectedChapter,
@@ -70,7 +104,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
   const hasPremiumSubscription =
     subscription.subscribed && (subscription.subscription_tier === "premium" || subscription.subscription_tier === "basic");
 
-  const BIBLICAL_BOOKS = Object.keys(BOOK_NAMES);
+  const BIBLICAL_BOOKS = Object.keys(BOOK_NAMES_PT);
 
   useEffect(() => {
     if (!hasLoaded) return;
@@ -80,14 +114,16 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       if (lastPosition.book) {
         setSelectedBook(lastPosition.book);
         setSelectedChapter(lastPosition.chapter ?? 1);
-        setBibleVersion(lastPosition.version ?? "nvi");
+        setBibleVersion(getAllowedVersion(lastPosition.version));
       } else {
         setSelectedBook("gn");
         setSelectedChapter(1);
+        setBibleVersion(fallbackVersion);
       }
     } else {
       setSelectedBook("gn");
       setSelectedChapter(1);
+      setBibleVersion(fallbackVersion);
     }
   }, [
     user,
@@ -98,7 +134,13 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
     loadFavorites,
     setSelectedBook,
     setSelectedChapter,
+    getAllowedVersion,
+    fallbackVersion,
   ]);
+
+  useEffect(() => {
+    setBibleVersion((current) => getAllowedVersion(current));
+  }, [getAllowedVersion]);
 
   const getTrialStorageKey = useCallback(() => {
     // Phase 3 fix: scope the trial to the current user (or guest) to avoid unintended sharing.
@@ -148,7 +190,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
   };
 
   const handleBibleVersionChange = (version: string) => {
-    const selected = BIBLE_VERSIONS.find(ver => ver.value === version);
+    const selected = versionOptions.find(ver => ver.value === version);
     const canUsePremium = hasPremiumSubscription || isTrialActive();
     if (subscriptionLoading && selected?.premium) {
       // Phase 3 fix: avoid granting premium while subscription is unknown.
@@ -168,16 +210,16 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
 
   useEffect(() => {
     // Phase 3 fix: if trial expires or subscription is removed, downgrade premium versions.
-    const isPremiumVersion = BIBLE_VERSIONS.some(ver => ver.value === bibleVersion && ver.premium);
+    const isPremiumVersion = versionOptions.some(ver => ver.value === bibleVersion && ver.premium);
     const canUsePremium = hasPremiumSubscription || isTrialActive();
     if (isPremiumVersion && !canUsePremium && !subscriptionLoading) {
-      setBibleVersion("nvi");
+      setBibleVersion(fallbackVersion);
       toast({
         title: tx("Versão premium expirada", "Premium version expired"),
-        description: tx("Sua versão foi restaurada para NVI.", "Your version was restored to NVI."),
+        description: tx("Sua versão foi restaurada para a padrão.", "Your version was restored to default."),
       });
     }
-  }, [bibleVersion, hasPremiumSubscription, isTrialActive, subscriptionLoading, toast, tx]);
+  }, [bibleVersion, hasPremiumSubscription, isTrialActive, subscriptionLoading, toast, tx, versionOptions, fallbackVersion]);
 
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -235,9 +277,9 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
           book: verse.livro,
           chapter: verse.capitulo,
           verse: verse.versiculo,
-          title: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
+          title: `${bookNames[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
           content: verse.texto,
-          reference: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
+          reference: `${bookNames[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
           version: version
         });
         toast({ title: tx("Adicionado aos favoritos", "Added to favorites") });
@@ -284,7 +326,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
             <SelectValue placeholder={tx("Versão da Bíblia", "Bible Version")} />
           </SelectTrigger>
           <SelectContent>
-            {BIBLE_VERSIONS.map(ver => {
+            {versionOptions.map(ver => {
               const canUsePremium = hasPremiumSubscription || isTrialActive();
               const isLocked = ver.premium && !canUsePremium;
               return (
@@ -308,8 +350,8 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
             <AlertDialogTitle>{tx("Versão premium da Bíblia", "Premium Bible version")}</AlertDialogTitle>
             <AlertDialogDescription>
               {tx(
-                "As versões AA e ACF fazem parte do plano Premium. Você pode testar gratuitamente por 24 horas ou conhecer os planos.",
-                "AA and ACF versions are part of the Premium plan. You can try them free for 24 hours or view plans."
+                "Algumas versões fazem parte do plano Premium. Você pode testar gratuitamente por 24 horas ou conhecer os planos.",
+                "Some versions are part of the Premium plan. You can try them free for 24 hours or view plans."
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -338,7 +380,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
           <SelectContent>
             {BIBLICAL_BOOKS.map(book => (
               <SelectItem key={book} value={book} disabled={!user && book !== "gn"}>
-                {BOOK_NAMES[book]} {!user && book !== "gn" && "🔒"}
+                {bookNames[book]} {!user && book !== "gn" && "🔒"}
               </SelectItem>
             ))}
           </SelectContent>
