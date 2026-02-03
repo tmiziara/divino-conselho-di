@@ -92,9 +92,6 @@ const Profile = () => {
           gender: (data.gender as "masculino" | "feminino" | "outros") || "masculino",
         });
 
-        if (data.language === "pt" || data.language === "en") {
-          await setLanguage(data.language);
-        }
       }
     } catch (error) {
       toast({
@@ -105,7 +102,7 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  }, [profileForm, setLanguage, toast, user]);
+  }, [profileForm, toast, user]);
 
   useEffect(() => {
     fetchProfile();

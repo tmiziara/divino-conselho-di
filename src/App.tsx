@@ -68,15 +68,22 @@ const AppContent = () => {
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const { user } = useAuth();
   const { language, setLanguage } = useLanguage();
+  const [languageHydrated, setLanguageHydrated] = React.useState(false);
+  const remoteLanguageRef = React.useRef<"pt" | "en" | null>(null);
 
   // Phase 5: keep cross-device progress/schedules synced on login.
   useProgressSync(user?.id);
 
   // Load persisted profile language once after auth.
   React.useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      remoteLanguageRef.current = null;
+      setLanguageHydrated(false);
+      return;
+    }
 
     let cancelled = false;
+    setLanguageHydrated(false);
 
     void supabase
       .from("profiles")
@@ -86,10 +93,16 @@ const AppContent = () => {
       .then(({ data }) => {
         if (cancelled) return;
         if (data?.language === "pt" || data?.language === "en") {
+          remoteLanguageRef.current = data.language;
           void setLanguage(data.language);
+        } else {
+          remoteLanguageRef.current = null;
         }
+        setLanguageHydrated(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setLanguageHydrated(true);
+      });
 
     return () => {
       cancelled = true;
@@ -98,7 +111,8 @@ const AppContent = () => {
 
   // Persist selected language; prefer UPDATE to avoid RLS failures from UPSERT.
   React.useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !languageHydrated) return;
+    if (remoteLanguageRef.current === language) return;
 
     const persistLanguage = async () => {
       const payload = { language, updated_at: new Date().toISOString() };
@@ -110,17 +124,23 @@ const AppContent = () => {
         .select("user_id");
 
       if (updateError) return;
-      if (updatedRows && updatedRows.length > 0) return;
+      if (updatedRows && updatedRows.length > 0) {
+        remoteLanguageRef.current = language;
+        return;
+      }
 
-      await supabase.from("profiles").insert({
+      const { error: insertError } = await supabase.from("profiles").insert({
         user_id: user.id,
         language,
         updated_at: new Date().toISOString(),
       });
+      if (!insertError) {
+        remoteLanguageRef.current = language;
+      }
     };
 
     void persistLanguage();
-  }, [language, user?.id]);
+  }, [language, languageHydrated, user?.id]);
 
   // Phase 5: record basic screen view analytics for logged-in users.
   React.useEffect(() => {

@@ -11,9 +11,10 @@ export const useLanguage = () => {
 
   const setLanguage = useCallback(async (nextLanguage: AppLanguage) => {
     const normalized = normalizeLanguage(nextLanguage);
-    if (normalized === language) return;
+    const current = normalizeLanguage(i18n.resolvedLanguage || i18n.language || DEFAULT_LANGUAGE);
+    if (normalized === current) return;
     await i18n.changeLanguage(normalized);
-  }, [language]);
+  }, []);
 
   const isEnglish = language === "en";
   const isPortuguese = language === "pt";
