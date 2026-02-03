@@ -1,8 +1,8 @@
 ﻿# HANDOUT — i18n Progress & Next Steps
 
-Date: 2026-02-02
+Date: 2026-02-03
 Project: `divino-conselho-di`
-Current branch: `feat/i18n-pr3-home-privacy`
+Current branch: `feat/i18n-pr4-full-coverage-and-language-save`
 
 ## 1) Goal of this workstream
 Deliver full bilingual support (PT-BR + EN) across the app, including:
@@ -46,13 +46,28 @@ Key outcomes in PR3B:
 - Mojibake/encoding issues addressed in current scope (Home + locale labels).
 - Build passes after changes.
 
+### PR4 (in progress) — persistence hardening + stability (`feat/i18n-pr4-full-coverage-and-language-save`)
+Commits:
+- `3fb7ae2` — language persistence hardening (update-first flow) in `App` + `Profile`, plus RLS migration for `profiles`
+- `09d7c50` — removed BOM from migration file for Supabase CLI compatibility
+- `6c7e7a3` — fixed language flicker/race on app open and profile language switch
+
+Key outcomes so far in PR4:
+- Added migration `supabase/migrations/20260202193000_profiles_language_rls.sql`.
+- Applied remote migrations successfully (local and remote migration history aligned).
+- Stabilized language hydration/persist cycle to prevent repeated language toggling.
+
 ---
 
 ## 3) Current git state
-- Branch: `feat/i18n-pr3-home-privacy`
-- Last commit: `5f73083`
+- Branch: `feat/i18n-pr4-full-coverage-and-language-save`
+- Last commit: `6c7e7a3`
 - Branch pushed to remote: yes
-- Working tree status at handout creation: clean (`git status -sb` showed no pending changes)
+- Note: untracked English Bible folders exist and are intentional for future use:
+  - `public/data/bible/ESV/`
+  - `public/data/bible/NASB1995/`
+  - `public/data/bible/NIV/`
+  - `public/data/bible/NKJV/`
 
 ---
 
@@ -69,6 +84,7 @@ Key outcomes in PR3B:
 - `src/pages/Profile.tsx` (language selector UI)
 - `src/integrations/supabase/types.ts` (profiles.language typing)
 - `supabase/migrations/20260202161000_add_profiles_language.sql` (language column migration)
+- `supabase/migrations/20260202193000_profiles_language_rls.sql` (RLS + policy hardening)
 
 ### Pages in PR3 scope
 - `src/pages/Index.tsx`
@@ -81,14 +97,10 @@ Key outcomes in PR3B:
 
 ## 5) Known gaps / pending items
 
-### A) Profile language save can fail for some environments
-Symptom seen by user:
-- Message: "não foi possível salvar o idioma na sua conta"
-
-Likely causes to validate in next session:
-1. migration not applied in current Supabase env (`profiles.language` missing),
-2. RLS policy/update permission for `profiles` does not allow user to update own language,
-3. profile row not created for current user in edge auth cases.
+### A) Language persistence backend issue
+- Status: **addressed in PR4**.
+- Migration and RLS hardening applied; update-first profile write flow implemented.
+- Need final QA on real devices/accounts to confirm no edge-case regressions.
 
 ### B) i18n coverage is not 100% app-wide yet
 - Home improved significantly, but there are still pages/components with hardcoded PT strings.
@@ -98,6 +110,19 @@ Likely causes to validate in next session:
 - Some areas may still contain accent/encoding artifacts from legacy text.
 - Need final pass to guarantee PT-BR copy quality.
 
+### D) New issue under investigation (not fixed yet)
+- Android logcat spam while app is open:
+  - `Capacitor/Console ... Line 334 - Msg: undefined` repeating continuously.
+- This likely comes from repeated `console` output in bundled JS (line refers to bundle, not source TSX).
+- Next action: map source and remove/guard noisy logging path.
+
+### E) English Bible datasets (docs -> app) not integrated yet
+- Source files currently in `docs/ESV`, `docs/NASB1995`, `docs/NIV`, `docs/NKJV`.
+- App reader expects per-book JSON in `public/data/bible/{version}/{abbrev}.json` with this schema:
+  - `{ "abbrev": "...", "chapters": string[][], "name": "..." }`
+- Current docs are mostly in a different nested structure (`Book -> chapter -> verse`) and are not directly consumable by `useBibleData`.
+- Some `*_books` files show mojibake/encoding artifacts; avoid using them as canonical input.
+
 ---
 
 ## 6) Remaining PRs from the plan
@@ -106,15 +131,36 @@ Likely causes to validate in next session:
 **Objective:** finish i18n coverage and fix profile language persistence.
 
 **Scope**
-1. Backend persistence hardening (`profiles.language`, migration/RLS/profile upsert).
+1. Backend persistence hardening (`profiles.language`, migration/RLS/profile upsert). **Done (first part).**
 2. Full UI sweep for remaining hardcoded PT strings.
 3. Global PT-BR normalization (accents/encoding).
 4. Validation: first-open language, manual switch, reopen app, login/logout, `npm run build`.
+5. Investigate and fix logcat spam (`Msg: undefined`, bundle line 334).
+6. Document and prepare English Bible ingestion pipeline (without shipping reader/search changes yet).
 
 **Acceptance**
 - No visible hardcoded PT strings in covered UI.
 - Language save in profile works (no error toast).
 - Device-language fallback works on first run.
+- No continuous `Capacitor/Console ... Msg: undefined` spam in Android logcat.
+
+### Best implementation approach for English Bible files (recommended)
+1. Use `docs/*/*_bible.json` as canonical source (not `*_books`).
+2. Create a conversion script (e.g. `scripts/convert_bible_docs_to_app_format.py`) that:
+   - parses `Book -> chapter -> verse`,
+   - converts to app schema (`abbrev`, `chapters`, `name`),
+   - writes one file per book into `public/data/bible/{version}/`.
+3. Reuse current `public/data/bible/nvi` filenames as source-of-truth for abbrev mapping (66 exact codes).
+4. Normalize output to UTF-8 and validate no mojibake.
+5. Add automated validation checks in script:
+   - 66 output files per version,
+   - non-empty `chapters`,
+   - expected keys present in all files.
+6. After data is generated, update app in a separate PR:
+   - add English versions in `BibleReader` (`BIBLE_VERSIONS`),
+   - adapt book label maps by UI language,
+   - decide premium/free gating for EN versions,
+   - update Bible search strategy (currently Supabase `versiculos`; does not yet support local multi-version EN search).
 
 ### PR5 — `feat/i18n-pr5-secondary-screens`
 **Objective:** translate all secondary/less-used pages and flows not finalized in PR4.
@@ -145,11 +191,13 @@ Likely causes to validate in next session:
 ---
 
 ## 7) Suggested execution checklist for next Codex session
-1. `git checkout feat/i18n-pr3-home-privacy`
+1. `git checkout feat/i18n-pr4-full-coverage-and-language-save`
 2. `git pull`
-3. Create next branch (start with PR4):
-   - `git checkout -b feat/i18n-pr4-full-coverage-and-language-save`
-4. Execute PR4 scope and merge/push.
+3. Finish remaining PR4 scope:
+   - full i18n sweep,
+   - PT-BR normalization pass,
+   - logcat spam root-cause fix.
+4. Open/merge PR4.
 5. Continue with PR5 then PR6 using the same flow (branch -> implement -> validate -> push).
 6. For each PR: run `npm run build`, then commit in logical chunks and push.
 

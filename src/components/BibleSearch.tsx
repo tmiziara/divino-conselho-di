@@ -8,6 +8,7 @@ import { useBibleSearch } from "@/hooks/useBibleSearch";
 import { useBibleFavorites } from "@/hooks/useBibleFavorites";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const BOOK_NAMES = {
   "gn": "Gênesis", "ex": "Êxodo", "lv": "Levítico", "nm": "Números", "dt": "Deuteronômio",
@@ -35,6 +36,8 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
   const [query, setQuery] = useState(searchQuery);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
   const { searchResults, loading, searchVerses } = useBibleSearch();
   const { favorites, addToFavorites, removeFromFavorites, loadFavorites } = useBibleFavorites();
 
@@ -75,8 +78,8 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
   const toggleFavorite = async (verse: any) => {
     if (!user) {
       toast({
-        title: "Login necessário",
-        description: "Faça login para salvar versículos favoritos",
+        title: tx("Login necessário", "Login required"),
+        description: tx("Faça login para salvar versículos favoritos", "Log in to save favorite verses"),
         variant: "destructive"
       });
       return;
@@ -89,7 +92,7 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
     if (isFavorite) {
       await removeFromFavorites(verse.livro, verse.capitulo, verse.versiculo, version);
       toast({
-        title: "Removido dos favoritos",
+        title: tx("Removido dos favoritos", "Removed from favorites"),
         description: `${BOOK_NAMES[verse.livro as keyof typeof BOOK_NAMES]} ${verse.capitulo}:${verse.versiculo}`
       });
     } else {
@@ -103,7 +106,7 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
         version: version
       });
       toast({
-        title: "Adicionado aos favoritos",
+        title: tx("Adicionado aos favoritos", "Added to favorites"),
         description: `${BOOK_NAMES[verse.livro as keyof typeof BOOK_NAMES]} ${verse.capitulo}:${verse.versiculo}`
       });
     }
@@ -127,7 +130,7 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Digite uma palavra ou frase para pesquisar..."
+            placeholder={tx("Digite uma palavra ou frase para pesquisar...", "Type a word or phrase to search...")}
             className="pl-10"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -135,14 +138,16 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
           />
         </div>
         <Button onClick={handleSearch} disabled={loading}>
-          {loading ? "Pesquisando..." : "Pesquisar"}
+          {loading ? tx("Pesquisando...", "Searching...") : tx("Pesquisar", "Search")}
         </Button>
       </div>
 
       {/* Results Count */}
       {searchResults.length > 0 && (
         <div className="text-muted-foreground">
-          {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
+          {isEnglish
+            ? `${searchResults.length} result${searchResults.length !== 1 ? "s" : ""} found`
+            : `${searchResults.length} resultado${searchResults.length !== 1 ? "s" : ""} encontrado${searchResults.length !== 1 ? "s" : ""}`}
         </div>
       )}
 
@@ -184,8 +189,8 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
       {!loading && searchResults.length === 0 && query.trim() && (
         <div className="text-center py-8 text-muted-foreground">
           <Search className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-semibold mb-2">Nenhum resultado encontrado</h3>
-          <p>Tente pesquisar com outras palavras</p>
+          <h3 className="text-lg font-semibold mb-2">{tx("Nenhum resultado encontrado", "No results found")}</h3>
+          <p>{tx("Tente pesquisar com outras palavras", "Try searching with different words")}</p>
         </div>
       )}
 
@@ -193,8 +198,8 @@ const BibleSearch = ({ searchQuery = "" }: BibleSearchProps) => {
       {!query.trim() && (
         <div className="text-center py-12 text-muted-foreground">
           <Search className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-semibold mb-2">Pesquisar na Bíblia</h3>
-          <p>Digite uma palavra ou frase para encontrar versículos relacionados</p>
+          <h3 className="text-lg font-semibold mb-2">{tx("Pesquisar na Bíblia", "Search the Bible")}</h3>
+          <p>{tx("Digite uma palavra ou frase para encontrar versículos relacionados", "Type a word or phrase to find related verses")}</p>
         </div>
       )}
     </div>

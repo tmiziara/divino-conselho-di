@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { trackEvent } from '@/lib/analytics';
 import { recordActivity } from '@/lib/activityLog';
 import { useStreaks } from '@/hooks/useStreaks';
+import { useLanguage } from '@/hooks/useLanguage';
 
 export interface BibleStudy {
   id: string;
@@ -54,6 +55,8 @@ export const useBibleStudies = () => {
   const { subscription } = useSubscription();
   const { toast } = useToast();
   const { registerCompletion } = useStreaks();
+  const { isEnglish } = useLanguage();
+  const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
   const [studies, setStudies] = useState<BibleStudy[]>([]);
   const [chapters, setChapters] = useState<BibleStudyChapter[]>([]);
   const [progress, setProgress] = useState<UserStudyProgress[]>([]);
@@ -241,8 +244,8 @@ export const useBibleStudies = () => {
   const markChapterAsCompleted = async (chapterId: string, studyId: string) => {
     if (!user) {
       toast({
-        title: "Login necessário",
-        description: "Faça login para salvar seu progresso.",
+        title: tx("Login necessário", "Login required"),
+        description: tx("Faça login para salvar seu progresso.", "Log in to save your progress."),
         variant: "destructive"
       });
       return;
@@ -295,13 +298,13 @@ export const useBibleStudies = () => {
       registerCompletion();
 
       toast({
-        title: "Capítulo concluído!",
-        description: "Seu progresso foi salvo.",
+        title: tx("Capítulo concluído!", "Chapter completed!"),
+        description: tx("Seu progresso foi salvo.", "Your progress was saved."),
       });
     } catch (error) {
       toast({
-        title: "Erro ao salvar progresso",
-        description: "Não foi possível salvar seu progresso.",
+        title: tx("Erro ao salvar progresso", "Error saving progress"),
+        description: tx("Não foi possível salvar seu progresso.", "Could not save your progress."),
         variant: "destructive"
       });
     }
@@ -326,8 +329,8 @@ export const useBibleStudies = () => {
   const toggleFavorite = async (chapterId: string) => {
     if (!user) {
       toast({
-        title: "Login necessário",
-        description: "Faça login para salvar favoritos",
+        title: tx("Login necessário", "Login required"),
+        description: tx("Faça login para salvar favoritos", "Log in to save favorites"),
         variant: "destructive"
       });
       return;
@@ -341,8 +344,8 @@ export const useBibleStudies = () => {
         
         if (currentFavorites.length >= 10) {
           toast({
-            title: "Limite de favoritos atingido",
-            description: "Você atingiu o limite de 10 favoritos no plano gratuito. Faça upgrade para salvar mais!",
+            title: tx("Limite de favoritos atingido", "Favorites limit reached"),
+            description: tx("Você atingiu o limite de 10 favoritos no plano gratuito. Faça upgrade para salvar mais!", "You reached the 10 favorites limit on the free plan. Upgrade to save more!"),
             variant: "destructive"
           });
           return;
@@ -358,14 +361,14 @@ export const useBibleStudies = () => {
       if (isFavorite) {
         updatedFavorites = favorites.filter((id: string) => id !== chapterId);
         toast({
-          title: "Removido dos favoritos",
-          description: "Capítulo removido da sua lista de favoritos.",
+          title: tx("Removido dos favoritos", "Removed from favorites"),
+          description: tx("Capítulo removido da sua lista de favoritos.", "Chapter removed from your favorites list."),
         });
       } else {
         updatedFavorites = [...favorites, chapterId];
         toast({
-          title: "Adicionado aos favoritos",
-          description: "Capítulo adicionado à sua lista de favoritos.",
+          title: tx("Adicionado aos favoritos", "Added to favorites"),
+          description: tx("Capítulo adicionado à sua lista de favoritos.", "Chapter added to your favorites list."),
         });
       }
       
@@ -373,8 +376,8 @@ export const useBibleStudies = () => {
       setFavorites(updatedFavorites);
     } catch (error) {
       toast({
-        title: "Erro ao salvar favorito",
-        description: "Não foi possível salvar o favorito.",
+        title: tx("Erro ao salvar favorito", "Error saving favorite"),
+        description: tx("Não foi possível salvar o favorito.", "Could not save favorite."),
         variant: "destructive"
       });
     }

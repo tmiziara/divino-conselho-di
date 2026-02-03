@@ -8,17 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useReadingPlans } from "@/hooks/useReadingPlans";
 import { useStreaks } from "@/hooks/useStreaks";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const ReadingPlans = () => {
   const [showAuth, setShowAuth] = useState(false);
+  const { language } = useLanguage();
+  const isEnglish = language === "en";
   const { plans, loading, activePlan, startPlan, getCompletedDays, isPlanCompleted } = useReadingPlans();
   const { current, badges, badgeLabels } = useStreaks();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
 
   const streakLabel = useMemo(() => {
-    if (current <= 0) return "Comece sua constância hoje";
-    if (current === 1) return "1 dia seguido";
-    return `${current} dias seguidos`;
-  }, [current]);
+    if (current <= 0) return isEnglish ? "Start your consistency today" : "Comece sua constância hoje";
+    if (current === 1) return isEnglish ? "1 day streak" : "1 dia seguido";
+    return isEnglish ? `${current} day streak` : `${current} dias seguidos`;
+  }, [current, isEnglish]);
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
@@ -27,10 +31,10 @@ const ReadingPlans = () => {
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold heavenly-text flex items-center justify-center gap-2">
             <CalendarDays className="w-6 h-6 text-primary" />
-            Planos de Leitura
+            {tx("Planos de Leitura", "Reading Plans")}
           </h1>
           <p className="text-muted-foreground">
-            Jornadas simples para manter seu hábito diário com Deus.
+            {tx("Jornadas simples para manter seu hábito diário com Deus.", "Simple journeys to keep your daily habit with God.")}
           </p>
         </div>
 
@@ -38,14 +42,14 @@ const ReadingPlans = () => {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Flame className="w-5 h-5 text-orange-500" />
-              Seu ritmo
+              {tx("Seu ritmo", "Your pace")}
             </CardTitle>
             <CardDescription>{streakLabel}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {badges.length === 0 && (
               <span className="text-xs text-muted-foreground">
-                Complete capítulos ou dias de plano para desbloquear badges.
+                {tx("Complete capítulos ou dias de plano para desbloquear badges.", "Complete chapters or plan days to unlock badges.")}
               </span>
             )}
             {badges.map((badge) => (
@@ -85,16 +89,16 @@ const ReadingPlans = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {completedDays}/{plan.durationDays} dias concluídos
+                    {completedDays}/{plan.durationDays} {tx("dias concluídos", "days completed")}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {isActive && <Badge>Plano ativo</Badge>}
-                    {done && <Badge variant="secondary">Concluído</Badge>}
+                    {isActive && <Badge>{tx("Plano ativo", "Active plan")}</Badge>}
+                    {done && <Badge variant="secondary">{tx("Concluído", "Completed")}</Badge>}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link to={`/plano/${plan.id}`}>
                       <Button className="divine-button">
-                        {isActive ? "Continuar" : "Ver detalhes"}
+                        {isActive ? tx("Continuar", "Continue") : tx("Ver detalhes", "View details")}
                       </Button>
                     </Link>
                     {!isActive && (
@@ -102,7 +106,7 @@ const ReadingPlans = () => {
                         variant="outline"
                         onClick={() => startPlan(plan.id)}
                       >
-                        Iniciar plano
+                        {tx("Iniciar plano", "Start plan")}
                       </Button>
                     )}
                   </div>

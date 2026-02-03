@@ -16,12 +16,14 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const BibleFavorites = () => {
   const { favorites, loading, loadFavorites, removeFromFavorites } = useBibleFavorites();
   const { toast } = useToast();
-  const [shareLoading, setShareLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState<string | null>(null);
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
 
   useEffect(() => {
     loadFavorites();
@@ -29,12 +31,16 @@ const BibleFavorites = () => {
 
   const handleShare = async (title: string, text: string) => {
     try {
-      const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor && (window as any).Capacitor.isNativePlatform && (window as any).Capacitor.isNativePlatform();
-      if (isCapacitor && (window as any).Capacitor && (window as any).Capacitor.Plugins && (window as any).Capacitor.Plugins.Share) {
+      const isCapacitor =
+        typeof window !== "undefined" &&
+        (window as any).Capacitor &&
+        (window as any).Capacitor.isNativePlatform &&
+        (window as any).Capacitor.isNativePlatform();
+      if (isCapacitor && (window as any).Capacitor?.Plugins?.Share) {
         await (window as any).Capacitor.Plugins.Share.share({
           title,
           text,
-          dialogTitle: 'Compartilhar com...'
+          dialogTitle: tx("Compartilhar com...", "Share with..."),
         });
         return;
       }
@@ -43,17 +49,17 @@ const BibleFavorites = () => {
         return;
       }
       await navigator.clipboard.writeText(`${title}\n\n${text}`);
-      toast({ title: 'Copiado!', description: 'Texto copiado para área de transferência.' });
+      toast({ title: tx("Copiado!", "Copied!"), description: tx("Texto copiado para área de transferência.", "Text copied to clipboard.") });
     } catch (err) {
-      toast({ title: 'Erro ao compartilhar', description: 'Não foi possível compartilhar.' });
+      toast({ title: tx("Erro ao compartilhar", "Share error"), description: tx("Não foi possível compartilhar.", "Could not share.") });
     }
   };
 
   const handleRemoveFavorite = async (book: string, chapter: number, verse: number, title: string) => {
     await removeFromFavorites(book, chapter, verse);
     toast({
-      title: "Removido dos favoritos",
-      description: title
+      title: tx("Removido dos favoritos", "Removed from favorites"),
+      description: title,
     });
     setDialogOpen(null);
   };
@@ -61,7 +67,7 @@ const BibleFavorites = () => {
   if (loading) {
     return (
       <div className="text-center py-8">
-        <p>Carregando favoritos...</p>
+        <p>{tx("Carregando favoritos...", "Loading favorites...")}</p>
       </div>
     );
   }
@@ -70,8 +76,8 @@ const BibleFavorites = () => {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Heart className="w-16 h-16 mx-auto mb-4 opacity-50" />
-        <h3 className="text-lg font-semibold mb-2">Nenhum versículo favorito</h3>
-        <p>Marque versículos como favoritos durante a leitura para vê-los aqui</p>
+        <h3 className="text-lg font-semibold mb-2">{tx("Nenhum versículo favorito", "No favorite verses")}</h3>
+        <p>{tx("Marque versículos como favoritos durante a leitura para vê-los aqui", "Mark verses as favorites while reading to see them here")}</p>
       </div>
     );
   }
@@ -79,7 +85,9 @@ const BibleFavorites = () => {
   return (
     <div className="space-y-6">
       <div className="text-muted-foreground">
-        {favorites.length} versículo{favorites.length !== 1 ? 's' : ''} favorito{favorites.length !== 1 ? 's' : ''}
+        {isEnglish
+          ? `${favorites.length} favorite verse${favorites.length !== 1 ? "s" : ""}`
+          : `${favorites.length} versículo${favorites.length !== 1 ? "s" : ""} favorito${favorites.length !== 1 ? "s" : ""}`}
       </div>
 
       <div className="space-y-4">
@@ -93,55 +101,46 @@ const BibleFavorites = () => {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 rounded-lg shadow"
-                      onClick={() => handleShare(
-                        favorite.reference || 'Favorito',
-                        `${favorite.content}\n\nEnviado do app Conexão com Deus!`
-                      )}
-                      aria-label="Compartilhar favorito"
+                      onClick={() =>
+                        handleShare(
+                          favorite.reference || tx("Favorito", "Favorite"),
+                          `${favorite.content}\n\n${tx("Enviado do app Conexão com Deus!", "Sent from the Conexão com Deus app!")}`
+                        )
+                      }
+                      aria-label={tx("Compartilhar favorito", "Share favorite")}
                     >
                       <Share2 className="w-4 h-4" />
                     </Button>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary">
-                      {favorite.reference}
-                    </Badge>
-                    <AlertDialog open={dialogOpen === favorite.id} onOpenChange={open => setDialogOpen(open ? favorite.id : null)}>
+                    <Badge variant="secondary">{favorite.reference}</Badge>
+                    <AlertDialog open={dialogOpen === favorite.id} onOpenChange={(open) => setDialogOpen(open ? favorite.id : null)}>
                       <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500 hover:text-red-700"
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Remover favorito?</AlertDialogTitle>
+                          <AlertDialogTitle>{tx("Remover favorito?", "Remove favorite?")}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem certeza que deseja remover este versículo dos favoritos?
+                            {tx("Tem certeza que deseja remover este versículo dos favoritos?", "Are you sure you want to remove this verse from favorites?")}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleRemoveFavorite(
-                            favorite.book || '', 
-                            favorite.chapter || 0, 
-                            favorite.verse || 0, 
-                            favorite.title
-                          )}>
-                            Remover
+                          <AlertDialogCancel>{tx("Cancelar", "Cancel")}</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleRemoveFavorite(favorite.book || "", favorite.chapter || 0, favorite.verse || 0, favorite.title)}
+                          >
+                            {tx("Remover", "Remove")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
-                  <p className="text-foreground leading-relaxed">
-                    {favorite.content}
-                  </p>
+                  <p className="text-foreground leading-relaxed">{favorite.content}</p>
                   <span className="text-xs text-muted-foreground">
-                    Adicionado em {new Date(favorite.created_at).toLocaleDateString('pt-BR')}
+                    {tx("Adicionado em", "Added on")} {new Date(favorite.created_at).toLocaleDateString(isEnglish ? "en-US" : "pt-BR")}
                   </span>
                 </div>
               </div>

@@ -17,6 +17,7 @@ import { useAdManager } from "@/hooks/useAdManager";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { spiritualChatService } from "@/services/spiritualChatService";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/hooks/useLanguage";
 
 // Interface para mensagens
 interface ChatMessage {
@@ -101,6 +102,8 @@ const Chat = () => {
   const navigate = useNavigate();
   const { showRewardedAd } = useAdManager();
   const { isDark, toggle: toggleTheme } = useTheme();
+  const { isEnglish } = useLanguage();
+  const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -194,7 +197,10 @@ const Chat = () => {
       const welcomeMessage: ChatMessage = {
         id: 'welcome',
         role: 'assistant',
-        content: "Olá! Que a paz do Senhor esteja contigo. Como posso te ajudar em sua jornada espiritual hoje?",
+        content: tx(
+          "Olá! Que a paz do Senhor esteja contigo. Como posso te ajudar em sua jornada espiritual hoje?",
+          "Hello! May the Lord's peace be with you. How can I help you in your spiritual journey today?"
+        ),
         timestamp: new Date()
       };
       setMessages([welcomeMessage]);
@@ -206,7 +212,7 @@ const Chat = () => {
       // Phase 5: refresh summary from local history on load.
       queueChatSummarySync(userId, history);
     }
-  }, [queueChatSummarySync]);
+  }, [queueChatSummarySync, tx]);
 
   // Função para carregar contexto local
   const loadLocalContext = (userId: string) => {
@@ -243,8 +249,11 @@ const Chat = () => {
     // Verificar créditos apenas para usuários gratuitos
     if (!isPremium && credits !== null && credits < 1) {
       toast({
-        title: "Sem créditos",
-        description: "Você precisa de pelo menos 1 crédito para enviar mensagens. Compre créditos ou assista um anúncio.",
+        title: tx("Sem créditos", "No credits"),
+        description: tx(
+          "Você precisa de pelo menos 1 crédito para enviar mensagens. Compre créditos ou assista um anúncio.",
+          "You need at least 1 credit to send messages. Buy credits or watch an ad."
+        ),
         variant: "destructive"
       });
       return;
@@ -277,7 +286,7 @@ const Chat = () => {
       
       if (response.error) {
         toast({
-          title: "Erro",
+          title: tx("Erro", "Error"),
           description: response.error,
           variant: "destructive"
         });
@@ -316,15 +325,21 @@ const Chat = () => {
       if (typeof response.credits === 'number') {
         setCredits(response.credits);
         toast({
-          title: "Mensagem enviada",
-          description: `Resposta recebida! Créditos restantes: ${response.credits}`,
+          title: tx("Mensagem enviada", "Message sent"),
+          description: tx(
+            `Resposta recebida! Créditos restantes: ${response.credits}`,
+            `Response received! Remaining credits: ${response.credits}`
+          ),
         });
       }
       
     } catch (error: any) {
       toast({
-        title: "Erro na conversa",
-        description: "Não foi possível receber uma resposta. Tente novamente. Seu crédito não foi consumido.",
+        title: tx("Erro na conversa", "Conversation error"),
+        description: tx(
+          "Não foi possível receber uma resposta. Tente novamente. Seu crédito não foi consumido.",
+          "Could not receive a response. Please try again. Your credit was not consumed."
+        ),
         variant: "destructive"
       });
     } finally {
@@ -359,8 +374,8 @@ const Chat = () => {
           if (result.success) {
             creditsAdded = true;
             toast({
-              title: "Créditos ganhos!",
-              description: "Você ganhou 3 créditos por assistir o anúncio.",
+              title: tx("Créditos ganhos!", "Credits earned!"),
+              description: tx("Você ganhou 3 créditos por assistir o anúncio.", "You earned 3 credits for watching the ad."),
             });
             // Atualizar créditos
             setCredits(result.credits);
@@ -369,15 +384,15 @@ const Chat = () => {
             startAdTimer();
           } else {
             toast({
-              title: "Erro",
-              description: result.error || "Erro ao adicionar créditos.",
+              title: tx("Erro", "Error"),
+              description: result.error || tx("Erro ao adicionar créditos.", "Error adding credits."),
               variant: "destructive"
             });
           }
         } catch (error) {
           toast({
-            title: "Erro",
-            description: "Erro ao processar créditos. Tente novamente.",
+            title: tx("Erro", "Error"),
+            description: tx("Erro ao processar créditos. Tente novamente.", "Error processing credits. Please try again."),
             variant: "destructive"
           });
         }
@@ -390,8 +405,8 @@ const Chat = () => {
             const result = await spiritualChatService.watchAdForCredits();
             if (result.success) {
               toast({
-                title: "Créditos ganhos!",
-                description: "Você ganhou 3 créditos por assistir o anúncio.",
+                title: tx("Créditos ganhos!", "Credits earned!"),
+                description: tx("Você ganhou 3 créditos por assistir o anúncio.", "You earned 3 credits for watching the ad."),
               });
               setCredits(result.credits);
               
@@ -405,8 +420,8 @@ const Chat = () => {
       
     } catch (error) {
       toast({
-        title: "Erro no anúncio",
-        description: "Não foi possível carregar o anúncio. Tente novamente.",
+        title: tx("Erro no anúncio", "Ad error"),
+        description: tx("Não foi possível carregar o anúncio. Tente novamente.", "Could not load the ad. Please try again."),
         variant: "destructive"
       });
     }
@@ -433,7 +448,7 @@ const Chat = () => {
   }, [loadChatHistoryLocal, reloadCredits, startAdTimer, user]);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', { 
+    return date.toLocaleTimeString(isEnglish ? 'en-US' : 'pt-BR', { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
@@ -448,14 +463,17 @@ const Chat = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="w-6 h-6 text-blue-600" />
-                Conversa Espiritual
+                {tx("Conversa Espiritual", "Spiritual Chat")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Faça login para acessar a conversa espiritual e receber orientações baseadas na Bíblia.
+                  {tx(
+                    "Faça login para acessar a conversa espiritual e receber orientações baseadas na Bíblia.",
+                    "Sign in to access spiritual chat and receive Bible-based guidance."
+                  )}
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -474,14 +492,14 @@ const Chat = () => {
           <CardHeader className="bg-card border-b border-border">
             <CardTitle className="flex items-center gap-2 text-card-foreground">
               <MessageCircle className="w-6 h-6 text-primary" />
-              Conversa Espiritual
+              {tx("Conversa Espiritual", "Spiritual Chat")}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs bg-secondary text-secondary-foreground border-border">
-                Créditos: {isPremium ? (
+                {tx("Créditos", "Credits")}: {isPremium ? (
                   <span className="flex items-center gap-1">
                     <Infinity className="w-3 h-3" />
-                    Ilimitados
+                    {tx("Ilimitados", "Unlimited")}
                   </span>
                 ) : (
                   credits !== null ? credits : '...'
@@ -501,7 +519,7 @@ const Chat = () => {
                 size="sm"
                 onClick={toggleTheme} // Usar toggle do useTheme
                 className="ml-2 text-muted-foreground hover:bg-muted"
-                title={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
+                title={isDark ? tx("Mudar para modo claro", "Switch to light mode") : tx("Mudar para modo escuro", "Switch to dark mode")}
               >
                 {isDark ? (
                   <Sun className="w-4 h-4 text-accent" />
@@ -580,7 +598,7 @@ const Chat = () => {
             {/* Área de entrada */}
             <div className="flex gap-2">
               <Textarea
-                placeholder="Digite sua mensagem..."
+                placeholder={tx("Digite sua mensagem...", "Type your message...")}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -613,10 +631,10 @@ const Chat = () => {
                   <Coins className="w-4 h-4" />
                   {adTimer && !adTimer.canWatch ? (
                     <span className="flex items-center gap-2">
-                      Aguarde {formatAdTimer()}
+                      {tx("Aguarde", "Wait")} {formatAdTimer()}
                     </span>
                   ) : (
-                    "Assistir Anúncio"
+                    tx("Assistir Anúncio", "Watch Ad")
                   )}
                 </Button>
                 <Button
@@ -626,7 +644,7 @@ const Chat = () => {
                   className="flex items-center gap-2 border-border text-foreground hover:bg-muted"
                 >
                   <ShoppingCart className="w-4 h-4" />
-                  Comprar Créditos
+                  {tx("Comprar Créditos", "Buy Credits")}
                 </Button>
               </div>
             )}
@@ -636,7 +654,10 @@ const Chat = () => {
               <Alert className="bg-red-50 border-red-200 dark:bg-destructive/10 dark:border-destructive/20">
                 <AlertCircle className="h-4 w-4 text-red-600 dark:text-destructive" />
                 <AlertDescription className="text-red-800 dark:text-destructive-foreground">
-                  Você tem poucos créditos. Assista um anúncio ou compre mais créditos para continuar conversando.
+                  {tx(
+                    "Você tem poucos créditos. Assista um anúncio ou compre mais créditos para continuar conversando.",
+                    "You have few credits left. Watch an ad or buy more credits to keep chatting."
+                  )}
                 </AlertDescription>
               </Alert>
             )}
@@ -646,7 +667,10 @@ const Chat = () => {
               <Alert className="bg-green-50 border-green-200 dark:bg-emerald-900/20 dark:border-emerald-700/30">
                 <AlertCircle className="h-4 w-4 text-green-600 dark:text-emerald-400" />
                 <AlertDescription className="text-green-800 dark:text-emerald-200">
-                  🎉 Como usuário Premium, você tem chat ilimitado! Envie quantas mensagens quiser sem se preocupar com créditos.
+                  {tx(
+                    "🎉 Como usuário Premium, você tem chat ilimitado! Envie quantas mensagens quiser sem se preocupar com créditos.",
+                    "🎉 As a Premium user, you have unlimited chat! Send as many messages as you want without worrying about credits."
+                  )}
                 </AlertDescription>
               </Alert>
             )}

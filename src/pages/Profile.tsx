@@ -44,6 +44,9 @@ const Profile = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
+  const isEnglish = language === "en";
+  const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
+  const deletePhrase = isEnglish ? "DELETE MY ACCOUNT" : "EXCLUIR MINHA CONTA";
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
@@ -95,14 +98,14 @@ const Profile = () => {
       }
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível carregar o perfil",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível carregar o perfil", "Could not load the profile"),
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [profileForm, toast, user]);
+  }, [profileForm, toast, tx, user]);
 
   useEffect(() => {
     fetchProfile();
@@ -125,15 +128,15 @@ const Profile = () => {
       if (error) throw error;
 
       toast({
-        title: "Sucesso",
-        description: "Perfil atualizado com sucesso",
+        title: tx("Sucesso", "Success"),
+        description: tx("Perfil atualizado com sucesso", "Profile updated successfully"),
       });
 
       fetchProfile();
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o perfil",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível atualizar o perfil", "Could not update the profile"),
         variant: "destructive",
       });
     }
@@ -192,15 +195,15 @@ const Profile = () => {
       if (error) throw error;
 
       toast({
-        title: "Sucesso",
-        description: "Senha atualizada com sucesso",
+        title: tx("Sucesso", "Success"),
+        description: tx("Senha atualizada com sucesso", "Password updated successfully"),
       });
 
       passwordForm.reset();
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível atualizar a senha",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível atualizar a senha", "Could not update the password"),
         variant: "destructive",
       });
     }
@@ -214,8 +217,8 @@ const Profile = () => {
       }
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível abrir o portal de assinaturas.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível abrir o portal de assinaturas.", "Could not open the subscriptions portal."),
         variant: "destructive",
       });
     }
@@ -223,10 +226,10 @@ const Profile = () => {
 
   // Função para excluir conta
   const handleDeleteAccount = async () => {
-    if (deleteConfirmation !== "EXCLUIR MINHA CONTA") {
+    if (deleteConfirmation !== deletePhrase) {
       toast({
-        title: "Confirmação incorreta",
-        description: "Digite exatamente 'EXCLUIR MINHA CONTA' para confirmar.",
+        title: tx("Confirmação incorreta", "Incorrect confirmation"),
+        description: tx(`Digite exatamente '${deletePhrase}' para confirmar.`, `Type exactly '${deletePhrase}' to confirm.`),
         variant: "destructive"
       });
       return;
@@ -234,8 +237,8 @@ const Profile = () => {
 
     if (!user) {
       toast({
-        title: "Erro",
-        description: "Você precisa estar logado para excluir sua conta.",
+        title: tx("Erro", "Error"),
+        description: tx("Você precisa estar logado para excluir sua conta.", "You must be logged in to delete your account."),
         variant: "destructive"
       });
       return;
@@ -288,8 +291,8 @@ const Profile = () => {
       }
 
       toast({
-        title: "Conta excluída",
-        description: "Sua conta foi excluída com sucesso. Todos os dados foram removidos.",
+        title: tx("Conta excluída", "Account deleted"),
+        description: tx("Sua conta foi excluída com sucesso. Todos os dados foram removidos.", "Your account was deleted successfully. All data was removed."),
       });
 
       // Fazer logout e redirecionar
@@ -298,8 +301,8 @@ const Profile = () => {
 
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível excluir sua conta. Tente novamente ou entre em contato conosco.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível excluir sua conta. Tente novamente ou entre em contato conosco.", "Could not delete your account. Please try again or contact us."),
         variant: "destructive"
       });
     } finally {
@@ -315,7 +318,7 @@ const Profile = () => {
   const getPlanDisplayName = (tier: string) => {
     switch (tier) {
       case "premium": return "Premium";
-      default: return "Gratuito";
+      default: return tx("Gratuito", "Free");
     }
   };
 
@@ -327,15 +330,15 @@ const Profile = () => {
           <Card className="max-w-md mx-auto">
             <CardHeader>
               <CardTitle className="text-center bg-gradient-to-r from-blue-400 via-green-400 to-yellow-400 bg-clip-text text-transparent">
-                Perfil
+                {tx("Perfil", "Profile")}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-muted-foreground mb-4">
-                Faça login para acessar e gerenciar seu perfil
+                {tx("Faça login para acessar e gerenciar seu perfil", "Sign in to access and manage your profile")}
               </p>
               <Button className="divine-button" onClick={handleAuthClick}>
-                Fazer Login
+                {tx("Fazer Login", "Sign In")}
               </Button>
             </CardContent>
           </Card>
@@ -350,8 +353,8 @@ const Profile = () => {
       <Navigation onAuthClick={handleAuthClick} />
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-4xl flex flex-col items-center">
         <div className="mb-6 w-full text-center">
-          <h1 className="text-3xl font-bold mx-auto">Meu Perfil</h1>
-          <p className="text-muted-foreground">Gerencie suas informações pessoais</p>
+          <h1 className="text-3xl font-bold mx-auto">{tx("Meu Perfil", "My Profile")}</h1>
+          <p className="text-muted-foreground">{tx("Gerencie suas informações pessoais", "Manage your personal information")}</p>
         </div>
         {!subscriptionLoading && subscription !== undefined && (
           <div className="mb-6 w-full text-center">
@@ -394,16 +397,16 @@ const Profile = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-primary" />
-                Status da Assinatura
+                {tx("Status da Assinatura", "Subscription Status")}
               </CardTitle>
               <CardDescription>
-                Gerencie sua assinatura e planos
+                {tx("Gerencie sua assinatura e planos", "Manage your subscription and plans")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Plano Atual</p>
+                  <p className="font-medium">{tx("Plano Atual", "Current Plan")}</p>
                   <p className="text-sm text-muted-foreground">
                     {getPlanDisplayName(subscription.subscription_tier)}
                   </p>
@@ -412,7 +415,7 @@ const Profile = () => {
                   variant={subscription.subscribed ? "default" : "secondary"}
                   className="text-sm"
                 >
-                  {subscription.subscribed ? "Ativo" : "Gratuito"}
+                  {subscription.subscribed ? tx("Ativo", "Active") : tx("Gratuito", "Free")}
                 </Badge>
               </div>
               
@@ -420,7 +423,7 @@ const Profile = () => {
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="font-medium text-sm">Próxima renovação</p>
+                    <p className="font-medium text-sm">{tx("Próxima renovação", "Next renewal")}</p>
                     <p className="text-sm text-muted-foreground">
                       {formatDate(subscription.subscription_end)}
                     </p>
@@ -432,20 +435,20 @@ const Profile = () => {
                 {subscription.subscribed ? (
                   <Button onClick={handleManageSubscription} className="flex-1">
                     <CreditCard className="w-4 h-4 mr-2" />
-                    Gerenciar Assinatura
+                    {tx("Gerenciar Assinatura", "Manage Subscription")}
                   </Button>
                 ) : (
                   <Link to="/assinatura?plan=premium" className="flex-1">
                     <Button className="w-full divine-button">
                       <Crown className="w-4 h-4 mr-2" />
-                      Upgrade para Premium
+                      {tx("Upgrade para Premium", "Upgrade to Premium")}
                     </Button>
                   </Link>
                 )}
                 <Link to="/assinatura">
                   <Button variant="outline">
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Ver Planos
+                    {tx("Ver Planos", "View Plans")}
                   </Button>
                 </Link>
               </div>
@@ -456,9 +459,9 @@ const Profile = () => {
           {/* Informações Pessoais */}
           <Card className="bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Informações Pessoais</CardTitle>
+              <CardTitle>{tx("Informações Pessoais", "Personal Information")}</CardTitle>
               <CardDescription>
-                Atualize suas informações de perfil
+                {tx("Atualize suas informações de perfil", "Update your profile information")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -469,9 +472,9 @@ const Profile = () => {
                     name="display_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome de Exibição</FormLabel>
+                        <FormLabel>{tx("Nome de Exibição", "Display Name")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Seu nome" {...field} />
+                          <Input placeholder={tx("Seu nome", "Your name")} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -497,17 +500,17 @@ const Profile = () => {
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gênero</FormLabel>
+                        <FormLabel>{tx("Gênero", "Gender")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione seu gênero" />
+                              <SelectValue placeholder={tx("Selecione seu gênero", "Select your gender")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="masculino">Masculino</SelectItem>
-                            <SelectItem value="feminino">Feminino</SelectItem>
-                            <SelectItem value="outros">Outros</SelectItem>
+                            <SelectItem value="masculino">{tx("Masculino", "Male")}</SelectItem>
+                            <SelectItem value="feminino">{tx("Feminino", "Female")}</SelectItem>
+                            <SelectItem value="outros">{tx("Outros", "Other")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -516,7 +519,7 @@ const Profile = () => {
                   />
 
                   <Button type="submit" className="w-full">
-                    Atualizar Perfil
+                    {tx("Atualizar Perfil", "Update Profile")}
                   </Button>
                 </form>
               </Form>
@@ -526,9 +529,9 @@ const Profile = () => {
           {/* Alterar Senha */}
           <Card className="bg-card dark:bg-zinc-900 mb-2">
             <CardHeader>
-              <CardTitle className="text-lg">Alterar Senha</CardTitle>
+              <CardTitle className="text-lg">{tx("Alterar Senha", "Change Password")}</CardTitle>
               <CardDescription className="text-sm">
-                Mantenha sua conta segura
+                {tx("Mantenha sua conta segura", "Keep your account secure")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -539,7 +542,7 @@ const Profile = () => {
                     name="currentPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Senha Atual</FormLabel>
+                        <FormLabel className="text-sm">{tx("Senha Atual", "Current Password")}</FormLabel>
                         <FormControl>
                           <Input type="password" {...field} className="h-9 py-2 text-sm" />
                         </FormControl>
@@ -553,7 +556,7 @@ const Profile = () => {
                     name="newPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Nova Senha</FormLabel>
+                        <FormLabel className="text-sm">{tx("Nova Senha", "New Password")}</FormLabel>
                         <FormControl>
                           <Input type="password" {...field} className="h-9 py-2 text-sm" />
                         </FormControl>
@@ -567,7 +570,7 @@ const Profile = () => {
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Confirmar Nova Senha</FormLabel>
+                        <FormLabel className="text-sm">{tx("Confirmar Nova Senha", "Confirm New Password")}</FormLabel>
                         <FormControl>
                           <Input type="password" {...field} className="h-9 py-2 text-sm" />
                         </FormControl>
@@ -577,7 +580,7 @@ const Profile = () => {
                   />
 
                   <Button type="submit" className="w-full h-9 text-sm mt-1">
-                    Alterar Senha
+                    {tx("Alterar Senha", "Change Password")}
                   </Button>
                 </form>
               </Form>
@@ -589,55 +592,55 @@ const Profile = () => {
             <CardHeader>
               <CardTitle className="text-lg text-red-600 dark:text-red-400 flex items-center gap-2">
                 <Trash2 className="w-5 h-5" />
-                Excluir Conta
+                {tx("Excluir Conta", "Delete Account")}
               </CardTitle>
               <CardDescription className="text-sm">
-                Exclua permanentemente sua conta e todos os dados associados
+                {tx("Exclua permanentemente sua conta e todos os dados associados", "Permanently delete your account and all associated data")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">
-                  <p className="mb-2"><strong>⚠️ Atenção:</strong> Esta ação é irreversível.</p>
-                  <p className="mb-2">Serão excluídos:</p>
+                  <p className="mb-2"><strong>{tx("⚠️ Atenção:", "⚠️ Warning:")}</strong> {tx("Esta ação é irreversível.", "This action is irreversible.")}</p>
+                  <p className="mb-2">{tx("Serão excluídos:", "The following will be deleted:")}</p>
                   <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>Favoritos salvos</li>
-                    <li>Progresso de estudos</li>
-                    <li>Histórico de chat</li>
-                    <li>Dados de assinatura</li>
-                    <li>Créditos disponíveis</li>
+                    <li>{tx("Favoritos salvos", "Saved favorites")}</li>
+                    <li>{tx("Progresso de estudos", "Study progress")}</li>
+                    <li>{tx("Histórico de chat", "Chat history")}</li>
+                    <li>{tx("Dados de assinatura", "Subscription data")}</li>
+                    <li>{tx("Créditos disponíveis", "Available credits")}</li>
                   </ul>
                 </div>
                 
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="deleteConfirmation" className="text-sm">
-                      Digite "EXCLUIR MINHA CONTA" para confirmar
+                      {tx(`Digite "${deletePhrase}" para confirmar`, `Type "${deletePhrase}" to confirm`)}
                     </Label>
                     <Input
                       id="deleteConfirmation"
                       type="text"
                       value={deleteConfirmation}
                       onChange={(e) => setDeleteConfirmation(e.target.value)}
-                      placeholder="EXCLUIR MINHA CONTA"
+                      placeholder={deletePhrase}
                       className="h-9 py-2 text-sm font-mono"
                     />
                   </div>
                   
                   <Button 
                     onClick={handleDeleteAccount}
-                    disabled={deleteConfirmation !== "EXCLUIR MINHA CONTA" || isDeleting}
+                    disabled={deleteConfirmation !== deletePhrase || isDeleting}
                     className="w-full h-9 text-sm bg-red-600 hover:bg-red-700 text-white"
                   >
                     {isDeleting ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Excluindo conta...
+                        {tx("Excluindo conta...", "Deleting account...")}
                       </>
                     ) : (
                       <>
                         <Trash2 className="w-4 h-4 mr-2" />
-                        Excluir Conta Permanentemente
+                        {tx("Excluir Conta Permanentemente", "Delete Account Permanently")}
                       </>
                     )}
                   </Button>

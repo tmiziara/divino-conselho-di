@@ -6,10 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useWeeklySummary } from "@/hooks/useWeeklySummary";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const WeeklySummary = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { summary, currentStreak, encouragement } = useWeeklySummary();
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
@@ -18,18 +21,20 @@ const WeeklySummary = () => {
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold heavenly-text flex items-center justify-center gap-2">
             <BarChart3 className="w-6 h-6 text-primary" />
-            Resumo Semanal
+            {tx("Resumo Semanal", "Weekly Summary")}
           </h1>
-          <p className="text-muted-foreground">Sua semana de fé em números simples.</p>
+          <p className="text-muted-foreground">{tx("Sua semana de fé em números simples.", "Your week of faith in simple numbers.")}</p>
         </div>
 
         <Card className="spiritual-card bg-card dark:bg-zinc-900">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Flame className="w-5 h-5 text-orange-500" />
-              Sequência atual
+              {tx("Sequência atual", "Current streak")}
             </CardTitle>
-            <CardDescription>{currentStreak} dias seguidos</CardDescription>
+            <CardDescription>
+              {isEnglish ? `${currentStreak} day streak` : `${currentStreak} dias seguidos`}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">{encouragement}</p>
@@ -39,7 +44,7 @@ const WeeklySummary = () => {
         <div className="grid gap-4 md:grid-cols-2">
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Dias ativos</CardTitle>
+              <CardTitle>{tx("Dias ativos", "Active days")}</CardTitle>
               <CardDescription>{summary.rangeLabel}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -48,7 +53,7 @@ const WeeklySummary = () => {
           </Card>
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Capítulos lidos</CardTitle>
+              <CardTitle>{tx("Capítulos lidos", "Chapters read")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold text-primary">{summary.chaptersRead}</p>
@@ -56,7 +61,7 @@ const WeeklySummary = () => {
           </Card>
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Dias de plano</CardTitle>
+              <CardTitle>{tx("Dias de plano", "Plan days")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold text-primary">{summary.planDaysCompleted}</p>
@@ -64,7 +69,7 @@ const WeeklySummary = () => {
           </Card>
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Estudos concluídos</CardTitle>
+              <CardTitle>{tx("Estudos concluídos", "Studies completed")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold text-primary">{summary.studiesCompleted}</p>
@@ -72,7 +77,7 @@ const WeeklySummary = () => {
           </Card>
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Diário de oração</CardTitle>
+              <CardTitle>{tx("Diário de oração", "Prayer journal")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold text-primary">{summary.journalEntries}</p>
@@ -84,16 +89,16 @@ const WeeklySummary = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-primary" />
-              Próximos passos
+              {tx("Próximos passos", "Next steps")}
             </CardTitle>
-            <CardDescription>Escolha um caminho para continuar.</CardDescription>
+            <CardDescription>{tx("Escolha um caminho para continuar.", "Choose a path to continue.")}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             <Link to="/planos">
-              <Button className="divine-button">Ver planos</Button>
+              <Button className="divine-button">{tx("Ver planos", "View plans")}</Button>
             </Link>
             <Link to="/diario">
-              <Button variant="outline">Abrir diário</Button>
+              <Button variant="outline">{tx("Abrir diário", "Open journal")}</Button>
             </Link>
           </CardContent>
         </Card>

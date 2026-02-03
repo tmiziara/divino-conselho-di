@@ -13,15 +13,18 @@ import { useBibleStudies } from "@/hooks/useBibleStudies";
 import { useStudyCategories } from "@/hooks/useStudyCategories";
 import { useSubscription } from "@/hooks/useSubscription";
 import { getCategoryConfig } from "@/lib/categories";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const CategoryStudies = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const { studies, loading, progress } = useBibleStudies();
   const categorizedStudies = useStudyCategories(studies, progress);
+  const tx = (pt: string, en: string) => (language === "en" ? en : pt);
 
   const hasPremiumAccess = useMemo(() => {
     if (subscriptionLoading || subscription === undefined) return undefined;
@@ -46,15 +49,15 @@ const CategoryStudies = () => {
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2" />
-                Estudos Bíblicos
+                {tx("Estudos Bíblicos", "Bible Studies")}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-muted-foreground mb-4">
-                Faça login para acessar estudos bíblicos profundos e salvar seu progresso
+                {tx("Faça login para acessar estudos bíblicos profundos e salvar seu progresso", "Log in to access in-depth Bible studies and save your progress")}
               </p>
               <Button className="divine-button" onClick={handleAuthClick}>
-                Fazer Login
+                {tx("Fazer Login", "Log In")}
               </Button>
             </CardContent>
           </Card>
@@ -72,13 +75,13 @@ const CategoryStudies = () => {
           <Card className="spiritual-card max-w-md mx-auto bg-card text-card-foreground dark:bg-zinc-900 dark:text-white">
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">Categoria não encontrada</h3>
+              <h3 className="text-xl font-semibold mb-2">{tx("Categoria não encontrada", "Category not found")}</h3>
               <p className="text-muted-foreground mb-4">
-                A categoria que você está procurando não existe.
+                {tx("A categoria que você está procurando não existe.", "The category you are looking for does not exist.")}
               </p>
               <Button onClick={() => navigate('/estudos')} className="divine-button">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar aos Estudos
+                {tx("Voltar aos Estudos", "Back to Studies")}
               </Button>
             </CardContent>
           </Card>
@@ -126,7 +129,7 @@ const CategoryStudies = () => {
             className="mb-4 text-muted-foreground hover:text-primary"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar aos Estudos
+            {tx("Voltar aos Estudos", "Back to Studies")}
           </Button>
           
           <div className="flex items-center gap-4 mb-4">
@@ -144,11 +147,11 @@ const CategoryStudies = () => {
           </div>
           
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>{currentCategory.count} {currentCategory.count === 1 ? 'estudo' : 'estudos'}</span>
+            <span>{currentCategory.count} {currentCategory.count === 1 ? tx("estudo", "study") : tx("estudos", "studies")}</span>
             {currentCategory.studies.some(study => study.is_premium) && (
               <Badge variant="secondary" className="bg-amber-100 text-amber-800">
                 <Lock className="w-3 h-3 mr-1" />
-                Inclui conteúdo premium
+                {tx("Inclui conteúdo premium", "Includes premium content")}
               </Badge>
             )}
           </div>
@@ -204,9 +207,9 @@ const CategoryStudies = () => {
                     {/* Progresso */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Progresso</span>
+                        <span className="text-muted-foreground">{tx("Progresso", "Progress")}</span>
                         <span className="font-medium">
-                          {completedChapters}/{totalChapters} capítulos
+                          {completedChapters}/{totalChapters} {tx("capítulos", "chapters")}
                         </span>
                       </div>
                       <Progress 
@@ -215,7 +218,7 @@ const CategoryStudies = () => {
                       />
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        <span>{totalChapters} capítulos • Navegação livre</span>
+                        <span>{totalChapters} {tx("capítulos", "chapters")} • {tx("Navegação livre", "Free navigation")}</span>
                       </div>
                     </div>
 
@@ -227,21 +230,21 @@ const CategoryStudies = () => {
                             <div className="w-full">
                               <Link to={`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}`}>
                                 <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
-                                  <span>Ver estudo premium</span>
+                                  <span>{tx("Ver estudo premium", "View premium study")}</span>
                                   <Lock className="w-4 h-4 ml-2" />
                                 </Button>
                               </Link>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Você precisa fazer upgrade da sua assinatura para acessar este estudo.</p>
+                            <p>{tx("Você precisa fazer upgrade da sua assinatura para acessar este estudo.", "You need to upgrade your subscription to access this study.")}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     ) : (
                       <Link to={`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}`}>
                         <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
-                          <span>Começar Estudo</span>
+                          <span>{tx("Começar Estudo", "Start Study")}</span>
                           <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       </Link>
@@ -255,13 +258,13 @@ const CategoryStudies = () => {
           <Card className="spiritual-card max-w-md mx-auto">
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">Nenhum estudo nesta categoria</h3>
+              <h3 className="text-xl font-semibold mb-2">{tx("Nenhum estudo nesta categoria", "No studies in this category")}</h3>
               <p className="text-muted-foreground mb-4">
-                Em breve teremos estudos nesta categoria!
+                {tx("Em breve teremos estudos nesta categoria!", "We will add studies to this category soon!")}
               </p>
               <Button onClick={() => navigate('/estudos')} className="divine-button">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar aos Estudos
+                {tx("Voltar aos Estudos", "Back to Studies")}
               </Button>
             </CardContent>
           </Card>

@@ -8,14 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { usePrayerJournal } from "@/hooks/usePrayerJournal";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const PrayerJournalNew = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { prompts, createEntry } = usePrayerJournal();
   const navigate = useNavigate();
+  const { isEnglish } = useLanguage();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [promptId, setPromptId] = useState("");
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
 
   const selectedPrompt = prompts.find((prompt) => prompt.id === promptId);
 
@@ -25,34 +28,34 @@ const PrayerJournalNew = () => {
       <div className="container mx-auto px-4 sm:px-6 py-8 space-y-6">
         <Link to="/diario" className="text-sm text-muted-foreground flex items-center gap-1">
           <ChevronLeft className="w-4 h-4" />
-          Voltar ao diário
+          {tx("Voltar ao diário", "Back to journal")}
         </Link>
 
         <Card className="spiritual-card bg-card dark:bg-zinc-900">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <NotebookPen className="w-5 h-5 text-primary" />
-              Nova oração
+              {tx("Nova oração", "New prayer")}
             </CardTitle>
-            <CardDescription>Escreva com liberdade. Isso fica apenas no seu aparelho.</CardDescription>
+            <CardDescription>{tx("Escreva com liberdade. Isso fica apenas no seu aparelho.", "Write freely. This stays only on your device.")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Título</label>
+              <label className="text-sm font-medium">{tx("Título", "Title")}</label>
               <Input
-                placeholder="Ex: Gratidão pela semana"
+                placeholder={tx("Ex: Gratidão pela semana", "E.g.: Gratitude for this week")}
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tema de oração (opcional)</label>
+              <label className="text-sm font-medium">{tx("Tema de oração (opcional)", "Prayer theme (optional)")}</label>
               <select
                 className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                 value={promptId}
                 onChange={(event) => setPromptId(event.target.value)}
               >
-                <option value="">Sem tema</option>
+                <option value="">{tx("Sem tema", "No theme")}</option>
                 {prompts.map((prompt) => (
                   <option key={prompt.id} value={prompt.id}>
                     {prompt.label}
@@ -64,10 +67,10 @@ const PrayerJournalNew = () => {
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Oração / reflexão</label>
+              <label className="text-sm font-medium">{tx("Oração / reflexão", "Prayer / reflection")}</label>
               <Textarea
                 rows={6}
-                placeholder="Escreva sua oração aqui..."
+                placeholder={tx("Escreva sua oração aqui...", "Write your prayer here...")}
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
               />
@@ -86,7 +89,7 @@ const PrayerJournalNew = () => {
               }}
             >
               <Save className="w-4 h-4 mr-2" />
-              Salvar oração
+              {tx("Salvar oração", "Save prayer")}
             </Button>
           </CardContent>
         </Card>

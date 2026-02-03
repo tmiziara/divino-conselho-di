@@ -10,6 +10,7 @@ import SwipeContainer from "@/components/SwipeContainer";
 import { shareVerseImage } from './shareVerseImage';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAdManager } from "@/hooks/useAdManager";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface Verse {
   tema: string;
@@ -19,6 +20,7 @@ interface Verse {
 
 const VersiculoDoDia = () => {
   const [showAuth, setShowAuth] = useState(false);
+  const { isEnglish } = useLanguage();
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentBackground, setCurrentBackground] = useState('background1.jpg');
@@ -37,6 +39,7 @@ const VersiculoDoDia = () => {
   const GUEST_VIEW_KEY = "guest_verse_views";
   const GUEST_VIEW_LIMIT = 2;
   const REMINDER_CTA_KEY = "reminder_cta_verse_v1";
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
 
   const triggerGuestLimit = () => {
     setShowGuestLimit(true);
@@ -80,7 +83,7 @@ const VersiculoDoDia = () => {
         const data = await response.json();
         if (!Array.isArray(data) || data.length === 0) {
           setVerses([]);
-          setLoadError("Nenhum versículo disponível no momento.");
+          setLoadError(tx("Nenhum versículo disponível no momento.", "No verse available at the moment."));
           setLoading(false);
           return;
         }
@@ -158,7 +161,7 @@ const VersiculoDoDia = () => {
           }
         }
       } catch (error) {
-        setLoadError("Não foi possível carregar os versículos.");
+        setLoadError(tx("Não foi possível carregar os versículos.", "Could not load verses."));
         setLoading(false);
       }
     };
@@ -190,14 +193,14 @@ const VersiculoDoDia = () => {
     const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
 
     if (!isNative) {
-      alert('O compartilhamento de imagem só está disponível no app instalado.');
+      alert(tx("O compartilhamento de imagem só está disponível no app instalado.", "Image sharing is only available in the installed app."));
       return;
     }
 
     try {
       await shareVerseImage(imageUrl);
     } catch (error) {
-      alert('Erro ao compartilhar imagem: ' + error);
+      alert(tx("Erro ao compartilhar imagem: ", "Error sharing image: ") + error);
     }
   };
 
@@ -288,7 +291,7 @@ const VersiculoDoDia = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-md mx-auto text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-            <p className="text-muted-foreground">Carregando versículos...</p>
+            <p className="text-muted-foreground">{tx("Carregando versículos...", "Loading verses...")}</p>
           </div>
         </div>
       </div>
@@ -302,7 +305,7 @@ const VersiculoDoDia = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-md mx-auto text-center">
             <p className="text-muted-foreground mb-4">{loadError}</p>
-            <Button onClick={() => setReloadToken((value) => value + 1)}>Tentar novamente</Button>
+            <Button onClick={() => setReloadToken((value) => value + 1)}>{tx("Tentar novamente", "Try again")}</Button>
           </div>
         </div>
         <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
@@ -320,12 +323,12 @@ const VersiculoDoDia = () => {
             <div className="flex items-center justify-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-yellow-400" />
               <h1 className="text-2xl font-bold heavenly-text">
-                Versículo do Dia
+                {tx("Versículo do Dia", "Verse of the Day")}
               </h1>
               <Sparkles className="w-5 h-5 text-yellow-400" />
             </div>
             <p className="text-muted-foreground">
-              {currentIndex + 1} de {verses.length} versículos
+              {currentIndex + 1} {tx("de", "of")} {verses.length} {tx("versículos", "verses")}
             </p>
 
           </div>
@@ -342,7 +345,7 @@ const VersiculoDoDia = () => {
                   <div className="h-96 flex items-center justify-center">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p className="text-muted-foreground">Gerando imagem...</p>
+                      <p className="text-muted-foreground">{tx("Gerando imagem...", "Generating image...")}</p>
                     </div>
                   </div>
                 ) : imageUrl ? (
@@ -368,7 +371,7 @@ const VersiculoDoDia = () => {
                   </div>
                 ) : (
                   <div className="h-96 flex items-center justify-center">
-                    <p className="text-muted-foreground">Erro ao carregar versículo</p>
+                    <p className="text-muted-foreground">{tx("Erro ao carregar versículo", "Error loading verse")}</p>
                   </div>
                 )}
 
@@ -379,7 +382,7 @@ const VersiculoDoDia = () => {
                       {currentVerse?.referencia}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Tema: {currentVerse?.tema}
+                      {tx("Tema", "Theme")}: {currentVerse?.tema}
                     </p>
                     <p className="text-foreground leading-relaxed italic">
                       "{currentVerse?.texto}"
@@ -399,7 +402,7 @@ const VersiculoDoDia = () => {
               className="flex-1"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
-              Anterior
+              {tx("Anterior", "Previous")}
             </Button>
 
             <Button
@@ -408,7 +411,7 @@ const VersiculoDoDia = () => {
               disabled={currentIndex === verses.length - 1}
               className="flex-1"
             >
-              Próximo
+              {tx("Próximo", "Next")}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -421,7 +424,7 @@ const VersiculoDoDia = () => {
               className="w-full"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Versículo Aleatório
+              {tx("Versículo Aleatório", "Random Verse")}
             </Button>
           </div>
 
@@ -431,7 +434,7 @@ const VersiculoDoDia = () => {
               <Card className="spiritual-card bg-card dark:bg-zinc-900">
                 <CardContent className="p-4 text-center">
                   <p className="text-sm text-muted-foreground mb-3">
-                    Quer receber lembretes diários com versículos?
+                    {tx("Quer receber lembretes diários com versículos?", "Would you like daily verse reminders?")}
                   </p>
                   <div className="flex gap-2 justify-center">
                     <Button
@@ -443,7 +446,7 @@ const VersiculoDoDia = () => {
                         navigate(`/notificacoes?guided=1&source=verse&theme=${themeParam}`);
                       }}
                     >
-                      Ativar lembretes
+                      {tx("Ativar lembretes", "Enable reminders")}
                     </Button>
                     <Button
                       variant="outline"
@@ -452,7 +455,7 @@ const VersiculoDoDia = () => {
                         setShowReminderCta(false);
                       }}
                     >
-                      Agora não
+                      {tx("Agora não", "Not now")}
                     </Button>
                   </div>
                 </CardContent>
@@ -467,10 +470,10 @@ const VersiculoDoDia = () => {
                 <CardContent className="text-center p-6">
                   <BookOpen className="w-10 h-10 mx-auto mb-3 text-primary" />
                   <p className="text-sm text-muted-foreground mb-4">
-                    Você já viu seus 2 versículos gratuitos. Entre para continuar.
+                    {tx("Você já viu seus 2 versículos gratuitos. Entre para continuar.", "You already viewed your 2 free verses. Sign in to continue.")}
                   </p>
                   <Button className="divine-button" onClick={handleAuthClick}>
-                    Fazer Login
+                    {tx("Fazer Login", "Sign In")}
                   </Button>
                 </CardContent>
               </Card>
@@ -480,7 +483,7 @@ const VersiculoDoDia = () => {
           {/* Instruções */}
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              💡 Deslize para navegar ou use o botão aleatório para surpresas!
+              {tx("💡 Deslize para navegar ou use o botão aleatório para surpresas!", "💡 Swipe to navigate or use the random button for surprises!")}
             </p>
           </div>
         </div>

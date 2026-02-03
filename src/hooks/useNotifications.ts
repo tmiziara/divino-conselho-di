@@ -3,6 +3,12 @@ import { Device } from '@capacitor/device';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import i18n, { normalizeLanguage } from '@/i18n';
+
+const tx = (pt: string, en: string) => {
+  const isEnglish = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'en';
+  return isEnglish ? en : pt;
+};
 
 // Declarações de tipo para Cordova Local Notifications
 declare global {
@@ -379,8 +385,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
               requestBatteryOptimizationPermission();
             } else {
               toast({
-                title: "Permissão necessária",
-                description: "Para receber notificações, é necessário permitir o acesso nas configurações do app.",
+                title: tx("Permissão necessária", "Permission required"),
+                description: tx("Para receber notificações, é necessário permitir o acesso nas configurações do app.", "To receive notifications, you must allow access in app settings."),
                 variant: "destructive"
               });
             }
@@ -389,8 +395,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       });
     } catch (error) {
       toast({
-        title: "Erro de permissão",
-        description: "Não foi possível solicitar permissões de notificação.",
+        title: tx("Erro de permissão", "Permission error"),
+        description: tx("Não foi possível solicitar permissões de notificação.", "Could not request notification permissions."),
         variant: "destructive"
       });
     }
@@ -400,11 +406,14 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
     try {
       // Verificar se o dispositivo tem Android 6+ (API 23+)
       if (window.cordova?.platformId === 'android') {
+        const isEnglish = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'en';
         
         // Mostrar instruções para o usuário
         toast({
-          title: "Otimização de Bateria",
-          description: "Para notificações precisas, desative a otimização de bateria para este app nas configurações.",
+          title: isEnglish ? "Battery Optimization" : "Otimização de Bateria",
+          description: isEnglish
+            ? "For reliable notifications, disable battery optimization for this app in system settings."
+            : "Para notificações precisas, desative a otimização de bateria para este app nas configurações.",
           duration: 5000
         });
       }
@@ -617,7 +626,7 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       // Configuração da notificação usando Cordova Local Notifications
       const notificationConfig = {
         id: notificationId,
-        title: "Versículo do Dia",
+        title: tx("Versículo do Dia", "Verse of the Day"),
         text: `${verse.referencia}: ${verse.texto}`,
         trigger: {
           every: {
@@ -640,8 +649,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
         androidImportance: 4, // IMPORTANCE_HIGH
         androidVisibility: 1, // VISIBILITY_PUBLIC
         androidChannelId: 'versiculos',
-        androidChannelName: 'Versículos Bíblicos',
-        androidChannelDescription: 'Notificações de versículos agendados',
+        androidChannelName: tx('Versículos Bíblicos', 'Bible Verses'),
+        androidChannelDescription: tx('Notificações de versículos agendados', 'Scheduled verse notifications'),
         androidChannelImportance: 4, // IMPORTANCE_HIGH
         androidChannelShowBadge: true,
         androidChannelEnableVibration: true,
@@ -691,8 +700,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       // Configuração da notificação de oração usando Cordova Local Notifications
       const notificationConfig = {
         id: notificationId,
-        title: "Hora de Orar",
-        text: "É um bom momento para fazer uma oração e conectar-se com Deus.",
+        title: tx("Hora de Orar", "Time to Pray"),
+        text: tx("É um bom momento para fazer uma oração e conectar-se com Deus.", "This is a good moment to pray and connect with God."),
         trigger: {
           every: {
             weekday,
@@ -713,8 +722,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
         androidImportance: 4, // IMPORTANCE_HIGH
         androidVisibility: 1, // VISIBILITY_PUBLIC
         androidChannelId: 'oracoes',
-        androidChannelName: 'Lembretes de Oração',
-        androidChannelDescription: 'Notificações de lembretes de oração',
+        androidChannelName: tx('Lembretes de Oração', 'Prayer Reminders'),
+        androidChannelDescription: tx('Notificações de lembretes de oração', 'Prayer reminder notifications'),
         androidChannelImportance: 4, // IMPORTANCE_HIGH
         androidChannelShowBadge: true,
         androidChannelEnableVibration: true,
@@ -759,8 +768,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       const verse = getRandomVerse(schedule.theme, versesArg);
       if (!verse) {
         toast({
-          title: "Erro",
-          description: "Não foi possível encontrar um versículo para este tema.",
+          title: tx("Erro", "Error"),
+          description: tx("Não foi possível encontrar um versículo para este tema.", "Could not find a verse for this theme."),
           variant: "destructive"
         });
         return false;
@@ -788,8 +797,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       return true;
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível criar a notificação. Verifique as permissões do app.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível criar a notificação. Verifique as permissões do app.", "Could not create the notification. Check app permissions."),
         variant: "destructive"
       });
       return false;
@@ -826,8 +835,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       
       if (success) {
         toast({
-          title: "Agendamento criado",
-          description: `Notificação agendada para ${newSchedule.days.length} dia(s) da semana.`,
+          title: tx("Agendamento criado", "Schedule created"),
+          description: tx(`Notificação agendada para ${newSchedule.days.length} dia(s) da semana.`, `Notification scheduled for ${newSchedule.days.length} day(s) of the week.`),
         });
       }
 
@@ -856,8 +865,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       
       if (success) {
         toast({
-          title: "Lembrete de oração criado",
-          description: `Lembrete agendado para ${newSchedule.days.length} dia(s) da semana.`,
+          title: tx("Lembrete de oração criado", "Prayer reminder created"),
+          description: tx(`Lembrete agendado para ${newSchedule.days.length} dia(s) da semana.`, `Reminder scheduled for ${newSchedule.days.length} day(s) of the week.`),
         });
       }
 
@@ -896,8 +905,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       return true;
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível criar o lembrete de oração. Verifique as permissões do app.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível criar o lembrete de oração. Verifique as permissões do app.", "Could not create the prayer reminder. Check app permissions."),
         variant: "destructive"
       });
       return false;
@@ -954,8 +963,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       saveSchedules(newSchedules);
 
       toast({
-        title: "Agendamento removido",
-        description: "O agendamento foi removido com sucesso.",
+        title: tx("Agendamento removido", "Schedule removed"),
+        description: tx("O agendamento foi removido com sucesso.", "The schedule was removed successfully."),
       });
 
       return true;
@@ -1016,8 +1025,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       savePrayerSchedules(newPrayerSchedules);
 
       toast({
-        title: "Lembrete de oração removido",
-        description: "O lembrete de oração foi removido com sucesso.",
+        title: tx("Lembrete de oração removido", "Prayer reminder removed"),
+        description: tx("O lembrete de oração foi removido com sucesso.", "The prayer reminder was removed successfully."),
       });
 
       return true;
@@ -1027,11 +1036,30 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
   };
 
   const formatDays = (days: number[]) => {
-    return days.map(day => DAYS_OF_WEEK.find(d => d.value === day)?.label).join(', ');
+    const isEnglish = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'en';
+    const pt = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const en = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const labels = isEnglish ? en : pt;
+    return days.map((day) => labels[day] || "").filter(Boolean).join(', ');
   };
 
   const getThemeLabel = (theme: string) => {
-    return THEMES.find(t => t.value === theme)?.label || theme;
+    const ptToEn: Record<string, string> = {
+      "Automático": "Automatic",
+      "Amor": "Love",
+      "Fé": "Faith",
+      "Esperança": "Hope",
+      "Paz": "Peace",
+      "Perdão": "Forgiveness",
+      "Sabedoria": "Wisdom",
+      "Força": "Strength",
+      "Oração": "Prayer",
+      "Confiança": "Trust",
+      "Graça": "Grace",
+    };
+    const label = THEMES.find(t => t.value === theme)?.label || theme;
+    const isEnglish = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'en';
+    return isEnglish ? (ptToEn[label] || label) : label;
   };
 
   const getActiveSchedulesCount = () => {
@@ -1092,15 +1120,15 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       
       
       toast({
-        title: "Notificações resetadas",
-        description: "Todas as notificações foram removidas. Você pode criar novos agendamentos.",
+        title: tx("Notificações resetadas", "Notifications reset"),
+        description: tx("Todas as notificações foram removidas. Você pode criar novos agendamentos.", "All notifications were removed. You can create new schedules."),
       });
       
       return true;
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível resetar as notificações.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível resetar as notificações.", "Could not reset notifications."),
         variant: "destructive"
       });
       return false;
@@ -1110,19 +1138,19 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
   const getNotificationStatus = async () => {
     try {
       if (!isMobile || !isCordovaAvailable()) {
-        return { enabled: false, message: 'Notificações não disponíveis em web ou Cordova não disponível' };
+        return { enabled: false, message: tx('Notificações não disponíveis em web ou Cordova não disponível', 'Notifications are unavailable on web or Cordova is not available') };
       }
 
       return new Promise((resolve) => {
         window.cordova!.plugins.notification.local.hasPermission((granted) => {
           resolve({
             enabled: granted,
-            message: granted ? 'Notificações habilitadas' : 'Permissão necessária'
+            message: granted ? tx('Notificações habilitadas', 'Notifications enabled') : tx('Permissão necessária', 'Permission required')
           });
         });
       });
     } catch (error) {
-      return { enabled: false, message: 'Erro ao verificar permissões' };
+      return { enabled: false, message: tx('Erro ao verificar permissões', 'Error checking permissions') };
     }
   };
 
@@ -1130,8 +1158,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
     try {
       if (!isMobile || !isCordovaAvailable()) {
         toast({
-          title: "Teste não disponível",
-          description: "Teste de notificação só funciona no app móvel com Cordova.",
+          title: tx("Teste não disponível", "Test unavailable"),
+          description: tx("Teste de notificação só funciona no app móvel com Cordova.", "Notification test only works in the mobile app with Cordova."),
           variant: "destructive"
         });
         return false;
@@ -1144,8 +1172,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       
       const testConfig = {
         id: 999999, // ID único para teste
-        title: "Teste de Notificação",
-        text: "Esta é uma notificação de teste. Se você vê isso, o sistema está funcionando!",
+        title: tx("Teste de Notificação", "Notification Test"),
+        text: tx("Esta é uma notificação de teste. Se você vê isso, o sistema está funcionando!", "This is a test notification. If you can see this, the system is working!"),
         trigger: {
           at: testTime
         },
@@ -1157,13 +1185,13 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       window.cordova!.plugins.notification.local.schedule(testConfig, (scheduled) => {
         if (scheduled) {
           toast({
-            title: "Teste agendado",
-            description: "Uma notificação de teste aparecerá em 1 minuto.",
+            title: tx("Teste agendado", "Test scheduled"),
+            description: tx("Uma notificação de teste aparecerá em 1 minuto.", "A test notification will appear in 1 minute."),
           });
         } else {
           toast({
-            title: "Erro no teste",
-            description: "Não foi possível criar a notificação de teste.",
+            title: tx("Erro no teste", "Test error"),
+            description: tx("Não foi possível criar a notificação de teste.", "Could not create the test notification."),
             variant: "destructive"
           });
         }
@@ -1172,8 +1200,8 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
       return true;
     } catch (error) {
       toast({
-        title: "Erro no teste",
-        description: "Não foi possível criar a notificação de teste.",
+        title: tx("Erro no teste", "Test error"),
+        description: tx("Não foi possível criar a notificação de teste.", "Could not create the test notification."),
         variant: "destructive"
       });
       return false;

@@ -23,6 +23,7 @@ import { useBibleFavorites } from "@/hooks/useBibleFavorites";
 import { useToast } from "@/hooks/use-toast";
 import { useAdManager } from "@/hooks/useAdManager";
 import { useContentAccess } from "@/hooks/useContentAccess";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const StudyChapter = () => {
   const { studyId, chapterId } = useParams<{ studyId: string; chapterId: string }>();
@@ -40,6 +41,7 @@ const StudyChapter = () => {
   const [isPreparingRewarded, setIsPreparingRewarded] = useState(false);
   const preparingRewardedRef = useRef(false);
   const { user } = useAuth();
+  const { language } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { hasPremiumAccess, loading: accessLoading } = useContentAccess();
@@ -55,6 +57,7 @@ const StudyChapter = () => {
   const { incrementStudyCount, showRewardedAd, prepareRewardedAd, isRewardedReady } = useAdManager({ versesPerAd: 5, studiesPerAd: 1 });
   const REMINDER_CTA_KEY = "reminder_cta_study_v1";
   const PREVIEW_KEY_PREFIX = "rewarded_preview_chapter_v1";
+  const tx = (pt: string, en: string) => (language === "en" ? en : pt);
   const safeStorageSet = (key: string, value: string) => {
     try {
       localStorage.setItem(key, value);
@@ -219,8 +222,8 @@ const StudyChapter = () => {
         await loadPreviewChapter(studyId, chapterNumber);
       }
       toast({
-        title: "Prévia liberada",
-        description: "Este capítulo premium foi liberado após o anúncio."
+        title: tx("Prévia liberada", "Preview unlocked"),
+        description: tx("Este capítulo premium foi liberado após o anúncio.", "This premium chapter was unlocked after the ad.")
       });
     });
   };
@@ -287,8 +290,8 @@ const StudyChapter = () => {
       }
     } catch (error) {
       toast({
-        title: "Erro ao salvar progresso",
-        description: "Não foi possível marcar o capítulo como concluído.",
+        title: tx("Erro ao salvar progresso", "Error saving progress"),
+        description: tx("Não foi possível marcar o capítulo como concluído.", "Could not mark chapter as completed."),
         variant: "destructive"
       });
     } finally {
@@ -299,8 +302,8 @@ const StudyChapter = () => {
   const toggleVerseFavorite = async () => {
     if (!user) {
       toast({
-        title: "Login necessário",
-        description: "Faça login para salvar versículos favoritos",
+        title: tx("Login necessário", "Login required"),
+        description: tx("Faça login para salvar versículos favoritos", "Log in to save favorite verses"),
         variant: "destructive"
       });
       return;
@@ -317,8 +320,8 @@ const StudyChapter = () => {
       if (isFavorite) {
         await removeFavoriteByTitle(verseKey);
         toast({
-          title: "Removido dos favoritos",
-          description: "Versículo removido dos favoritos"
+          title: tx("Removido dos favoritos", "Removed from favorites"),
+          description: tx("Versículo removido dos favoritos", "Verse removed from favorites")
         });
       } else {
         await addToFavorites({
@@ -330,14 +333,14 @@ const StudyChapter = () => {
           reference: chapter.main_verse_reference
         });
         toast({
-          title: "Adicionado aos favoritos",
-          description: `${chapter.main_verse_reference} adicionado aos favoritos`
+          title: tx("Adicionado aos favoritos", "Added to favorites"),
+          description: tx(`${chapter.main_verse_reference} adicionado aos favoritos`, `${chapter.main_verse_reference} added to favorites`)
         });
       }
     } catch (error: any) {
       toast({
-        title: "Não foi possível salvar o favorito",
-        description: error?.message || "Tente novamente.",
+        title: tx("Não foi possível salvar o favorito", "Could not save favorite"),
+        description: error?.message || tx("Tente novamente.", "Please try again."),
         variant: "destructive"
       });
     }
@@ -346,8 +349,8 @@ const StudyChapter = () => {
   const togglePrayerFavorite = async () => {
     if (!user) {
       toast({
-        title: "Login necessário",
-        description: "Faça login para salvar orações favoritas",
+        title: tx("Login necessário", "Login required"),
+        description: tx("Faça login para salvar orações favoritas", "Log in to save favorite prayers"),
         variant: "destructive"
       });
       return;
@@ -364,8 +367,8 @@ const StudyChapter = () => {
       if (isFavorite) {
         await removeFavoriteByTitle(prayerKey);
         toast({
-          title: "Removido dos favoritos",
-          description: "Oração removida dos favoritos"
+          title: tx("Removido dos favoritos", "Removed from favorites"),
+          description: tx("Oração removida dos favoritos", "Prayer removed from favorites")
         });
       } else {
         await addToFavorites({
@@ -374,17 +377,17 @@ const StudyChapter = () => {
           verse: 1,
           title: prayerKey,
           content: chapter.chapter_prayer,
-          reference: `Oração - ${chapter.title}`
+          reference: tx(`Oração - ${chapter.title}`, `Prayer - ${chapter.title}`)
         });
         toast({
-          title: "Adicionado aos favoritos",
-          description: `Oração de "${chapter.title}" adicionada aos favoritos`
+          title: tx("Adicionado aos favoritos", "Added to favorites"),
+          description: tx(`Oração de "${chapter.title}" adicionada aos favoritos`, `Prayer from "${chapter.title}" added to favorites`)
         });
       }
     } catch (error: any) {
       toast({
-        title: "Não foi possível salvar o favorito",
-        description: error?.message || "Tente novamente.",
+        title: tx("Não foi possível salvar o favorito", "Could not save favorite"),
+        description: error?.message || tx("Tente novamente.", "Please try again."),
         variant: "destructive"
       });
     }
@@ -422,7 +425,7 @@ const StudyChapter = () => {
         await window.Capacitor.Plugins.Share.share({
           title,
           text,
-          dialogTitle: 'Compartilhar com...'
+          dialogTitle: tx("Compartilhar com...", "Share with...")
         });
         return;
       }
@@ -447,15 +450,15 @@ const StudyChapter = () => {
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2" />
-                Capítulo do Estudo
+                {tx("Capítulo do Estudo", "Study Chapter")}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-muted-foreground mb-4">
-                Faça login para acessar este capítulo
+                {tx("Faça login para acessar este capítulo", "Log in to access this chapter")}
               </p>
               <Button className="divine-button" onClick={handleAuthClick}>
-                Fazer Login
+                {tx("Fazer Login", "Log In")}
               </Button>
             </CardContent>
           </Card>
@@ -500,15 +503,15 @@ const StudyChapter = () => {
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2 text-amber-500" />
-                Capítulo premium bloqueado
+                {tx("Capítulo premium bloqueado", "Premium chapter locked")}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-muted-foreground">
-                Este capítulo faz parte do plano Premium.
+                {tx("Este capítulo faz parte do plano Premium.", "This chapter is part of the Premium plan.")}
               </p>
               <p className="text-xs text-muted-foreground">
-                Assista a um anúncio para liberar uma prévia deste capítulo.
+                {tx("Assista a um anúncio para liberar uma prévia deste capítulo.", "Watch an ad to unlock a preview of this chapter.")}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
@@ -519,28 +522,28 @@ const StudyChapter = () => {
                   {isUnlockingPreview ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                      Abrindo anúncio...
+                      {tx("Abrindo anúncio...", "Opening ad...")}
                     </>
                   ) : !isRewardedReady ? (
                     <>
                       {isPreparingRewarded && (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
                       )}
-                      Carregando anúncio...
+                      {tx("Carregando anúncio...", "Loading ad...")}
                     </>
                   ) : (
-                    "Ver anúncio e liberar prévia"
+                    tx("Ver anúncio e liberar prévia", "Watch ad and unlock preview")
                   )}
                 </Button>
                 <Button
                   className="divine-button"
                   onClick={() => navigate('/assinatura?plan=premium')}
                 >
-                  Fazer assinatura Premium
+                  {tx("Fazer assinatura Premium", "Subscribe to Premium")}
                 </Button>
                 <Link to={"/estudos"}>
                   <Button variant="outline">
-                    Ver outros estudos
+                    {tx("Ver outros estudos", "See other studies")}
                   </Button>
                 </Link>
               </div>
@@ -561,16 +564,16 @@ const StudyChapter = () => {
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                Capítulo não encontrado
+                {tx("Capítulo não encontrado", "Chapter not found")}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-muted-foreground">
-                O capítulo que você está procurando não existe.
+                {tx("O capítulo que você está procurando não existe.", "The chapter you are looking for does not exist.")}
               </p>
               <Link to={`/estudo/${studyId || ''}`}>
                 <Button variant="outline">
-                  Voltar ao Estudo
+                  {tx("Voltar ao Estudo", "Back to Study")}
                 </Button>
               </Link>
             </CardContent>
@@ -621,7 +624,7 @@ const StudyChapter = () => {
               <Link to={`/estudo/${studyId}`}>
                 <Button variant="ghost">
                   <ChevronLeft className="w-4 h-4 mr-2" />
-                  Voltar ao Estudo
+                  {tx("Voltar ao Estudo", "Back to Study")}
                 </Button>
               </Link>
             </div>
@@ -629,12 +632,12 @@ const StudyChapter = () => {
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Badge variant="outline">
-                  Capítulo {chapter.chapter_number}
+                  {tx("Capítulo", "Chapter")} {chapter.chapter_number}
                 </Badge>
                 {isCompleted && (
                   <Badge variant="default" className="bg-green-500">
                     <CheckCircle className="w-3 h-3 mr-1" />
-                    Concluído
+                    {tx("Concluído", "Completed")}
                   </Badge>
                 )}
               </div>
@@ -654,7 +657,7 @@ const StudyChapter = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" />
-                Versículo Principal
+                {tx("Versículo Principal", "Main Verse")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -668,7 +671,7 @@ const StudyChapter = () => {
                         size="icon"
                         onClick={toggleVerseFavorite}
                         className="h-8 w-8"
-                        aria-label={isVerseFavorite() ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                        aria-label={isVerseFavorite() ? tx("Remover dos favoritos", "Remove from favorites") : tx("Adicionar aos favoritos", "Add to favorites")}
                       >
                         {isVerseFavorite() ? (
                           <Heart className="w-4 h-4 fill-red-500 text-red-500" />
@@ -680,10 +683,10 @@ const StudyChapter = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => shareContent(
-                          'Versículo Inspirador',
-                          `"${chapter.main_verse}"\n${chapter.main_verse_reference}\n\nEnviado do app Conexão com Deus!`
+                          tx("Versículo Inspirador", "Inspiring Verse"),
+                          `"${chapter.main_verse}"\n${chapter.main_verse_reference}\n\n${tx("Enviado do app Conexão com Deus!", "Sent from the Conexão com Deus app!")}`
                         )}
-                        aria-label="Compartilhar versículo"
+                        aria-label={tx("Compartilhar versículo", "Share verse")}
                         className="h-8 w-8"
                       >
                         <Share2 className="w-4 h-4" />
@@ -705,7 +708,7 @@ const StudyChapter = () => {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Lightbulb className="w-5 h-5 text-yellow-500" />
-                  <h3 className="text-xl font-semibold">Leitura Reflexiva</h3>
+                  <h3 className="text-xl font-semibold">{tx("Leitura Reflexiva", "Reflective Reading")}</h3>
                 </div>
                 <div className="prose prose-sm max-w-none space-y-2">
                   {chapter.reflective_reading
@@ -728,7 +731,7 @@ const StudyChapter = () => {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-blue-500" />
-                  <h3 className="text-xl font-semibold">Pergunta para Reflexão</h3>
+                  <h3 className="text-xl font-semibold">{tx("Pergunta para Reflexão", "Question for Reflection")}</h3>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border-l-4 border-blue-500">
                   <p className="text-lg font-medium">
@@ -743,7 +746,7 @@ const StudyChapter = () => {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Heart className="w-5 h-5 text-green-500" />
-                  <h3 className="text-xl font-semibold">Oração do Capítulo</h3>
+                  <h3 className="text-xl font-semibold">{tx("Oração do Capítulo", "Chapter Prayer")}</h3>
                 </div>
                 <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border-l-4 border-green-500">
                   <div className="w-full flex justify-end gap-2 mb-2">
@@ -754,7 +757,7 @@ const StudyChapter = () => {
                           size="icon"
                           onClick={togglePrayerFavorite}
                           className="h-8 w-8"
-                          aria-label={isPrayerFavorite() ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                          aria-label={isPrayerFavorite() ? tx("Remover dos favoritos", "Remove from favorites") : tx("Adicionar aos favoritos", "Add to favorites")}
                         >
                           {isPrayerFavorite() ? (
                             <Heart className="w-4 h-4 fill-red-500 text-red-500" />
@@ -765,11 +768,11 @@ const StudyChapter = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => shareContent(
-                            'Oração do Capítulo',
-                            `${chapter.chapter_prayer}\n\nEnviado do app Conexão com Deus!`
+                        onClick={() => shareContent(
+                            tx("Oração do Capítulo", "Chapter Prayer"),
+                            `${chapter.chapter_prayer}\n\n${tx("Enviado do app Conexão com Deus!", "Sent from the Conexão com Deus app!")}`
                           )}
-                          aria-label="Compartilhar oração"
+                          aria-label={tx("Compartilhar oração", "Share prayer")}
                           className="h-8 w-8"
                         >
                           <Share2 className="w-4 h-4" />
@@ -789,7 +792,7 @@ const StudyChapter = () => {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <CheckCircle className="w-5 h-5 text-purple-500" />
-                  <h3 className="text-xl font-semibold">Aplicação Prática</h3>
+                  <h3 className="text-xl font-semibold">{tx("Aplicação Prática", "Practical Application")}</h3>
                 </div>
                 <div className="bg-purple-50 dark:bg-purple-950/20 p-6 rounded-lg border-l-4 border-purple-500">
                   <p className="font-medium text-justify text-base">
@@ -812,17 +815,17 @@ const StudyChapter = () => {
                 {isMarkingCompleted ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Salvando...
+                    {tx("Salvando...", "Saving...")}
                   </>
                 ) : isCompleted ? (
                   <>
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    Capítulo Concluído
+                    {tx("Capítulo Concluído", "Chapter Completed")}
                   </>
                 ) : (
                   <>
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    Marcar como Concluído
+                    {tx("Marcar como Concluído", "Mark as Completed")}
                   </>
                 )}
               </Button>
@@ -833,7 +836,7 @@ const StudyChapter = () => {
               <Card className="spiritual-card bg-card dark:bg-zinc-900">
                 <CardContent className="p-4 text-center">
                   <p className="text-sm text-muted-foreground mb-3">
-                    Quer receber lembretes diários para continuar seus estudos?
+                    {tx("Quer receber lembretes diários para continuar seus estudos?", "Do you want daily reminders to continue your studies?")}
                   </p>
                   <div className="flex gap-2 justify-center">
                     <Button
@@ -844,7 +847,7 @@ const StudyChapter = () => {
                         navigate("/notificacoes?guided=1&source=study&theme=auto");
                       }}
                     >
-                      Ativar lembretes
+                      {tx("Ativar lembretes", "Enable reminders")}
                     </Button>
                     <Button
                       variant="outline"
@@ -853,7 +856,7 @@ const StudyChapter = () => {
                         setShowReminderCta(false);
                       }}
                     >
-                      Agora não
+                      {tx("Agora não", "Not now")}
                     </Button>
                   </div>
                 </CardContent>
@@ -867,19 +870,19 @@ const StudyChapter = () => {
                   <Link to={`/estudo/${studyId}/capitulo/${prevChapter.chapter_number}`}>
                     <Button variant="outline" className="w-full sm:w-auto">
                       <ChevronLeft className="w-4 h-4 mr-2" />
-                      Capítulo {prevChapter.chapter_number}
+                      {tx("Capítulo", "Chapter")} {prevChapter.chapter_number}
                     </Button>
                   </Link>
                 ) : (
                   <div className="text-muted-foreground text-sm">
-                    Primeiro capítulo
+                    {tx("Primeiro capítulo", "First chapter")}
                   </div>
                 )}
               </div>
               
               <div className="flex-1 text-center">
                 <div className="text-sm text-muted-foreground">
-                  Capítulo {chapter.chapter_number} de {chapters.length}
+                  {tx("Capítulo", "Chapter")} {chapter.chapter_number} {tx("de", "of")} {chapters.length}
                 </div>
               </div>
               
@@ -887,13 +890,13 @@ const StudyChapter = () => {
                 {nextChapter ? (
                   <Link to={`/estudo/${studyId}/capitulo/${nextChapter.chapter_number}`}>
                     <Button className="divine-button w-full sm:w-auto">
-                      Capítulo {nextChapter.chapter_number}
+                      {tx("Capítulo", "Chapter")} {nextChapter.chapter_number}
                       <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                   </Link>
                 ) : (
                   <div className="text-muted-foreground text-sm">
-                    Último capítulo
+                    {tx("Último capítulo", "Last chapter")}
                   </div>
                 )}
               </div>

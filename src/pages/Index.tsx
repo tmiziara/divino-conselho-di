@@ -597,7 +597,9 @@ const Index = () => {
 
 
   const todayPlanItem = activePlan ? getTodayPlanItem(activePlan.id) : null;
-  const streakLabel = currentStreak > 0 ? `${currentStreak} dias seguidos` : "Comece sua constância";
+  const streakLabel = currentStreak > 0
+    ? tx(`${currentStreak} dias seguidos`, `${currentStreak} day streak`)
+    : tx("Comece sua constância", "Start your consistency");
   const planCompleted = activePlan ? isPlanCompleted(activePlan.id) : false;
 
   return (

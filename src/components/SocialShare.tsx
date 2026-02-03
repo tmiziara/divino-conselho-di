@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Share2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface SocialShareProps {
   open: boolean;
@@ -15,6 +16,8 @@ interface SocialShareProps {
 const SocialShare = ({ open, onOpenChange, title, text, url }: SocialShareProps) => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
 
   const handleCopy = async () => {
     try {
@@ -22,43 +25,40 @@ const SocialShare = ({ open, onOpenChange, title, text, url }: SocialShareProps)
       await navigator.clipboard.writeText(shareText);
       setCopied(true);
       toast({
-        title: "Link copiado!",
-        description: "O link foi copiado para a área de transferência.",
+        title: tx("Link copiado!", "Link copied!"),
+        description: tx("O link foi copiado para a área de transferência.", "The link was copied to clipboard."),
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast({
-        title: "Erro ao copiar",
-        description: "Não foi possível copiar o link.",
-        variant: "destructive"
+        title: tx("Erro ao copiar", "Copy error"),
+        description: tx("Não foi possível copiar o link.", "Could not copy the link."),
+        variant: "destructive",
       });
     }
   };
 
   const handleNativeShare = async () => {
-    // Só tenta importar se estiver em ambiente Capacitor
-    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+    if (typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
       try {
-        const { Share } = await import('@capacitor/share');
+        const { Share } = await import("@capacitor/share");
         await Share.share({
-          title: title || '',
-          text: text || '',
-          url: url || '',
-          dialogTitle: 'Compartilhar com...'
+          title: title || "",
+          text: text || "",
+          url: url || "",
+          dialogTitle: tx("Compartilhar com...", "Share with..."),
         });
         return;
       } catch (e) {
-        // fallback
+        // Fallback.
       }
     }
-    // Web Share API
     if (navigator.share) {
       try {
         await navigator.share({ title, text, url });
         return;
       } catch (error) {}
     }
-    // Fallback: copiar
     handleCopy();
   };
 
@@ -68,36 +68,32 @@ const SocialShare = ({ open, onOpenChange, title, text, url }: SocialShareProps)
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="w-5 h-5" />
-            Compartilhar
+            {tx("Compartilhar", "Share")}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div className="bg-muted p-3 rounded-lg">
             <p className="text-sm font-medium mb-1">{title}</p>
             <p className="text-xs text-muted-foreground">{text}</p>
           </div>
-          
+
           <div className="flex gap-2">
             <Button onClick={handleNativeShare} className="flex-1">
               <Share2 className="w-4 h-4 mr-2" />
-              Compartilhar
+              {tx("Compartilhar", "Share")}
             </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={handleCopy}
-              className="flex-1"
-            >
+
+            <Button variant="outline" onClick={handleCopy} className="flex-1">
               {copied ? (
                 <>
                   <Check className="w-4 h-4 mr-2" />
-                  Copiado!
+                  {tx("Copiado!", "Copied!")}
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4 mr-2" />
-                  Copiar
+                  {tx("Copiar", "Copy")}
                 </>
               )}
             </Button>

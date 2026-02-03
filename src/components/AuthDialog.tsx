@@ -9,6 +9,7 @@ import { Heart, Mail, Lock, User, Shield, Star, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface AuthDialogProps {
   open: boolean;
@@ -24,24 +25,38 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
   const [selectedPlan, setSelectedPlan] = useState("free");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
 
   const plans = [
     {
       id: "free",
-      name: "Gratuito",
+      name: tx("Gratuito", "Free"),
       price: "R$ 0",
-      description: "Recursos essenciais para começar",
+      description: tx("Recursos essenciais para começar", "Essential features to get started"),
       icon: Star,
-      features: ["Leitura completa da Bíblia", "Busca de versículos", "Favoritos limitados (10)", "Chat com créditos (limitado)"]
+      features: [
+        tx("Leitura completa da Bíblia", "Full Bible reading"),
+        tx("Busca de versículos", "Verse search"),
+        tx("Favoritos limitados (10)", "Limited favorites (10)"),
+        tx("Chat com créditos (limitado)", "Chat with credits (limited)"),
+      ],
     },
     {
       id: "premium",
       name: "Premium",
       price: "R$ 15/mês",
-      description: "Para quem quer acesso total",
+      description: tx("Para quem quer acesso total", "For complete access"),
       icon: Zap,
-      features: ["Tudo do plano Gratuito", "Versões AA/ACF", "Estudos bíblicos premium", "Favoritos ilimitados", "Chat sem consumir créditos", "Sem anúncios"]
-    }
+      features: [
+        tx("Tudo do plano Gratuito", "Everything in the Free plan"),
+        tx("Versões AA/ACF", "AA/ACF versions"),
+        tx("Estudos bíblicos premium", "Premium Bible studies"),
+        tx("Favoritos ilimitados", "Unlimited favorites"),
+        tx("Chat sem consumir créditos", "Chat without consuming credits"),
+        tx("Sem anúncios", "No ads"),
+      ],
+    },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,13 +73,12 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
         if (error) throw error;
 
         toast({
-          title: "Bem-vindo de volta!",
-          description: "Login realizado com sucesso.",
+          title: tx("Bem-vindo de volta!", "Welcome back!"),
+          description: tx("Login realizado com sucesso.", "Login successful."),
         });
-        
+
         onOpenChange(false);
       } else {
-        // Sign up process
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -81,21 +95,19 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
         if (error) throw error;
 
         toast({
-          title: "Conta criada com sucesso!",
-          description: "Verifique seu email para confirmar a conta.",
+          title: tx("Conta criada com sucesso!", "Account created successfully!"),
+          description: tx("Verifique seu email para confirmar a conta.", "Check your email to confirm your account."),
         });
 
         onOpenChange(false);
 
-        // If user selected a paid plan, redirect to subscription page
         if (selectedPlan !== "free") {
           setTimeout(() => {
             window.location.href = "/assinatura";
           }, 2000);
         }
       }
-      
-      // Reset form
+
       setEmail("");
       setPassword("");
       setName("");
@@ -103,8 +115,8 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       setSelectedPlan("free");
     } catch (error: any) {
       toast({
-        title: isLogin ? "Erro no login" : "Erro ao criar conta",
-        description: error.message || "Tente novamente.",
+        title: isLogin ? tx("Erro no login", "Login error") : tx("Erro ao criar conta", "Account creation error"),
+        description: error.message || tx("Tente novamente.", "Please try again."),
         variant: "destructive",
       });
     } finally {
@@ -123,26 +135,25 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
             </div>
           </div>
           <DialogTitle className="text-2xl heavenly-text">
-            {isLogin ? "Bem-vindo de volta" : "Comece sua jornada"}
+            {isLogin ? tx("Bem-vindo de volta", "Welcome back") : tx("Comece sua jornada", "Start your journey")}
           </DialogTitle>
           <DialogDescription>
-            {isLogin 
-              ? "Entre em sua conta para continuar sua caminhada espiritual"
-              : "Crie sua conta e conecte-se com o Divino"
-            }
+            {isLogin
+              ? tx("Entre em sua conta para continuar sua caminhada espiritual", "Sign in to continue your spiritual journey")
+              : tx("Crie sua conta e conecte-se com o Divino", "Create your account and connect with the Divine")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div className="space-y-2">
-              <Label htmlFor="name">Nome completo</Label>
+              <Label htmlFor="name">{tx("Nome completo", "Full name")}</Label>
               <div className="relative">
                 <User className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Seu nome"
+                  placeholder={tx("Seu nome", "Your name")}
                   className="pl-10"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -154,19 +165,19 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
 
           {!isLogin && (
             <div className="space-y-2">
-              <Label>Gênero</Label>
+              <Label>{tx("Gênero", "Gender")}</Label>
               <RadioGroup value={gender} onValueChange={setGender} className="flex gap-6">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="masculino" id="masculino" />
-                  <Label htmlFor="masculino">Masculino</Label>
+                  <Label htmlFor="masculino">{tx("Masculino", "Male")}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="feminino" id="feminino" />
-                  <Label htmlFor="feminino">Feminino</Label>
+                  <Label htmlFor="feminino">{tx("Feminino", "Female")}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="outros" id="outros" />
-                  <Label htmlFor="outros">Outros</Label>
+                  <Label htmlFor="outros">{tx("Outros", "Other")}</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -189,7 +200,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">{tx("Senha", "Password")}</Label>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
@@ -206,7 +217,7 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
 
           {!isLogin && (
             <div className="space-y-3">
-              <Label className="text-base font-semibold">Escolha seu plano</Label>
+              <Label className="text-base font-semibold">{tx("Escolha seu plano", "Choose your plan")}</Label>
               <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan}>
                 <div className="grid grid-cols-1 gap-2">
                   {plans.map((plan) => {
@@ -215,11 +226,9 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                       <div key={plan.id} className="flex items-center space-x-2">
                         <RadioGroupItem value={plan.id} id={plan.id} />
                         <Label htmlFor={plan.id} className="flex-1">
-                          <Card 
+                          <Card
                             className={`cursor-pointer transition-all ${
-                              selectedPlan === plan.id 
-                                ? 'ring-2 ring-primary bg-primary/5' 
-                                : 'hover:bg-muted/50'
+                              selectedPlan === plan.id ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/50"
                             }`}
                           >
                             <CardHeader className="pb-1 pt-3 px-3">
@@ -256,34 +265,33 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           )}
 
           <Button type="submit" className="w-full divine-button" disabled={isLoading}>
-            {isLoading ? (isLogin ? "Entrando..." : "Criando conta...") : (isLogin ? "Entrar" : "Criar conta")}
+            {isLoading
+              ? isLogin
+                ? tx("Entrando...", "Signing in...")
+                : tx("Criando conta...", "Creating account...")
+              : isLogin
+              ? tx("Entrar", "Sign In")
+              : tx("Criar conta", "Create account")}
           </Button>
         </form>
 
         <div className="relative">
           <Separator />
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-sm text-muted-foreground">
-            ou
+            {tx("ou", "or")}
           </span>
         </div>
 
         <div className="text-center">
-          <Button
-            variant="ghost"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-primary hover:text-primary/80"
-          >
-            {isLogin 
-              ? "Não tem uma conta? Cadastre-se" 
-              : "Já tem uma conta? Faça login"
-            }
+          <Button variant="ghost" onClick={() => setIsLogin(!isLogin)} className="text-primary hover:text-primary/80">
+            {isLogin ? tx("Não tem uma conta? Cadastre-se", "Don't have an account? Sign up") : tx("Já tem uma conta? Faça login", "Already have an account? Sign in")}
           </Button>
         </div>
 
         {isLogin && (
           <div className="text-center">
             <Button variant="link" className="text-sm text-muted-foreground">
-              Esqueceu sua senha?
+              {tx("Esqueceu sua senha?", "Forgot your password?")}
             </Button>
           </div>
         )}

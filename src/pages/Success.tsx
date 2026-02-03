@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, ArrowRight } from "lucide-react";
@@ -8,6 +8,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { trackEvent } from "@/lib/analytics";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Success = () => {
   const { checkSubscription } = useSubscription();
@@ -15,16 +16,16 @@ const Success = () => {
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const { user } = useAuth();
+  const { isEnglish } = useLanguage();
+  const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
 
   useEffect(() => {
-    // Show success message and check subscription
     toast({
-      title: "Pagamento Confirmado!",
-      description: "Sua assinatura foi ativada com sucesso.",
+      title: tx("Pagamento Confirmado!", "Payment Confirmed!"),
+      description: tx("Sua assinatura foi ativada com sucesso.", "Your subscription was activated successfully."),
     });
 
     if (user?.id) {
-      // Phase 5: record a subscription success event.
       trackEvent({
         event_name: "subscription_start",
         user_id: user.id,
@@ -32,21 +33,20 @@ const Success = () => {
       });
     }
 
-    // Check subscription and redirect to home after 3 seconds
     const timer = setTimeout(() => {
       setIsRedirecting(true);
       checkSubscription().then(() => {
-        navigate('/', { replace: true });
+        navigate("/", { replace: true });
       });
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [checkSubscription, toast, navigate, user?.id]);
+  }, [checkSubscription, toast, navigate, user?.id, tx]);
 
   return (
     <div className="min-h-screen celestial-bg">
       <Navigation onAuthClick={() => {}} />
-      
+
       <div className="container mx-auto px-6 py-20">
         <div className="max-w-2xl mx-auto text-center">
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
@@ -55,50 +55,47 @@ const Success = () => {
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
               <CardTitle className="text-3xl heavenly-text">
-                Pagamento Realizado com Sucesso!
+                {tx("Pagamento Realizado com Sucesso!", "Payment Completed Successfully!")}
               </CardTitle>
               <CardDescription className="text-lg">
-                Bem-vindo(a) à sua nova jornada espiritual premium
+                {tx("Bem-vindo(a) à sua nova jornada espiritual premium", "Welcome to your new premium spiritual journey")}
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent className="space-y-6">
               <div className="text-muted-foreground">
                 <p>
-                  Sua assinatura foi ativada e você já pode aproveitar todos os recursos premium.
-                  Estamos atualizando seu perfil - isso pode levar alguns instantes.
+                  {tx("Sua assinatura foi ativada e você já pode aproveitar todos os recursos premium. Estamos atualizando seu perfil - isso pode levar alguns instantes.", "Your subscription has been activated and you can now enjoy all premium features. We are updating your profile - this may take a few moments.")}
                 </p>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {isRedirecting ? (
                   <Button disabled className="divine-button">
-                    Redirecionando...
+                    {tx("Redirecionando...", "Redirecting...")}
                   </Button>
                 ) : (
                   <>
                     <Link to="/">
                       <Button className="divine-button">
-                        Ir para Início
+                        {tx("Ir para Início", "Go to Home")}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </Link>
                     <Link to="/perfil">
                       <Button variant="outline" className="border-primary/20">
-                        Ver Meu Perfil
+                        {tx("Ver Meu Perfil", "View My Profile")}
                       </Button>
                     </Link>
                   </>
                 )}
               </div>
-              
+
               <div className="pt-6 border-t border-border">
                 <p className="text-sm text-muted-foreground">
-                  {isRedirecting ? (
-                    "Redirecionando você para a página inicial em instantes..."
-                  ) : (
-                    "Você receberá um email de confirmação em breve. Redirecionamento automático em 3 segundos..."
-                  )}
+                  {isRedirecting
+                    ? tx("Redirecionando você para a página inicial em instantes...", "Redirecting you to the home page in a moment...")
+                    : tx("Você receberá um e-mail de confirmação em breve. Redirecionamento automático em 3 segundos...", "You will receive a confirmation email shortly. Automatic redirect in 3 seconds...")}
                 </p>
               </div>
             </CardContent>

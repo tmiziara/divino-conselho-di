@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,12 @@ import { useContentAccess } from '@/hooks/useContentAccess';
 import { localContent } from '@/lib/localContent';
 import AuthDialog from "@/components/AuthDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Study = () => {
   const { studyId } = useParams<{ studyId: string }>();
+  const { isEnglish } = useLanguage();
+  const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -97,8 +100,8 @@ const Study = () => {
           try {
             const { toast } = require('@/hooks/use-toast');
             toast({
-              title: "Erro ao carregar estudo",
-              description: "Não foi possível carregar o estudo. Tente novamente.",
+              title: tx("Erro ao carregar estudo", "Error loading study"),
+              description: tx("Não foi possível carregar o estudo. Tente novamente.", "Could not load the study. Please try again."),
               variant: "destructive"
             });
           } catch (toastError) {
@@ -118,7 +121,7 @@ const Study = () => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [studyId, accessLoading, hasPremiumAccess, fetchChapters]);
+  }, [studyId, accessLoading, hasPremiumAccess, fetchChapters, tx]);
 
   useEffect(() => {
     if (!studyId) return;
@@ -143,15 +146,15 @@ const Study = () => {
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <BookOpen className="w-8 h-8 mx-auto mb-2" />
-                Estudo Bíblico
+                {tx("Estudo Bíblico", "Bible Study")}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-muted-foreground mb-4">
-                Faça login para acessar este estudo bíblico
+                {tx("Faça login para acessar este estudo bíblico", "Sign in to access this Bible study")}
               </p>
               <Button className="divine-button" onClick={handleAuthClick}>
-                Fazer Login
+                {tx("Fazer Login", "Sign In")}
               </Button>
             </CardContent>
           </Card>
@@ -171,16 +174,10 @@ const Study = () => {
           <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
             <CardContent className="py-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <h3 className="text-xl font-semibold mb-2">Carregando estudo...</h3>
+              <h3 className="text-xl font-semibold mb-2">{tx("Carregando estudo...", "Loading study...")}</h3>
               <p className="text-muted-foreground mb-4">
-                Aguarde enquanto carregamos o conteúdo.
+                {tx("Aguarde enquanto carregamos o conteúdo.", "Please wait while we load the content.")}
               </p>
-              <div className="text-xs text-muted-foreground">
-                <p>Study Loading: {studyLoading?.toString() || 'undefined'}</p>
-                <p>Chapters Loading: {loading?.toString() || 'undefined'}</p>
-                <p>Access Loading: {accessLoading?.toString() || 'undefined'}</p>
-                <p>Study ID: {studyId}</p>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -198,14 +195,14 @@ const Study = () => {
           <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">Estudo não encontrado</h3>
+              <h3 className="text-xl font-semibold mb-2">{tx("Estudo não encontrado", "Study not found")}</h3>
               <p className="text-muted-foreground mb-4">
-                O estudo que você está procurando não existe.
+                {tx("O estudo que você está procurando não existe.", "The study you are looking for does not exist.")}
               </p>
               <Link to="/estudos">
                 <Button variant="outline">
                   <ChevronLeft className="w-4 h-4 mr-2" />
-                  Voltar aos Estudos
+                  {tx("Voltar aos Estudos", "Back to Studies")}
                 </Button>
               </Link>
             </CardContent>
@@ -230,16 +227,16 @@ const Study = () => {
             <CardHeader className="text-center">
               <CardTitle className="heavenly-text text-2xl">
                 <Lock className="w-8 h-8 mx-auto mb-3 text-amber-500" />
-                Estudo premium bloqueado
+                {tx("Estudo premium bloqueado", "Premium study locked")}
               </CardTitle>
               <p className="text-muted-foreground">
-                Este estudo faz parte do plano Premium.
+                {tx("Este estudo faz parte do plano Premium.", "This study is part of the Premium plan.")}
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
               {previewChapter && (
                 <div className="bg-muted/30 p-4 rounded-lg">
-                  <p className="text-sm font-semibold text-primary mb-2">Preview do Capítulo 1</p>
+                  <p className="text-sm font-semibold text-primary mb-2">{tx("Preview do Capítulo 1", "Chapter 1 Preview")}</p>
                   <p className="text-sm italic mb-2">"{previewChapter.main_verse}"</p>
                   <p className="text-xs text-muted-foreground">{previewChapter.main_verse_reference}</p>
                   {previewText && (
@@ -248,7 +245,7 @@ const Study = () => {
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Você pode liberar 1 capítulo premium assistindo a um anúncio.
+                {tx("Você pode liberar 1 capítulo premium assistindo a um anúncio.", "You can unlock 1 premium chapter by watching an ad.")}
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Phase 4: send the user to a locked chapter where the rewarded preview is available. */}
@@ -258,7 +255,7 @@ const Study = () => {
                     className="flex-1"
                     onClick={() => navigate(`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/1`)}
                   >
-                    Ver anúncio e liberar capítulo 1
+                    {tx("Ver anúncio e liberar capítulo 1", "Watch ad and unlock chapter 1")}
                   </Button>
                 ) : (
                   <Button
@@ -266,18 +263,18 @@ const Study = () => {
                     className="flex-1"
                     onClick={() => navigate(`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/1`)}
                   >
-                    Ler capítulo 1 liberado
+                    {tx("Ler capítulo 1 liberado", "Read unlocked chapter 1")}
                   </Button>
                 )}
                 <Button
                   className="divine-button flex-1"
                   onClick={() => navigate('/assinatura?plan=premium')}
                 >
-                  Fazer assinatura Premium
+                  {tx("Fazer assinatura Premium", "Subscribe to Premium")}
                 </Button>
                 <Link to="/estudos" className="flex-1">
                   <Button variant="outline" className="w-full">
-                    Ver outros estudos
+                    {tx("Ver outros estudos", "See other studies")}
                   </Button>
                 </Link>
               </div>
@@ -299,7 +296,7 @@ const Study = () => {
             <Link to="/estudos">
               <Button variant="ghost" size="sm">
                 <ChevronLeft className="w-4 h-4 mr-2" />
-                Voltar aos Estudos
+                {tx("Voltar aos Estudos", "Back to Studies")}
               </Button>
             </Link>
           </div>
@@ -317,7 +314,7 @@ const Study = () => {
             <div className="flex items-center justify-center gap-4 sm:gap-6 text-sm text-muted-foreground mt-6 flex-wrap">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                <span>{chapters.length} capítulos</span>
+                <span>{chapters.length} {tx("capítulos", "chapters")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
@@ -325,7 +322,7 @@ const Study = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Target className="w-4 h-4" />
-                <span>Estudo prático</span>
+                <span>{tx("Estudo prático", "Practical study")}</span>
               </div>
             </div>
           </div>
@@ -362,12 +359,12 @@ const Study = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <Badge variant="outline" className="text-xs">
-                            Capítulo {chapter.chapter_number}
+                            {tx("Capítulo", "Chapter")} {chapter.chapter_number}
                           </Badge>
                           {isCompleted && (
                             <Badge variant="default" className="bg-green-500 text-xs">
                               <CheckCircle className="w-3 h-3 mr-1" />
-                              Concluído
+                              {tx("Concluído", "Completed")}
                             </Badge>
                           )}
                         </div>
@@ -386,7 +383,7 @@ const Study = () => {
                   <CardContent className="space-y-4">
                     {/* Versículo principal */}
                     <div className="bg-muted/50 p-3 rounded-lg">
-                      <p className="text-sm font-medium mb-1">Versículo Principal</p>
+                      <p className="text-sm font-medium mb-1">{tx("Versículo Principal", "Main Verse")}</p>
                       <p className="text-xs text-muted-foreground italic">
                         "{chapter.main_verse}"
                       </p>
@@ -399,15 +396,15 @@ const Study = () => {
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
-                        <span>Leitura Reflexiva</span>
+                        <span>{tx("Leitura Reflexiva", "Reflective Reading")}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Heart className="w-3 h-3" />
-                        <span>Oração</span>
+                        <span>{tx("Oração", "Prayer")}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Target className="w-3 h-3" />
-                        <span>Aplicação</span>
+                        <span>{tx("Aplicação", "Application")}</span>
                       </div>
                     </div>
 
@@ -415,7 +412,7 @@ const Study = () => {
                     <Link to={`/estudo/${study.slug || encodeURIComponent(study.title.toLowerCase().replace(/\s+/g, '-'))}/capitulo/${chapter.chapter_number}`}>
                       <Button className="w-full divine-button group-hover:bg-primary/90 transition-colors">
                         <span>
-                          {isCompleted ? 'Revisar Capítulo' : 'Ler Capítulo'}
+                          {isCompleted ? tx("Revisar Capítulo", "Review Chapter") : tx("Ler Capítulo", "Read Chapter")}
                         </span>
                         <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
@@ -429,9 +426,9 @@ const Study = () => {
           <Card className="spiritual-card max-w-md mx-auto bg-card dark:bg-zinc-900 text-card-foreground dark:text-white">
             <CardContent className="py-12 text-center">
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">Nenhum capítulo encontrado</h3>
+              <h3 className="text-xl font-semibold mb-2">{tx("Nenhum capítulo encontrado", "No chapters found")}</h3>
               <p className="text-muted-foreground">
-                Este estudo ainda não possui capítulos disponíveis.
+                {tx("Este estudo ainda não possui capítulos disponíveis.", "This study still has no available chapters.")}
               </p>
             </CardContent>
           </Card>
@@ -443,36 +440,33 @@ const Study = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
-                Dicas para aproveitar ao máximo este estudo
+                {tx("Dicas para aproveitar ao máximo este estudo", "Tips to make the most of this study")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-primary">📖 Leitura Reflexiva</h4>
+                  <h4 className="font-semibold text-primary">{tx("Leitura Reflexiva", "Reflective Reading")}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Leia com calma, permitindo que as palavras penetrem seu coração. 
-                    Pause para refletir quando algo tocar você.
+                    {tx("Leia com calma, permitindo que as palavras penetrem seu coração. Pause para refletir quando algo tocar você.", "Read calmly, letting the words reach your heart. Pause to reflect when something touches you.")}
                   </p>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-primary">🤔 Pergunta para Reflexão</h4>
+                  <h4 className="font-semibold text-primary">{tx("Pergunta para Reflexão", "Reflection Question")}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Responda honestamente à pergunta proposta. 
-                    Escreva suas reflexões se desejar.
+                    {tx("Responda honestamente à pergunta proposta. Escreva suas reflexões se desejar.", "Answer the proposed question honestly. Write your reflections if you want.")}
                   </p>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-primary">🙏 Oração do Capítulo</h4>
+                  <h4 className="font-semibold text-primary">{tx("Oração do Capítulo", "Chapter Prayer")}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Use a oração sugerida como ponto de partida para sua conversa com Deus.
+                    {tx("Use a oração sugerida como ponto de partida para sua conversa com Deus.", "Use the suggested prayer as a starting point for your conversation with God.")}
                   </p>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-primary">✅ Aplicação Prática</h4>
+                  <h4 className="font-semibold text-primary">{tx("Aplicação Prática", "Practical Application")}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Coloque em prática o que aprendeu. 
-                    A verdadeira transformação acontece na aplicação.
+                    {tx("Coloque em prática o que aprendeu. A verdadeira transformação acontece na aplicação.", "Put into practice what you learned. Real transformation happens in application.")}
                   </p>
                 </div>
               </div>

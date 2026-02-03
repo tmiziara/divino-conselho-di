@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useReadingPlans } from "@/hooks/useReadingPlans";
 import { useBibleProgress } from "@/hooks/useBibleProgress";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const ReadingPlanDetail = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const {
     plans,
     loading,
@@ -24,6 +26,7 @@ const ReadingPlanDetail = () => {
     isPlanCompleted,
   } = useReadingPlans();
   const { setPreviewPosition } = useBibleProgress();
+  const tx = (pt: string, en: string) => (language === "en" ? en : pt);
 
   const plan = useMemo(
     () => plans.find((candidate) => candidate.id === planId) || null,
@@ -40,7 +43,7 @@ const ReadingPlanDetail = () => {
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Carregando plano...</CardTitle>
+              <CardTitle>{tx("Carregando plano...", "Loading plan...")}</CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -58,7 +61,7 @@ const ReadingPlanDetail = () => {
         <div className="flex items-center gap-3">
           <Link to="/planos" className="text-sm text-muted-foreground flex items-center gap-1">
             <ChevronLeft className="w-4 h-4" />
-            Voltar
+            {tx("Voltar", "Back")}
           </Link>
         </div>
 
@@ -71,16 +74,16 @@ const ReadingPlanDetail = () => {
             <CardDescription>{plan.description}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-2">
-            <Badge>{plan.durationDays} dias</Badge>
-            {isActive && <Badge variant="secondary">Plano ativo</Badge>}
-            {planCompleted && <Badge variant="secondary">Concluído</Badge>}
+            <Badge>{plan.durationDays} {tx("dias", "days")}</Badge>
+            {isActive && <Badge variant="secondary">{tx("Plano ativo", "Active plan")}</Badge>}
+            {planCompleted && <Badge variant="secondary">{tx("Concluído", "Completed")}</Badge>}
             {!isActive && (
               <Button className="divine-button" onClick={() => startPlan(plan.id)}>
-                Iniciar plano
+                {tx("Iniciar plano", "Start plan")}
               </Button>
             )}
             <p className="text-xs text-muted-foreground w-full">
-              Leia o trecho do dia, reflita e marque como concluído.
+              {tx("Leia o trecho do dia, reflita e marque como concluído.", "Read the day passage, reflect, and mark it as completed.")}
             </p>
           </CardContent>
         </Card>
@@ -94,15 +97,15 @@ const ReadingPlanDetail = () => {
               <Card key={item.dayNumber} className="spiritual-card bg-card dark:bg-zinc-900">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">Dia {item.dayNumber}: {item.title}</CardTitle>
+                    <CardTitle className="text-base">{tx("Dia", "Day")} {item.dayNumber}: {item.title}</CardTitle>
                     {isCompleted && (
                       <Badge variant="secondary" className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
-                        Concluído
+                        {tx("Concluído", "Completed")}
                       </Badge>
                     )}
                     {isToday && !isCompleted && (
-                      <Badge>Hoje</Badge>
+                      <Badge>{tx("Hoje", "Today")}</Badge>
                     )}
                   </div>
                   <CardDescription>
@@ -123,14 +126,14 @@ const ReadingPlanDetail = () => {
                       }}
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
-                      Abrir Bíblia
+                      {tx("Abrir Bíblia", "Open Bible")}
                     </Button>
                     <Button
                       className="divine-button"
                       disabled={!canComplete}
                       onClick={() => completeDay(plan.id, item.dayNumber)}
                     >
-                      Marcar como concluído
+                      {tx("Marcar como concluído", "Mark as completed")}
                     </Button>
                   </div>
                 </CardContent>

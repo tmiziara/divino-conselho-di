@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface Favorite {
   id: string;
@@ -26,6 +27,8 @@ interface Favorite {
 }
 
 const Favorites = () => {
+  const { isEnglish } = useLanguage();
+  const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
   const { user } = useAuth();
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const { toast } = useToast();
@@ -53,14 +56,14 @@ const Favorites = () => {
       setFavorites(data || []);
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível carregar seus favoritos.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível carregar seus favoritos.", "Could not load your favorites."),
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  }, [toast, user]);
+  }, [toast, tx, user]);
 
   // Função para deletar favorito
   const deleteFavorite = async (favoriteId: string) => {
@@ -78,13 +81,13 @@ const Favorites = () => {
       setFavorites(prev => prev.filter(fav => fav.id !== favoriteId));
       
       toast({
-        title: "Favorito removido",
-        description: "O item foi removido dos seus favoritos."
+        title: tx("Favorito removido", "Favorite removed"),
+        description: tx("O item foi removido dos seus favoritos.", "The item was removed from your favorites.")
       });
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível remover o favorito.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível remover o favorito.", "Could not remove the favorite."),
         variant: "destructive"
       });
     }
@@ -121,15 +124,15 @@ const Favorites = () => {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "verse":
-        return "Versículo";
+        return tx("Versículo", "Verse");
       case "study":
-        return "Estudo Bíblico";
+        return tx("Estudo Bíblico", "Bible Study");
       case "psalm":
-        return "Salmo";
+        return tx("Salmo", "Psalm");
       case "message":
-        return "Mensagem";
+        return tx("Mensagem", "Message");
       default:
-        return "Favorito";
+        return tx("Favorito", "Favorite");
     }
   };
 
@@ -173,7 +176,7 @@ const Favorites = () => {
         await (window as any).Capacitor.Plugins.Share.share({
           title,
           text: shareText,
-          dialogTitle: 'Compartilhar com...'
+          dialogTitle: tx("Compartilhar com...", "Share with...")
         });
         return;
       }
@@ -182,9 +185,9 @@ const Favorites = () => {
         return;
       }
       await navigator.clipboard.writeText(shareText);
-      toast({ title: 'Copiado!', description: 'Texto copiado para área de transferência.' });
+      toast({ title: tx("Copiado!", "Copied!"), description: tx("Texto copiado para área de transferência.", "Text copied to clipboard.") });
     } catch (err) {
-      toast({ title: 'Erro ao compartilhar', description: 'Não foi possível compartilhar.' });
+      toast({ title: tx("Erro ao compartilhar", "Share error"), description: tx("Não foi possível compartilhar.", "Could not share.") });
     }
   };
 
@@ -197,15 +200,15 @@ const Favorites = () => {
             <CardHeader>
               <CardTitle className="text-center heavenly-text">
                 <Heart className="w-8 h-8 mx-auto mb-2" />
-                Seus Favoritos
+                {tx("Seus Favoritos", "Your Favorites")}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-muted-foreground mb-4">
-                Faça login para salvar e visualizar seus versículos e mensagens favoritas
+                {tx("Faça login para salvar e visualizar seus versículos e mensagens favoritas", "Sign in to save and view your favorite verses and messages")}
               </p>
               <Button className="divine-button" onClick={handleAuthClick}>
-                Fazer Login
+                {tx("Fazer Login", "Sign In")}
               </Button>
             </CardContent>
           </Card>
@@ -222,10 +225,10 @@ const Favorites = () => {
         <div className="text-center mb-8">
           <h1 className="flex justify-center items-center text-2xl sm:text-3xl md:text-4xl font-bold heavenly-text mb-4 break-words">
             <Heart className="w-8 sm:w-10 h-8 sm:h-10 mr-3 text-pink-500" />
-            Seus Favoritos
+            {tx("Seus Favoritos", "Your Favorites")}
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground break-words px-2">
-            Versículos, salmos e mensagens que tocaram seu coração
+            {tx("Versículos, salmos e mensagens que tocaram seu coração", "Verses, psalms, and messages that touched your heart")}
           </p>
         </div>
 
@@ -234,19 +237,19 @@ const Favorites = () => {
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-center mb-2 heavenly-text">
               <Heart className="w-8 h-8 inline mr-2" />
-              Seus Favoritos
+              {tx("Seus Favoritos", "Your Favorites")}
             </h1>
             <div className="text-center text-muted-foreground">
               {subscriptionLoading ? (
-                <p>Carregando plano...</p>
+                <p>{tx("Carregando plano...", "Loading plan...")}</p>
               ) : subscription.subscribed && subscription.subscription_tier === 'premium' ? (
-                <p>✨ Plano Premium - Favoritos ilimitados</p>
+                <p>{tx("✨ Plano Premium - Favoritos ilimitados", "✨ Premium Plan - Unlimited favorites")}</p>
               ) : (
                 <p>
-                   Plano Gratuito - {favorites.length}/10 favoritos
+                   {tx("Plano Gratuito", "Free Plan")} - {favorites.length}/10 {tx("favoritos", "favorites")}
                   {hasReachedLimit() && (
                     <span className="text-red-500 font-semibold ml-2">
-                      (Limite atingido!)
+                      {tx("(Limite atingido!)", "(Limit reached!)")}
                     </span>
                   )}
                 </p>
@@ -258,10 +261,10 @@ const Favorites = () => {
           {hasReachedLimit() && (
             <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
               <p className="text-amber-800 font-medium">
-                🚫 Você atingiu o limite de 10 favoritos no plano gratuito!
+                {tx("🚫 Você atingiu o limite de 10 favoritos no plano gratuito!", "🚫 You reached the 10 favorites limit on the free plan!")}
               </p>
               <p className="text-amber-700 text-sm mt-1">
-                Faça upgrade para o plano Premium e salve quantos favoritos quiser.
+                {tx("Faça upgrade para o plano Premium e salve quantos favoritos quiser.", "Upgrade to Premium and save as many favorites as you want.")}
               </p>
               <Button 
                 className="mt-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
@@ -269,7 +272,7 @@ const Favorites = () => {
                 onClick={() => navigate('/assinatura?plan=premium')}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Fazer Upgrade
+                {tx("Fazer Upgrade", "Upgrade")}
               </Button>
             </div>
           )}
@@ -280,25 +283,25 @@ const Favorites = () => {
                 <Card className="spiritual-card">
                   <CardContent className="py-12 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Carregando seus favoritos...</p>
+                    <p className="text-muted-foreground">{tx("Carregando seus favoritos...", "Loading your favorites...")}</p>
                   </CardContent>
                 </Card>
               ) : favorites.length === 0 ? (
                 <Card className="spiritual-card">
                   <CardContent className="py-12 text-center">
                     <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold mb-2">Nenhum favorito ainda</h3>
+                    <h3 className="text-xl font-semibold mb-2">{tx("Nenhum favorito ainda", "No favorites yet")}</h3>
                     <p className="text-muted-foreground mb-6 break-words px-2">
-                      Comece explorando a Bíblia e o canal de conversa para salvar conteúdos que te inspiram
+                      {tx("Comece explorando a Bíblia e o canal de conversa para salvar conteúdos que te inspiram", "Start by exploring the Bible and chat to save content that inspires you")}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                       <Button className="divine-button">
                         <BookOpen className="w-4 h-4 mr-2" />
-                        Explorar Bíblia
+                        {tx("Explorar Bíblia", "Explore Bible")}
                       </Button>
                       <Button variant="outline">
                         <MessageCircle className="w-4 h-4 mr-2" />
-                        Ir para Chat
+                        {tx("Ir para Chat", "Go to Chat")}
                       </Button>
                     </div>
                   </CardContent>
@@ -347,9 +350,9 @@ const Favorites = () => {
                             className="h-8 w-8 text-blue-500 hover:text-blue-700"
                             onClick={() => shareContent(
                               getFullReference(fav),
-                              `${fav.content}\n\nEnviado do app Conexão com Deus!`
+                              `${fav.content}\n\n${tx("Enviado do app Conexão com Deus!", "Sent from the Conexao com Deus app!")}`
                             )}
-                            aria-label="Compartilhar favorito"
+                            aria-label={tx("Compartilhar favorito", "Share favorite")}
                           >
                             <Share2 className="w-4 h-4" />
                           </Button>
@@ -375,7 +378,7 @@ const Favorites = () => {
                           </div>
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          Salvo em {new Date(fav.created_at).toLocaleDateString('pt-BR')}
+                          {tx("Salvo em", "Saved on")} {new Date(fav.created_at).toLocaleDateString(isEnglish ? 'en-US' : 'pt-BR')}
                         </span>
                       </Card>
                     );

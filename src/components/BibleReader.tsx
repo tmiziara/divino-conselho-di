@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const BOOK_NAMES = {
   "gn": "Gênesis", "ex": "Êxodo", "lv": "Levítico", "nm": "Números", "dt": "Deuteronômio",
@@ -50,6 +51,8 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
   const { toast } = useToast();
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const navigate = useNavigate();
+  const { isEnglish } = useLanguage();
+  const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
   // Phase 3: track a local 24h premium Bible trial for version selection.
   const [premiumTrialExpiresAt, setPremiumTrialExpiresAt] = useState<string | null>(null);
   const [showPremiumDialog, setShowPremiumDialog] = useState(false);
@@ -139,8 +142,8 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
     setPendingVersion(null);
     setShowPremiumDialog(false);
     toast({
-      title: "Teste ativado",
-      description: "Você liberou as versões premium por 24h.",
+      title: tx("Teste ativado", "Trial activated"),
+      description: tx("Você liberou as versões premium por 24h.", "You unlocked premium versions for 24h."),
     });
   };
 
@@ -150,8 +153,8 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
     if (subscriptionLoading && selected?.premium) {
       // Phase 3 fix: avoid granting premium while subscription is unknown.
       toast({
-        title: "Carregando assinatura...",
-        description: "Aguarde para acessar versões premium.",
+        title: tx("Carregando assinatura...", "Loading subscription..."),
+        description: tx("Aguarde para acessar versões premium.", "Please wait to access premium versions."),
       });
       return;
     }
@@ -170,11 +173,11 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
     if (isPremiumVersion && !canUsePremium && !subscriptionLoading) {
       setBibleVersion("nvi");
       toast({
-        title: "Versão premium expirada",
-        description: "Sua versão foi restaurada para NVI.",
+        title: tx("Versão premium expirada", "Premium version expired"),
+        description: tx("Sua versão foi restaurada para NVI.", "Your version was restored to NVI."),
       });
     }
-  }, [bibleVersion, hasPremiumSubscription, isTrialActive, subscriptionLoading, toast]);
+  }, [bibleVersion, hasPremiumSubscription, isTrialActive, subscriptionLoading, toast, tx]);
 
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -186,8 +189,8 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
   const handleBookChange = (book: string) => {
     if (!user && book !== "gn") {
       toast({
-        title: "Cadastro necessário",
-        description: "Faça seu cadastro gratuito para ler todos os livros da Bíblia",
+        title: tx("Cadastro necessário", "Registration required"),
+        description: tx("Faça seu cadastro gratuito para ler todos os livros da Bíblia", "Sign up for free to read all books of the Bible"),
         variant: "destructive"
       });
       return;
@@ -212,8 +215,8 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
   const toggleFavorite = async (verse: any) => {
     if (!user) {
       toast({
-        title: "Login necessário",
-        description: "Faça login para salvar versículos favoritos",
+        title: tx("Login necessário", "Login required"),
+        description: tx("Faça login para salvar versículos favoritos", "Log in to save favorite verses"),
         variant: "destructive"
       });
       return;
@@ -226,7 +229,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
     try {
       if (isFavorite) {
         await removeFromFavorites(verse.livro, verse.capitulo, verse.versiculo, version);
-        toast({ title: "Removido dos favoritos" });
+        toast({ title: tx("Removido dos favoritos", "Removed from favorites") });
       } else {
         await addToFavorites({
           book: verse.livro,
@@ -237,12 +240,12 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
           reference: `${BOOK_NAMES[verse.livro]} ${verse.capitulo}:${verse.versiculo}`,
           version: version
         });
-        toast({ title: "Adicionado aos favoritos" });
+        toast({ title: tx("Adicionado aos favoritos", "Added to favorites") });
       }
     } catch (error: any) {
       toast({
-        title: "Não foi possível salvar o favorito",
-        description: error?.message || "Tente novamente.",
+        title: tx("Não foi possível salvar o favorito", "Could not save favorite"),
+        description: error?.message || tx("Tente novamente.", "Please try again."),
         variant: "destructive"
       });
     }
@@ -264,12 +267,12 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       {/* Alerta para não logados */}
       {!user && (
         <div className="bg-muted/50 border rounded-lg p-4 text-center">
-          <h3 className="font-semibold">📖 Leitura Gratuita de Gênesis</h3>
+          <h3 className="font-semibold">{tx("📖 Leitura Gratuita de Gênesis", "📖 Free Genesis Reading")}</h3>
           <p className="text-sm text-muted-foreground mb-3">
-            Faça seu cadastro para desbloquear todos os livros da Bíblia.
+            {tx("Faça seu cadastro para desbloquear todos os livros da Bíblia.", "Sign up to unlock all books of the Bible.")}
           </p>
           <Button variant="outline" size="sm" onClick={onAuthClick}>
-            Fazer Cadastro Gratuito
+            {tx("Fazer Cadastro Gratuito", "Sign Up for Free")}
           </Button>
         </div>
       )}
@@ -278,7 +281,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       <div className="flex justify-center">
         <Select value={bibleVersion} onValueChange={handleBibleVersionChange}>
           <SelectTrigger className="w-48 bg-card dark:bg-zinc-900">
-            <SelectValue placeholder="Versão da Bíblia" />
+            <SelectValue placeholder={tx("Versão da Bíblia", "Bible Version")} />
           </SelectTrigger>
           <SelectContent>
             {BIBLE_VERSIONS.map(ver => {
@@ -302,14 +305,16 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       <AlertDialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Versão premium da Bíblia</AlertDialogTitle>
+            <AlertDialogTitle>{tx("Versão premium da Bíblia", "Premium Bible version")}</AlertDialogTitle>
             <AlertDialogDescription>
-              As versões AA e ACF fazem parte do plano Premium.
-              Você pode testar gratuitamente por 24 horas ou conhecer os planos.
+              {tx(
+                "As versões AA e ACF fazem parte do plano Premium. Você pode testar gratuitamente por 24 horas ou conhecer os planos.",
+                "AA and ACF versions are part of the Premium plan. You can try them free for 24 hours or view plans."
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Agora não</AlertDialogCancel>
+            <AlertDialogCancel>{tx("Agora não", "Not now")}</AlertDialogCancel>
             <Button
               variant="outline"
               onClick={() => {
@@ -317,9 +322,9 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
                 navigate('/assinatura?plan=premium');
               }}
             >
-              Ver planos
+              {tx("Ver planos", "View plans")}
             </Button>
-            <AlertDialogAction onClick={startPremiumTrial}>Testar 24h</AlertDialogAction>
+            <AlertDialogAction onClick={startPremiumTrial}>{tx("Testar 24h", "Try 24h")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -328,7 +333,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <Select value={selectedBook || ""} onValueChange={handleBookChange}>
           <SelectTrigger className="w-48 bg-card dark:bg-zinc-900">
-            <SelectValue placeholder="Selecione o livro" />
+            <SelectValue placeholder={tx("Selecione o livro", "Select book")} />
           </SelectTrigger>
           <SelectContent>
             {BIBLICAL_BOOKS.map(book => (
@@ -341,7 +346,7 @@ const BibleReader = ({ onAuthClick }: BibleReaderProps) => {
 
         <Select value={selectedChapter?.toString() || ""} onValueChange={handleChapterChange} disabled={!selectedBook}>
           <SelectTrigger className="w-48 bg-card dark:bg-zinc-900">
-            <SelectValue placeholder="Capítulo" />
+            <SelectValue placeholder={tx("Capítulo", "Chapter")} />
           </SelectTrigger>
           <SelectContent>
             {chapters.map(ch => (

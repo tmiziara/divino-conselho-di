@@ -9,8 +9,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Subscription = () => {
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
   const [showAuth, setShowAuth] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const { user } = useAuth();
@@ -24,15 +27,15 @@ const Subscription = () => {
   const plans = [
     {
       id: "free",
-      name: "Gratuito",
+      name: tx("Gratuito", "Free"),
       price: "R$ 0",
-      period: "/mês",
-      description: "Recursos essenciais para iniciar sua jornada espiritual",
+      period: tx("/mês", "/month"),
+      description: tx("Recursos essenciais para iniciar sua jornada espiritual", "Essential features to start your spiritual journey"),
       features: [
-        "Leitura completa da Bíblia",
-        "Busca de versículos",
-        "Favoritos limitados (10)",
-        "Chat com créditos (limitado)",
+        tx("Leitura completa da Bíblia", "Full Bible reading"),
+        tx("Busca de versículos", "Verse search"),
+        tx("Favoritos limitados (10)", "Limited favorites (10)"),
+        tx("Chat com créditos (limitado)", "Chat with credits (limited)"),
       ],
       icon: Star,
       popular: false,
@@ -41,15 +44,15 @@ const Subscription = () => {
       id: "premium",
       name: "Premium",
       price: "R$ 15",
-      period: "/mês",
-      description: "Acesso total ao conteúdo premium do app",
+      period: tx("/mês", "/month"),
+      description: tx("Acesso total ao conteúdo premium do app", "Full access to premium app content"),
       features: [
-        "Tudo do plano Gratuito",
-        "Versões AA/ACF da Bíblia",
-        "Estudos bíblicos premium",
-        "Favoritos ilimitados",
-        "Chat sem consumir créditos",
-        "Sem anúncios",
+        tx("Tudo do plano Gratuito", "Everything in the Free plan"),
+        tx("Versões AA/ACF da Bíblia", "AA/ACF Bible versions"),
+        tx("Estudos bíblicos premium", "Premium Bible studies"),
+        tx("Favoritos ilimitados", "Unlimited favorites"),
+        tx("Chat sem consumir créditos", "Chat without spending credits"),
+        tx("Sem anúncios", "No ads"),
       ],
       icon: Zap,
       popular: true,
@@ -64,8 +67,8 @@ const Subscription = () => {
 
     if (planId === "free") {
       toast({
-        title: "Plano Gratuito",
-        description: "Você já está no plano gratuito!",
+        title: tx("Plano Gratuito", "Free Plan"),
+        description: tx("Você já está no plano gratuito!", "You are already on the free plan!"),
       });
       return;
     }
@@ -78,8 +81,8 @@ const Subscription = () => {
       }
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível iniciar o processo de pagamento.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível iniciar o processo de pagamento.", "Could not start the checkout process."),
         variant: "destructive",
       });
     } finally {
@@ -95,8 +98,8 @@ const Subscription = () => {
       }
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Não foi possível abrir o portal de assinaturas.",
+        title: tx("Erro", "Error"),
+        description: tx("Não foi possível abrir o portal de assinaturas.", "Could not open the subscriptions portal."),
         variant: "destructive",
       });
     }
@@ -108,9 +111,9 @@ const Subscription = () => {
 
   const getButtonText = (planId: string) => {
     if (isCurrentPlan(planId)) {
-      return "Plano Atual";
+      return tx("Plano Atual", "Current Plan");
     }
-    return planId === "free" ? "Gratuito" : "Assinar Agora";
+    return planId === "free" ? tx("Gratuito", "Free") : tx("Assinar Agora", "Subscribe Now");
   };
 
   return (
@@ -120,17 +123,17 @@ const Subscription = () => {
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-20">
         <div className="text-center mb-12 md:mb-16">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 heavenly-text">
-            Escolha Seu Plano Espiritual
+            {tx("Escolha Seu Plano Espiritual", "Choose Your Spiritual Plan")}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Desbloqueie todo o potencial da sua jornada espiritual com nossos planos personalizados
+            {tx("Desbloqueie todo o potencial da sua jornada espiritual com nossos planos personalizados", "Unlock the full potential of your spiritual journey with our personalized plans")}
           </p>
           
           {user && !subscriptionLoading && subscription !== undefined && subscription.subscribed && (
             <div className="mt-8">
               <Badge variant="secondary" className="text-lg px-4 py-2">
                 {/* Phase 3 fix: reflect legacy "basic" tier correctly in UI */}
-                Plano Atual: {subscription.subscription_tier === "premium" ? "Premium" : subscription.subscription_tier === "basic" ? "Básico" : "Gratuito"}
+                {tx("Plano Atual", "Current Plan")}: {subscription.subscription_tier === "premium" ? "Premium" : subscription.subscription_tier === "basic" ? tx("Básico", "Basic") : tx("Gratuito", "Free")}
               </Badge>
               <div className="mt-4">
                 <Button
@@ -138,7 +141,7 @@ const Subscription = () => {
                   variant="outline"
                   className="border-primary/20 hover:bg-primary/5"
                 >
-                  Gerenciar Assinatura
+                  {tx("Gerenciar Assinatura", "Manage Subscription")}
                 </Button>
               </div>
             </div>
@@ -155,7 +158,7 @@ const Subscription = () => {
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                     <Badge className="bg-primary text-primary-foreground">
-                      Mais Popular
+                      {tx("Mais Popular", "Most Popular")}
                     </Badge>
                   </div>
                 )}
@@ -163,7 +166,7 @@ const Subscription = () => {
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10 flex items-center gap-1">
                     <Badge className="bg-primary text-primary-foreground">
                       <Check className="w-4 h-4 mr-1 inline-block" />
-                      Plano Atual
+                      {tx("Plano Atual", "Current Plan")}
                     </Badge>
                   </div>
                 )}
@@ -194,7 +197,7 @@ const Subscription = () => {
                     <ul className="mb-6 mt-2 space-y-2">
                       {plan.features.map((feature, idx) => (
                         <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="text-primary">✓</span> {feature}
+                          <Check className="w-4 h-4 text-primary" /> {feature}
                         </li>
                       ))}
                     </ul>
@@ -209,7 +212,7 @@ const Subscription = () => {
                             : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                       }`}
                     >
-                      {isCurrent ? 'Plano Atual' : plan.id === 'free' ? 'Gratuito' : 'Assinar Agora'}
+                      {isCurrent ? tx("Plano Atual", "Current Plan") : plan.id === 'free' ? tx("Gratuito", "Free") : tx("Assinar Agora", "Subscribe Now")}
                     </Button>
                   </CardContent>
                 </Card>
@@ -220,7 +223,7 @@ const Subscription = () => {
 
         <div className="text-center mt-12 md:mt-16">
           <p className="text-muted-foreground text-sm md:text-base">
-            Tem dúvidas? Entre em contato conosco e teremos prazer em ajudar.
+            {tx("Tem dúvidas? Entre em contato conosco e teremos prazer em ajudar.", "Have questions? Contact us and we will be glad to help.")}
           </p>
         </div>
       </div>

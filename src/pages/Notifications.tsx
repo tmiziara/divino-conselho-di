@@ -12,12 +12,15 @@ import { Bell, Clock, Calendar, Trash2, Plus, Settings, BookOpen, Loader2, Heart
 import { useNotifications } from "@/hooks/useNotifications";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { trackEvent } from "@/lib/analytics";
 
 const Notifications = () => {
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
   const [showForm, setShowForm] = useState(false);
   const [showAuth, setShowAuth] = useState(false); // NOVO estado
-  const handleAuthClick = () => setShowAuth(true); // NOVA fun��o
+  const handleAuthClick = () => setShowAuth(true); // NOVA função
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   // Phase 2: track when guided setup is requested.
@@ -37,15 +40,15 @@ const Notifications = () => {
     loading,
     isMobile,
     addSchedule,
-    addPrayerSchedule, // NOVA função
+    addPrayerSchedule, // NOVA funÃ§Ã£o
     toggleSchedule,
     deleteSchedule,
-    togglePrayerSchedule, // NOVA função
-    deletePrayerSchedule, // NOVA função
+    togglePrayerSchedule, // NOVA funÃ§Ã£o
+    deletePrayerSchedule, // NOVA funÃ§Ã£o
     formatDays,
     getThemeLabel,
     getActiveSchedulesCount,
-    getActivePrayerSchedulesCount, // NOVA função
+    getActivePrayerSchedulesCount, // NOVA funÃ§Ã£o
     getAvailableThemesCount,
     testNotification,
     THEMES,
@@ -76,11 +79,17 @@ const Notifications = () => {
   const themeValues = useMemo(() => new Set(THEMES.map((theme) => theme.value)), [THEMES]);
   // Phase 2: quick templates for prefilled notification setup.
   const quickTemplates = [
-    { id: "auto", label: "Di�rio (Auto)", type: "verse", theme: "auto" },
-    { id: "paz", label: "Paz", type: "verse", theme: "paz" },
-    { id: "esperanca", label: "Esperan�a", type: "verse", theme: "esperan�a" },
-    { id: "oracao", label: "Ora��o di�ria", type: "prayer", theme: "auto" },
+    { id: "auto", label: tx("Diário (Auto)", "Daily (Auto)"), type: "verse", theme: "auto" },
+    { id: "paz", label: tx("Paz", "Peace"), type: "verse", theme: "paz" },
+    { id: "esperanca", label: tx("Esperança", "Hope"), type: "verse", theme: "esperança" },
+    { id: "oracao", label: tx("Oração diária", "Daily prayer"), type: "prayer", theme: "auto" },
   ];
+
+  const dayShortLabel = (day: number) => {
+    const pt = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const en = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return (isEnglish ? en : pt)[day] ?? "";
+  };
 
   const applyTemplate = (template: { type: "verse" | "prayer"; theme: string }) => {
     setFormData({
@@ -111,7 +120,7 @@ const Notifications = () => {
 
   const [notificationStatus, setNotificationStatus] = useState<{ enabled: boolean; message: string } | null>({
     enabled: true,
-    message: 'Notificações disponíveis'
+    message: tx("Notificações disponíveis", "Notifications available")
   });
 
   const handleAddSchedule = async (): Promise<boolean> => {
@@ -184,7 +193,7 @@ const Notifications = () => {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="flex items-center gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-lg">Carregando notificações...</p>
+              <p className="text-lg">{tx("Carregando notificações...", "Loading notifications...")}</p>
             </div>
           </div>
         </div>
@@ -199,21 +208,21 @@ const Notifications = () => {
         <div className="flex items-center gap-3 mb-6">
           <Bell className="w-8 h-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold heavenly-text">Notificações</h1>
+            <h1 className="text-3xl font-bold heavenly-text">{tx("Notificações", "Notifications")}</h1>
             <p className="text-muted-foreground">
-              Agende versículos bíblicos para receber notificações diárias
+              {tx("Agende versículos bíblicos para receber notificações diárias", "Schedule Bible verses to receive daily notifications")}
             </p>
           </div>
         </div>
 
-        {/* Status das Notificações */}
+        {/* Status das NotificaÃ§Ãµes */}
         {notificationStatus && (
           <Card className="mb-6 bg-card border border-border dark:bg-zinc-900 dark:border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Bell className="w-5 h-5 text-primary" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Status das Notificações</p>
+                  <p className="text-sm text-muted-foreground">{tx("Status das Notificações", "Notification Status")}</p>
                   <p className={`font-medium ${notificationStatus.enabled ? 'text-green-600' : 'text-red-600'}`}>
                     {notificationStatus.message}
                   </p>
@@ -223,14 +232,14 @@ const Notifications = () => {
           </Card>
         )}
 
-        {/* Estatísticas */}
+        {/* EstatÃ­sticas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="bg-card border border-border dark:bg-zinc-900 dark:border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-primary" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Agendamentos Ativos</p>
+                  <p className="text-sm text-muted-foreground">{tx("Agendamentos Ativos", "Active schedules")}</p>
                   <p className="text-2xl font-bold">{getActiveSchedulesCount() + getActivePrayerSchedulesCount()}</p>
                 </div>
               </div>
@@ -241,7 +250,7 @@ const Notifications = () => {
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-blue-600" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Versículos</p>
+                  <p className="text-sm text-muted-foreground">{tx("Versículos", "Verses")}</p>
                   <p className="text-2xl font-bold">{getActiveSchedulesCount()}</p>
                 </div>
               </div>
@@ -252,7 +261,7 @@ const Notifications = () => {
               <div className="flex items-center gap-2">
                 <Heart className="w-5 h-5 text-green-600" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Orações</p>
+                  <p className="text-sm text-muted-foreground">{tx("Orações", "Prayers")}</p>
                   <p className="text-2xl font-bold">{getActivePrayerSchedulesCount()}</p>
                 </div>
               </div>
@@ -265,17 +274,17 @@ const Notifications = () => {
         {guidedSetup && (
           <Card className="mb-6 bg-card border border-border dark:bg-zinc-900 dark:border-border">
             <CardHeader>
-              <CardTitle>Configura��o guiada</CardTitle>
+              <CardTitle>{tx("Configuração guiada", "Guided setup")}</CardTitle>
               <CardDescription>
-                Escolha um tema e hor�rio para come�ar a receber lembretes.
+                {tx("Escolha um tema e horário para começar a receber lembretes.", "Choose a topic and time to start receiving reminders.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-2">
               <Button onClick={() => setShowForm(true)} className="flex-1">
-                Ajustar detalhes
+                {tx("Ajustar detalhes", "Adjust details")}
               </Button>
               <Button variant="outline" onClick={() => setShowForm(false)}>
-                Ver meus agendamentos
+                {tx("Ver meus agendamentos", "View my schedules")}
               </Button>
             </CardContent>
           </Card>
@@ -284,9 +293,9 @@ const Notifications = () => {
         {/* Phase 2: Theme-based templates */}
         <Card className="mb-6 bg-card border border-border dark:bg-zinc-900 dark:border-border">
           <CardHeader>
-            <CardTitle>Modelos r�pidos</CardTitle>
+            <CardTitle>{tx("Modelos rápidos", "Quick templates")}</CardTitle>
             <CardDescription>
-              Escolha um tema e deixe o resto pronto automaticamente.
+              {tx("Escolha um tema e deixe o resto pronto automaticamente.", "Pick a topic and leave the rest ready automatically.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
@@ -301,32 +310,32 @@ const Notifications = () => {
             ))}
           </CardContent>
         </Card>
-        {/* Botão Adicionar */}
+        {/* BotÃ£o Adicionar */}
         <div className="mb-6 flex gap-2 flex-wrap">
           <Button 
             onClick={() => setShowForm(true)} 
             className="w-full md:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Novo Agendamento
+            {tx("Novo Agendamento", "New Schedule")}
           </Button>
           
 
         </div>
 
-        {/* Formulário */}
+        {/* FormulÃ¡rio */}
         {showForm && (
           <Card className="mb-6 bg-card border border-border dark:bg-zinc-900 dark:border-border">
             <CardHeader>
-              <CardTitle>Novo Agendamento</CardTitle>
+              <CardTitle>{tx("Novo Agendamento", "New Schedule")}</CardTitle>
               <CardDescription>
-                Configure quando e como você quer receber notificações
+                {tx("Configure quando e como você quer receber notificações", "Set when and how you want to receive notifications")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Seletor de tipo - mobile friendly */}
               <div>
-                <Label>Tipo de Notificação</Label>
+                <Label>{tx("Tipo de Notificação", "Notification type")}</Label>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <Button
                     variant={formData.type === 'verse' ? "default" : "outline"}
@@ -335,7 +344,7 @@ const Notifications = () => {
                     className="h-12"
                   >
                     <BookOpen className="w-4 h-4 mr-2" />
-                    Versículo
+                    {tx("Versículo", "Verse")}
                   </Button>
                   <Button
                     variant={formData.type === 'prayer' ? "default" : "outline"}
@@ -344,14 +353,14 @@ const Notifications = () => {
                     className="h-12"
                   >
                     <Heart className="w-4 h-4 mr-2" />
-                    Oração
+                    {tx("Oração", "Prayer")}
                   </Button>
                 </div>
               </div>
 
-              {/* Horário */}
+              {/* HorÃ¡rio */}
               <div>
-                <Label htmlFor="time">Horário</Label>
+                <Label htmlFor="time">{tx("Horário", "Time")}</Label>
                 <Input
                   id="time"
                   type="time"
@@ -360,10 +369,10 @@ const Notifications = () => {
                 />
               </div>
 
-              {/* Tema só para versículos */}
+              {/* Tema sÃ³ para versÃ­culos */}
               {formData.type === 'verse' && (
                 <div>
-                  <Label htmlFor="theme">Tema</Label>
+                  <Label htmlFor="theme">{tx("Tema", "Theme")}</Label>
                   <Select value={formData.theme} onValueChange={(value) => setFormData({ ...formData, theme: value })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -381,7 +390,7 @@ const Notifications = () => {
 
               {/* Dias da semana - mobile grid */}
               <div>
-                <Label>Dias da Semana</Label>
+                <Label>{tx("Dias da Semana", "Days of the Week")}</Label>
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {DAYS_OF_WEEK.map((day) => (
                     <Button
@@ -395,22 +404,22 @@ const Notifications = () => {
                         setFormData({ ...formData, days: newDays });
                       }}
                     >
-                      {day.label.slice(0, 3)} {/* Seg, Ter, Qua, etc */}
+                      {dayShortLabel(day.value)}
                     </Button>
                   ))}
                 </div>
               </div>
 
-              {/* Botões mobile */}
+              {/* BotÃµes mobile */}
               <div className="flex gap-2 pt-2">
                 <Button onClick={handleAddSchedule} className="flex-1">
-                  Criar Agendamento
+                  {tx("Criar Agendamento", "Create schedule")}
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => setShowForm(false)}
                 >
-                  Cancelar
+                  {tx("Cancelar", "Cancel")}
                 </Button>
               </div>
             </CardContent>
@@ -419,20 +428,20 @@ const Notifications = () => {
 
         {/* Lista de Agendamentos */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Seus Agendamentos</h2>
+          <h2 className="text-xl font-semibold">{tx("Seus Agendamentos", "Your schedules")}</h2>
           
           {schedules.length === 0 && prayerSchedules.length === 0 ? (
             <Card className="bg-card border border-border dark:bg-zinc-900 dark:border-border">
               <CardContent className="p-8 text-center">
                 <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  Você ainda não tem agendamentos. Crie um para começar a receber notificações.
+                  {tx("Você ainda não tem agendamentos. Crie um para começar a receber notificações.", "You do not have schedules yet. Create one to start receiving notifications.")}
                 </p>
               </CardContent>
             </Card>
           ) : (
             <>
-              {/* Agendamentos de Versículos */}
+              {/* Agendamentos de VersÃ­culos */}
               {schedules.map((schedule) => (
                 <Card key={`verse-${schedule.id}`} className="bg-card border border-border dark:bg-zinc-900 dark:border-border">
                   <CardContent className="p-4">
@@ -440,11 +449,11 @@ const Notifications = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <Badge variant={schedule.enabled ? "default" : "secondary"} className="text-xs">
-                            {schedule.enabled ? "Ativo" : "Inativo"}
+                            {schedule.enabled ? tx("Ativo", "Active") : tx("Inativo", "Inactive")}
                           </Badge>
                           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
                             <BookOpen className="w-3 h-3 mr-1" />
-                            Versículo
+                            {tx("Versículo", "Verse")}
                           </Badge>
                         </div>
                         
@@ -458,7 +467,7 @@ const Notifications = () => {
                             {formatDays(schedule.days)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Tema: {getThemeLabel(schedule.theme)}
+                            {tx("Tema", "Theme")}: {getThemeLabel(schedule.theme)}
                           </p>
                         </div>
                       </div>
@@ -483,7 +492,7 @@ const Notifications = () => {
                 </Card>
               ))}
 
-              {/* Agendamentos de Oração */}
+              {/* Agendamentos de OraÃ§Ã£o */}
               {prayerSchedules.map((schedule) => (
                 <Card key={`prayer-${schedule.id}`} className="bg-card border border-border dark:bg-zinc-900 dark:border-border">
                   <CardContent className="p-4">
@@ -491,11 +500,11 @@ const Notifications = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <Badge variant={schedule.enabled ? "default" : "secondary"} className="text-xs">
-                            {schedule.enabled ? "Ativo" : "Inativo"}
+                            {schedule.enabled ? tx("Ativo", "Active") : tx("Inativo", "Inactive")}
                           </Badge>
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                             <Heart className="w-3 h-3 mr-1" />
-                            Oração
+                            {tx("Oração", "Prayer")}
                           </Badge>
                         </div>
                         

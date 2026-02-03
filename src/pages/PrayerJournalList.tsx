@@ -6,10 +6,14 @@ import AuthDialog from "@/components/AuthDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePrayerJournal } from "@/hooks/usePrayerJournal";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const PrayerJournalList = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { entries } = usePrayerJournal();
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
+  const dateLocale = isEnglish ? "en-US" : "pt-BR";
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
@@ -19,14 +23,14 @@ const PrayerJournalList = () => {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold heavenly-text flex items-center gap-2">
               <NotebookPen className="w-6 h-6 text-primary" />
-              Diário de oração
+              {tx("Diário de oração", "Prayer Journal")}
             </h1>
-            <p className="text-muted-foreground">Guarde suas orações e reflexões.</p>
+            <p className="text-muted-foreground">{tx("Guarde suas orações e reflexões.", "Keep your prayers and reflections.")}</p>
           </div>
           <Link to="/diario/nova">
             <Button className="divine-button">
               <PlusCircle className="w-4 h-4 mr-2" />
-              Nova oração
+              {tx("Nova oração", "New prayer")}
             </Button>
           </Link>
         </div>
@@ -34,14 +38,14 @@ const PrayerJournalList = () => {
         {entries.length === 0 ? (
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Nenhuma oração registrada</CardTitle>
+              <CardTitle>{tx("Nenhuma oração registrada", "No prayer entries yet")}</CardTitle>
               <CardDescription>
-                Comece com uma oração simples e volte quando precisar.
+                {tx("Comece com uma oração simples e volte quando precisar.", "Start with a simple prayer and come back whenever you need.")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link to="/diario/nova">
-                <Button className="divine-button">Criar primeira oração</Button>
+                <Button className="divine-button">{tx("Criar primeira oração", "Create first prayer")}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -53,7 +57,7 @@ const PrayerJournalList = () => {
                   <CardHeader>
                     <CardTitle className="text-lg">{entry.title}</CardTitle>
                     <CardDescription>
-                      {new Date(entry.createdAt).toLocaleDateString("pt-BR")}
+                      {new Date(entry.createdAt).toLocaleDateString(dateLocale)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

@@ -8,13 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { usePrayerJournal } from "@/hooks/usePrayerJournal";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const PrayerJournalEntry = () => {
   const [showAuth, setShowAuth] = useState(false);
   const { entryId } = useParams<{ entryId: string }>();
   const navigate = useNavigate();
   const { getEntryById, updateEntry, deleteEntry } = usePrayerJournal();
+  const { isEnglish } = useLanguage();
   const entry = entryId ? getEntryById(entryId) : null;
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
+  const dateLocale = isEnglish ? "en-US" : "pt-BR";
 
   const [title, setTitle] = useState(entry?.title ?? "");
   const [content, setContent] = useState(entry?.content ?? "");
@@ -32,12 +36,12 @@ const PrayerJournalEntry = () => {
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <Card className="spiritual-card bg-card dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle>Oração não encontrada</CardTitle>
-              <CardDescription>Volte ao diário para criar uma nova.</CardDescription>
+              <CardTitle>{tx("Oração não encontrada", "Prayer not found")}</CardTitle>
+              <CardDescription>{tx("Volte ao diário para criar uma nova.", "Go back to journal to create a new one.")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link to="/diario">
-                <Button className="divine-button">Voltar ao diário</Button>
+                <Button className="divine-button">{tx("Voltar ao diário", "Back to journal")}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -53,26 +57,26 @@ const PrayerJournalEntry = () => {
       <div className="container mx-auto px-4 sm:px-6 py-8 space-y-6">
         <Link to="/diario" className="text-sm text-muted-foreground flex items-center gap-1">
           <ChevronLeft className="w-4 h-4" />
-          Voltar ao diário
+          {tx("Voltar ao diário", "Back to journal")}
         </Link>
 
         <Card className="spiritual-card bg-card dark:bg-zinc-900">
           <CardHeader>
             <CardTitle>{entry.title}</CardTitle>
             <CardDescription>
-              {new Date(entry.createdAt).toLocaleDateString("pt-BR")}
+              {new Date(entry.createdAt).toLocaleDateString(dateLocale)}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Título</label>
+              <label className="text-sm font-medium">{tx("Título", "Title")}</label>
               <Input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Oração / reflexão</label>
+              <label className="text-sm font-medium">{tx("Oração / reflexão", "Prayer / reflection")}</label>
               <Textarea
                 rows={6}
                 value={content}
@@ -88,7 +92,7 @@ const PrayerJournalEntry = () => {
                 }}
               >
                 <Save className="w-4 h-4 mr-2" />
-                Salvar alterações
+                {tx("Salvar alterações", "Save changes")}
               </Button>
               <Button
                 variant="outline"
@@ -98,7 +102,7 @@ const PrayerJournalEntry = () => {
                 }}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Excluir
+                {tx("Excluir", "Delete")}
               </Button>
             </div>
           </CardContent>
