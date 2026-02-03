@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { StudyCategory } from "@/hooks/useStudyCategories";
-import { ChevronRight } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Link } from "react-router-dom";
 
 interface CategoryCardProps {
@@ -9,7 +9,9 @@ interface CategoryCardProps {
   small?: boolean;
 }
 
-const CategoryCard = ({ category, hasPremiumAccess, small }: CategoryCardProps) => {
+const CategoryCard = ({ category, hasPremiumAccess: _hasPremiumAccess, small }: CategoryCardProps) => {
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
   // Fallback para Sparkles se não houver ícone
   const IconComponent = category.config.icon || require('lucide-react').Sparkles;
   
@@ -54,7 +56,7 @@ const CategoryCard = ({ category, hasPremiumAccess, small }: CategoryCardProps) 
                 {category.count}
               </span>
               <span className={`text-xs ${small ? '' : 'sm:text-sm'} text-gray-600 dark:text-white`}>
-                {category.count === 1 ? 'estudo' : 'estudos'}
+                {category.count === 1 ? tx('estudo', 'study') : tx('estudos', 'studies')}
               </span>
             </div>
           </div>

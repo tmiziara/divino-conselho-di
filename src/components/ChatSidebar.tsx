@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Clock, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface ChatHistory {
   id: string;
@@ -14,6 +15,8 @@ interface ChatHistory {
 
 const ChatSidebar = () => {
   const { user } = useAuth();
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,13 +49,13 @@ const ChatSidebar = () => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 24) {
-      return `${diffInHours}h atrás`;
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays}d atrás`;
+      return isEnglish ? `${diffInHours}h ago` : `${diffInHours}h atrás`;
     }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    return isEnglish ? `${diffInDays}d ago` : `${diffInDays}d atrás`;
   };
 
   const truncateMessage = (message: string, maxLength: number = 40) => {
@@ -64,11 +67,11 @@ const ChatSidebar = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm">
           <Clock className="w-4 h-4" />
-          Histórico de Conversas
+          {tx("Histórico de Conversas", "Conversation History")}
         </CardTitle>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <AlertCircle className="w-3 h-3" />
-          <span>Logs mantidos por 3 dias</span>
+          <span>{tx("Logs mantidos por 3 dias", "Logs kept for 3 days")}</span>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -99,7 +102,7 @@ const ChatSidebar = () => {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhuma conversa recente</p>
+              <p className="text-sm">{tx("Nenhuma conversa recente", "No recent conversations")}</p>
             </div>
           )}
         </ScrollArea>

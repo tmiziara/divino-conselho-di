@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AdMob, BannerAdSize, BannerAdPosition, BannerAdPluginEvents } from '@capacitor-community/admob';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface AdMobBannerProps {
   className?: string;
@@ -8,6 +9,8 @@ interface AdMobBannerProps {
 
 const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
   const { subscription, loading: subscriptionLoading } = useSubscription();
+  const { isEnglish } = useLanguage();
+  const tx = useCallback((pt: string, en: string) => (isEnglish ? en : pt), [isEnglish]);
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +61,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
       localStorage.setItem('admob_banner_shown', 'true');
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      setError(err instanceof Error ? err.message : tx('Erro desconhecido', 'Unknown error'));
       setIsLoading(false);
       
       // Tentar novamente após 5 segundos (apenas para usuários gratuitos)
@@ -72,7 +75,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
         }
       }, 5000);
     }
-  }, [isLoading, subscription?.subscription_tier]);
+  }, [isLoading, subscription?.subscription_tier, tx]);
 
   // Função para ocultar o banner
   const hideBanner = async () => {
@@ -107,7 +110,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
       // Listener para quando o banner falha ao carregar
       const failedListener = await AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (err) => {
         setIsLoading(false);
-        setError('Falha ao carregar banner');
+        setError(tx('Falha ao carregar banner', 'Failed to load banner'));
         
         // Tentar novamente após 10 segundos (apenas para usuários gratuitos)
         if (retryTimeoutRef.current) {
@@ -128,7 +131,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
       listenersRef.current = [loadedListener, closedListener, failedListener, impressionListener];
     } catch (err) {
     }
-  }, [showBanner, subscription?.subscription_tier]);
+  }, [showBanner, subscription?.subscription_tier, tx]);
 
   // PRINCIPAL: Gerenciar visibilidade do banner baseado no status da assinatura
   useEffect(() => {
@@ -240,7 +243,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
     return (
       <div className={`admob-banner-error ${className}`}>
         <div className="text-xs text-muted-foreground p-2 text-center">
-          Erro no banner: {error}
+          {tx('Erro no banner:', 'Banner error:')} {error}
         </div>
       </div>
     );
@@ -251,7 +254,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
     return (
       <div className={`admob-banner-loading ${className}`}>
         <div className="text-xs text-muted-foreground p-2 text-center">
-          Carregando banner...
+          {tx('Carregando banner...', 'Loading banner...')}
         </div>
       </div>
     );
@@ -266,7 +269,7 @@ const AdMobBanner: React.FC<AdMobBannerProps> = ({ className = '' }) => {
   return (
     <div className={`admob-banner-placeholder ${className}`}>
       <div className="text-xs text-muted-foreground p-2 text-center">
-        Banner AdMob
+        {tx('Banner AdMob', 'AdMob Banner')}
       </div>
     </div>
   );

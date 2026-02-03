@@ -406,14 +406,13 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
     try {
       // Verificar se o dispositivo tem Android 6+ (API 23+)
       if (window.cordova?.platformId === 'android') {
-        const isEnglish = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'en';
-        
-        // Mostrar instruções para o usuário
+        // Mostrar instrucoes para o usuario
         toast({
-          title: isEnglish ? "Battery Optimization" : "Otimização de Bateria",
-          description: isEnglish
-            ? "For reliable notifications, disable battery optimization for this app in system settings."
-            : "Para notificações precisas, desative a otimização de bateria para este app nas configurações.",
+          title: tx("Otimiza\u00e7\u00e3o de Bateria", "Battery Optimization"),
+          description: tx(
+            "Para notifica\u00e7\u00f5es precisas, desative a otimiza\u00e7\u00e3o de bateria para este app nas configura\u00e7\u00f5es.",
+            "For reliable notifications, disable battery optimization for this app in system settings."
+          ),
           duration: 5000
         });
       }
@@ -1043,6 +1042,13 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
     return days.map((day) => labels[day] || "").filter(Boolean).join(', ');
   };
 
+  const getDayShortLabel = (day: number) => {
+    const isEnglish = normalizeLanguage(i18n.resolvedLanguage || i18n.language) === 'en';
+    const pt = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+    const en = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return (isEnglish ? en : pt)[day] ?? "";
+  };
+
   const getThemeLabel = (theme: string) => {
     const ptToEn: Record<string, string> = {
       "Automático": "Automatic",
@@ -1247,5 +1253,6 @@ export const useNotifications = (options?: { enableInitialization?: boolean }) =
     checkNotificationPersistence,
     THEMES,
     DAYS_OF_WEEK,
+    getDayShortLabel,
   };
 }; 

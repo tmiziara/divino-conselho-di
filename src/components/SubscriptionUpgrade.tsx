@@ -2,16 +2,16 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Crown, 
-  Sparkles, 
-  BookOpen, 
-  MessageCircle, 
-  Download, 
+import {
+  Crown,
+  Sparkles,
+  BookOpen,
+  MessageCircle,
+  Download,
   Shield,
   Check,
-  Lock
 } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface SubscriptionUpgradeProps {
   onUpgrade: () => void;
@@ -19,47 +19,50 @@ interface SubscriptionUpgradeProps {
   variant?: 'modal' | 'inline';
 }
 
-const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({ 
-  onUpgrade, 
-  onClose, 
-  variant = 'inline' 
+const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({
+  onUpgrade,
+  onClose,
+  variant = 'inline'
 }) => {
+  const { isEnglish } = useLanguage();
+  const tx = (pt: string, en: string) => (isEnglish ? en : pt);
+
   const features = [
     {
       icon: BookOpen,
-      title: 'Estudos Bíblicos Premium',
-      description: 'Acesso completo a todos os estudos bíblicos'
+      title: tx('Estudos Biblicos Premium', 'Premium Bible Studies'),
+      description: tx('Acesso completo a todos os estudos biblicos', 'Full access to all Bible studies')
     },
     {
       icon: MessageCircle,
-      title: 'Chat Espiritual',
-      description: 'Converse com IA sobre questões espirituais'
+      title: tx('Chat Espiritual', 'Spiritual Chat'),
+      description: tx('Converse com IA sobre questoes espirituais', 'Talk with AI about spiritual questions')
     },
     {
       icon: Download,
-      title: 'Modo Offline',
-      description: 'Baixe estudos para usar sem internet'
+      title: tx('Modo Offline', 'Offline Mode'),
+      description: tx('Baixe estudos para usar sem internet', 'Download studies to use without internet')
     },
     {
       icon: Shield,
-      title: 'Conteúdo Exclusivo',
-      description: 'Versículos e reflexões especiais'
+      title: tx('Conteudo Exclusivo', 'Exclusive Content'),
+      description: tx('Versiculos e reflexoes especiais', 'Special verses and reflections')
     }
   ];
 
   const plans = [
     {
-      name: 'Mensal',
+      name: tx('Mensal', 'Monthly'),
       price: 'R$ 9,90',
-      period: '/mês',
+      period: tx('/mes', '/month'),
       popular: false
     },
     {
-      name: 'Anual',
+      name: tx('Anual', 'Yearly'),
       price: 'R$ 99,90',
-      period: '/ano',
+      period: tx('/ano', '/year'),
       popular: true,
-      savings: 'Economize R$ 19,90'
+      savings: tx('Economize R$ 19,90', 'Save R$ 19,90')
     }
   ];
 
@@ -72,29 +75,28 @@ const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({
           </div>
         </div>
         <CardTitle className="text-2xl font-bold">
-          Desbloqueie Todo o Conteúdo
+          {tx('Desbloqueie Todo o Conteudo', 'Unlock All Content')}
         </CardTitle>
         <p className="text-muted-foreground">
-          Faça upgrade para acessar estudos premium, chat espiritual e muito mais
+          {tx('Faca upgrade para acessar estudos premium, chat espiritual e muito mais', 'Upgrade to access premium studies, spiritual chat, and more')}
         </p>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
-        {/* Planos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {plans.map((plan) => (
-            <Card 
+            <Card
               key={plan.name}
               className={`relative cursor-pointer transition-all hover:scale-105 ${
-                plan.popular 
-                  ? 'border-2 border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50' 
+                plan.popular
+                  ? 'border-2 border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50'
                   : 'border border-border'
               }`}
               onClick={() => onUpgrade()}
             >
               {plan.popular && (
                 <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500">
-                  Mais Popular
+                  {tx('Mais Popular', 'Most Popular')}
                 </Badge>
               )}
               <CardContent className="pt-6 text-center">
@@ -111,9 +113,8 @@ const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({
           ))}
         </div>
 
-        {/* Funcionalidades */}
         <div className="space-y-3">
-          <h4 className="font-semibold text-center mb-4">O que você ganha:</h4>
+          <h4 className="font-semibold text-center mb-4">{tx('O que voce ganha:', 'What you get:')}</h4>
           {features.map((feature, index) => (
             <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
               <div className="p-2 bg-primary/10 rounded-full">
@@ -128,33 +129,31 @@ const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({
           ))}
         </div>
 
-        {/* Botões */}
         <div className="space-y-3">
-          <Button 
+          <Button
             onClick={onUpgrade}
             className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
             size="lg"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            Fazer Upgrade Agora
+            {tx('Fazer Upgrade Agora', 'Upgrade Now')}
           </Button>
-          
+
           {onClose && (
-            <Button 
+            <Button
               onClick={onClose}
-              variant="outline" 
+              variant="outline"
               className="w-full"
             >
-              Continuar com versão gratuita
+              {tx('Continuar com versao gratuita', 'Continue with free version')}
             </Button>
           )}
         </div>
 
-        {/* Garantia */}
         <div className="text-center text-xs text-muted-foreground">
-          <p>✓ Cancelamento a qualquer momento</p>
-          <p>✓ 7 dias de garantia</p>
-          <p>✓ Acesso imediato</p>
+          <p>{tx('Cancelamento a qualquer momento', 'Cancel anytime')}</p>
+          <p>{tx('7 dias de garantia', '7-day guarantee')}</p>
+          <p>{tx('Acesso imediato', 'Instant access')}</p>
         </div>
       </CardContent>
     </Card>
@@ -173,4 +172,4 @@ const SubscriptionUpgrade: React.FC<SubscriptionUpgradeProps> = ({
   return content;
 };
 
-export default SubscriptionUpgrade; 
+export default SubscriptionUpgrade;

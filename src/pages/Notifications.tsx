@@ -53,6 +53,7 @@ const Notifications = () => {
     testNotification,
     THEMES,
     DAYS_OF_WEEK,
+    getDayShortLabel,
   } = useNotifications();
   // Phase 2: use onboarding preferences to prefill templates and guided setup.
   const safeStorageGet = (key: string) => {
@@ -85,11 +86,6 @@ const Notifications = () => {
     { id: "oracao", label: tx("Oração diária", "Daily prayer"), type: "prayer", theme: "auto" },
   ];
 
-  const dayShortLabel = (day: number) => {
-    const pt = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const en = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    return (isEnglish ? en : pt)[day] ?? "";
-  };
 
   const applyTemplate = (template: { type: "verse" | "prayer"; theme: string }) => {
     setFormData({
@@ -404,7 +400,7 @@ const Notifications = () => {
                         setFormData({ ...formData, days: newDays });
                       }}
                     >
-                      {dayShortLabel(day.value)}
+                      {getDayShortLabel(day.value)}
                     </Button>
                   ))}
                 </div>

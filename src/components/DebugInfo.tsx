@@ -87,7 +87,7 @@ export const DebugInfo: React.FC = () => {
                   <span>{localData.user_id.substring(0, 8)}...</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span>Tier:</span>
+                  <span>{tx("Plano:", "Tier:")}</span>
                   <Badge variant={localData.subscription_tier === "premium" ? "default" : "secondary"}>
                     {localData.subscription_tier}
                   </Badge>
