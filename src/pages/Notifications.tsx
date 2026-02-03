@@ -35,7 +35,7 @@ const Notifications = () => {
   
   const {
     schedules,
-    prayerSchedules, // NOVO estado
+    prayerSchedules, // New state
     verses,
     loading,
     isMobile,
