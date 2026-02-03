@@ -161,135 +161,135 @@ export default function PrivacyPolicy() {
     }
 
     return {
-      back: "Voltar às Configurações",
-      title: "Política de Privacidade",
-      meta: "Última atualização: 15 de julho de 2025 | Versão: 1.3",
+      back: "Voltar ?s Configura??es",
+      title: "Pol?tica de Privacidade",
+      meta: "?ltima atualiza??o: 15 de julho de 2025 | Vers?o: 1.3",
       sections: [
         {
-          title: "1. INFORMAÇÕES GERAIS",
+          title: "1. INFORMA??ES GERAIS",
           paragraphs: [
-            "Esta Política de Privacidade descreve como o aplicativo Conexao com Deus coleta, utiliza, armazena e protege seus dados. O app está disponível nas versões móvel (Android/iOS) e web.",
+            "Esta Pol?tica de Privacidade descreve como o aplicativo Conexao com Deus coleta, utiliza, armazena e protege seus dados. O app est? dispon?vel nas vers?es m?vel (Android/iOS) e web.",
           ],
         },
         {
           title: "2. DADOS QUE COLETAMOS",
-          paragraphs: ["2.1 Informações pessoais"],
+          paragraphs: ["2.1 Informa??es pessoais"],
           bullets: [
             "Nome completo",
-            "E-mail (obrigatório para login e comunicação)",
-            "Gênero (opcional)",
-            "Senha (armazenada com proteção criptográfica/hash)",
+            "E-mail (obrigat?rio para login e comunica??o)",
+            "G?nero (opcional)",
+            "Senha (armazenada com prote??o criptogr?fica/hash)",
           ],
         },
         {
           title: "2.2 Dados de uso",
           bullets: [
-            "Progresso de leitura bíblica (livro, capítulo, versículo)",
-            "Favoritos e destaques de versículos",
-            "Histórico de estudos e devocionais",
-            "Preferências de notificações (temas e horários)",
-            "Interações com o chat espiritual com IA",
+            "Progresso de leitura b?blica (livro, cap?tulo, vers?culo)",
+            "Favoritos e destaques de vers?culos",
+            "Hist?rico de estudos e devocionais",
+            "Prefer?ncias de notifica??es (temas e hor?rios)",
+            "Intera??es com o chat espiritual com IA",
           ],
         },
         {
-          title: "2.3 Dados técnicos",
+          title: "2.3 Dados t?cnicos",
           bullets: [
-            "Informações do dispositivo (modelo, SO, versão)",
+            "Informa??es do dispositivo (modelo, SO, vers?o)",
             "Status de rede (online/offline)",
             "Status da conta (gratuito ou premium)",
-            "Logs anônimos para melhoria do app",
+            "Logs an?nimos para melhoria do app",
           ],
         },
         {
           title: "3. COMO USAMOS SEUS DADOS",
           bullets: [
-            "Login e autenticação via Supabase",
-            "Sincronização de progresso e favoritos entre dispositivos",
-            "Personalização de conteúdo e notificações",
-            "Geração de respostas espirituais com IA (OpenAI)",
+            "Login e autentica??o via Supabase",
+            "Sincroniza??o de progresso e favoritos entre dispositivos",
+            "Personaliza??o de conte?do e notifica??es",
+            "Gera??o de respostas espirituais com IA (OpenAI)",
           ],
         },
         {
           title: "4. COMPARTILHAMENTO DE DADOS",
           bullets: [
-            "Supabase: autenticação e banco de dados",
+            "Supabase: autentica??o e banco de dados",
             "Stripe: pagamentos e assinaturas",
-            "Google AdMob: anúncios para usuários gratuitos",
+            "Google AdMob: an?ncios para usu?rios gratuitos",
             "OpenAI: processamento das mensagens do chat",
           ],
         },
         {
-          title: "5. ARMAZENAMENTO E SEGURANÇA",
+          title: "5. ARMAZENAMENTO E SEGURAN?A",
           bullets: [
-            "Dados locais: histórico de chat, progresso, favoritos e configurações",
+            "Dados locais: hist?rico de chat, progresso, favoritos e configura??es",
             "Dados em servidor protegidos no Supabase com backups seguros",
           ],
         },
         {
-          title: "6. ANÚNCIOS E MONETIZAÇÃO",
+          title: "6. AN?NCIOS E MONETIZA??O",
           bullets: [
-            "Usuários gratuitos: banners, intersticiais e recompensados",
-            "Usuários premium: experiência sem anúncios e acesso completo",
+            "Usu?rios gratuitos: banners, intersticiais e recompensados",
+            "Usu?rios premium: experi?ncia sem an?ncios e acesso completo",
           ],
         },
         {
-          title: "7. NOTIFICAÇÕES",
+          title: "7. NOTIFICA??ES",
           bullets: [
-            "Versículos e lembretes agendados",
-            "Lembretes de oração e estudos",
-            "Controle total de temas, horários e permissões",
+            "Vers?culos e lembretes agendados",
+            "Lembretes de ora??o e estudos",
+            "Controle total de temas, hor?rios e permiss?es",
           ],
         },
         {
           title: "8. SEUS DIREITOS",
           bullets: [
             "Visualizar, editar ou excluir seus dados",
-            "Solicitar exclusão completa da conta",
-            "Cancelar notificações a qualquer momento",
+            "Solicitar exclus?o completa da conta",
+            "Cancelar notifica??es a qualquer momento",
           ],
         },
         {
-          title: "9. RETENÇÃO DE DADOS",
+          title: "9. RETEN??O DE DADOS",
           bullets: [
             "Dados mantidos enquanto a conta estiver ativa",
-            "Exclusão completa em até 30 dias após solicitação",
-            "Logs técnicos por até 90 dias (sem identificação)",
+            "Exclus?o completa em at? 30 dias ap?s solicita??o",
+            "Logs t?cnicos por at? 90 dias (sem identifica??o)",
           ],
         },
         {
           title: "10. TECNOLOGIAS UTILIZADAS",
           bullets: [
-            "LocalStorage/AsyncStorage para preferências e progresso",
-            "Cookies web apenas para funcionalidade básica",
-            "Analytics anônimos para melhoria contínua",
+            "LocalStorage/AsyncStorage para prefer?ncias e progresso",
+            "Cookies web apenas para funcionalidade b?sica",
+            "Analytics an?nimos para melhoria cont?nua",
           ],
         },
         {
-          title: "11. TRANSFERÊNCIAS INTERNACIONAIS",
+          title: "11. TRANSFER?NCIAS INTERNACIONAIS",
           bullets: ["Supabase, Stripe, OpenAI e AdMob podem processar dados fora do Brasil"],
         },
         {
           title: "12. MENORES DE IDADE",
-          bullets: ["O app não é destinado a coletar intencionalmente dados de menores de 13 anos"],
+          bullets: ["O app n?o ? destinado a coletar intencionalmente dados de menores de 13 anos"],
         },
         {
-          title: "13. ALTERAÇÕES NA POLÍTICA",
+          title: "13. ALTERA??ES NA POL?TICA",
           bullets: [
-            "Atualizações podem ser informadas no app e por e-mail",
-            "Versões anteriores são mantidas para referência",
+            "Atualiza??es podem ser informadas no app e por e-mail",
+            "Vers?es anteriores s?o mantidas para refer?ncia",
           ],
         },
         {
           title: "14. CONTATO",
           bullets: [
             "E-mail: [seu-email@dominio.com]",
-            "Atendimento: segunda a sexta, das 9h às 18h",
+            "Atendimento: segunda a sexta, das 9h ?s 18h",
           ],
         },
         {
-          title: "15. CONCORDÂNCIA",
+          title: "15. CONCORD?NCIA",
           paragraphs: [
-            "Ao utilizar o Conexao com Deus, você concorda com os termos desta Política de Privacidade.",
+            "Ao utilizar o Conexao com Deus, voc? concorda com os termos desta Pol?tica de Privacidade.",
           ],
         },
       ] as Section[],
