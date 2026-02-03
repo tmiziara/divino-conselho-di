@@ -184,13 +184,13 @@ const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{tx("E-mail", "Email")}</Label>
             <div className="relative">
               <Mail className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
-                placeholder="seu@email.com"
+                placeholder={tx("seu@email.com", "your@email.com")}
                 className="pl-10"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

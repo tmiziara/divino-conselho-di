@@ -486,9 +486,9 @@ const Profile = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>{tx("E-mail", "Email")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="seu@email.com" {...field} />
+                          <Input placeholder={tx("seu@email.com", "your@email.com")} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
