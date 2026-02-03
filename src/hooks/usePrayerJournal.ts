@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { recordActivity } from "@/lib/activityLog";
 
 export interface PrayerJournalEntry {
@@ -35,6 +36,7 @@ const createLocalId = () => {
 
 export const usePrayerJournal = () => {
   const { user } = useAuth();
+  const { isEnglish } = useLanguage();
   const [entries, setEntries] = useState<PrayerJournalEntry[]>([]);
 
   useEffect(() => {
@@ -107,25 +109,28 @@ export const usePrayerJournal = () => {
   );
 
   const prompts = useMemo(
-    () => [
-      {
-        id: "gratidao",
-        label: "Pelo que você é grato hoje?",
-      },
-      {
-        id: "preocupacao",
-        label: "O que você quer entregar em oração?",
-      },
-      {
-        id: "pedido",
-        label: "Quem ou o que precisa das suas orações hoje?",
-      },
-      {
-        id: "resposta",
-        label: "Como você percebeu a ação de Deus hoje?",
-      },
-    ],
-    []
+    () => {
+      const tx = (pt: string, en: string) => (isEnglish ? en : pt);
+      return [
+        {
+          id: "gratidao",
+          label: tx("Pelo que você é grato hoje?", "What are you grateful for today?"),
+        },
+        {
+          id: "preocupacao",
+          label: tx("O que você quer entregar em oração?", "What do you want to surrender in prayer?"),
+        },
+        {
+          id: "pedido",
+          label: tx("Quem ou o que precisa das suas orações hoje?", "Who or what needs your prayers today?"),
+        },
+        {
+          id: "resposta",
+          label: tx("Como você percebeu a ação de Deus hoje?", "How did you notice God's action today?"),
+        },
+      ];
+    },
+    [isEnglish]
   );
 
   return {
